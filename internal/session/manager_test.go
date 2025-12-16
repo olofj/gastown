@@ -105,7 +105,7 @@ func TestStopNotFound(t *testing.T) {
 	}
 	m := NewManager(tmux.NewTmux(), r)
 
-	err := m.Stop("Toast")
+	err := m.Stop("Toast", false)
 	if err != ErrSessionNotFound {
 		t.Errorf("Stop = %v, want ErrSessionNotFound", err)
 	}

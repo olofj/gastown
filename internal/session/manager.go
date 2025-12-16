@@ -134,7 +134,8 @@ func (m *Manager) Start(polecat string, opts StartOptions) error {
 }
 
 // Stop terminates a polecat session.
-func (m *Manager) Stop(polecat string) error {
+// If force is true, skips graceful shutdown and kills immediately.
+func (m *Manager) Stop(polecat string, force bool) error {
 	sessionID := m.sessionName(polecat)
 
 	// Check if session exists
@@ -146,9 +147,11 @@ func (m *Manager) Stop(polecat string) error {
 		return ErrSessionNotFound
 	}
 
-	// Try graceful shutdown first
-	m.tmux.SendKeysRaw(sessionID, "C-c") // Ctrl+C
-	time.Sleep(100 * time.Millisecond)
+	// Try graceful shutdown first (unless forced)
+	if !force {
+		m.tmux.SendKeysRaw(sessionID, "C-c") // Ctrl+C
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	// Kill the session
 	if err := m.tmux.KillSession(sessionID); err != nil {
@@ -237,7 +240,7 @@ func (m *Manager) Inject(polecat, message string) error {
 }
 
 // StopAll terminates all sessions for this rig.
-func (m *Manager) StopAll() error {
+func (m *Manager) StopAll(force bool) error {
 	infos, err := m.List()
 	if err != nil {
 		return err
@@ -245,7 +248,7 @@ func (m *Manager) StopAll() error {
 
 	var lastErr error
 	for _, info := range infos {
-		if err := m.Stop(info.Polecat); err != nil {
+		if err := m.Stop(info.Polecat, force); err != nil {
 			lastErr = err
 		}
 	}

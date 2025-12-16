@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/gastown/internal/git"
@@ -106,8 +107,7 @@ func updateGitExclude(repoPath string) error {
 	}
 
 	// Check if already has Gas Town section
-	contentStr := string(content)
-	if len(content) > 0 && contains(contentStr, "Gas Town") {
+	if strings.Contains(string(content), "Gas Town") {
 		return nil // Already configured
 	}
 
@@ -125,17 +125,4 @@ func updateGitExclude(repoPath string) error {
 
 	// Write back
 	return os.WriteFile(excludePath, append(content, []byte(additions)...), 0644)
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

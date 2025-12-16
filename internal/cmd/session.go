@@ -225,8 +225,12 @@ func runSessionStop(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Stopping session for %s/%s...\n", rigName, polecatName)
-	if err := mgr.Stop(polecatName); err != nil {
+	if sessionForce {
+		fmt.Printf("Force stopping session for %s/%s...\n", rigName, polecatName)
+	} else {
+		fmt.Printf("Stopping session for %s/%s...\n", rigName, polecatName)
+	}
+	if err := mgr.Stop(polecatName, sessionForce); err != nil {
 		return fmt.Errorf("stopping session: %w", err)
 	}
 
