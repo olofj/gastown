@@ -8,7 +8,7 @@ This is the **Go port** of Gas Town, a multi-agent workspace manager.
 
 - **Issue prefix**: `gt-`
 - **Python version**: ~/ai/gastown-py (reference implementation)
-- **Design docs**: docs/town-design.md
+- **Architecture**: docs/architecture.md
 
 ## Development
 
