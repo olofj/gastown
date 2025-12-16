@@ -24,3 +24,4 @@ coverage.out
 # Local config
 config.toml
 !config.example.toml
+gt
