@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/steveyegge/gastown/internal/mail"
 	"github.com/steveyegge/gastown/internal/rig"
 )
 
@@ -341,6 +342,8 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 			// Abort the merge
 			m.gitRun("merge", "--abort")
 			m.completeMR(mr, MRFailed, "merge conflict - polecat must rebase")
+			// Notify worker about conflict
+			m.notifyWorkerConflict(mr)
 			return result
 		}
 		result.Error = fmt.Sprintf("merge failed: %v", err)
@@ -373,6 +376,9 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 	// Success!
 	result.Success = true
 	m.completeMR(mr, MRMerged, "")
+
+	// Notify worker of success
+	m.notifyWorkerMerged(mr)
 
 	// Optionally delete the merged branch
 	m.gitRun("push", "origin", "--delete", mr.Branch)
@@ -487,4 +493,77 @@ func formatAge(t time.Time) string {
 		return fmt.Sprintf("%dh ago", int(d.Hours()))
 	}
 	return fmt.Sprintf("%dd ago", int(d.Hours()/24))
+}
+
+// notifyWorkerConflict sends a conflict notification to a polecat.
+func (m *Manager) notifyWorkerConflict(mr *MergeRequest) {
+	// Find town root by walking up from rig path
+	townRoot := findTownRoot(m.workDir)
+	if townRoot == "" {
+		return
+	}
+
+	router := mail.NewRouter(townRoot)
+	msg := mail.NewMessage(
+		fmt.Sprintf("%s/refinery", m.rig.Name),
+		fmt.Sprintf("%s/%s", m.rig.Name, mr.Worker),
+		"Merge conflict - rebase required",
+		fmt.Sprintf(`Your branch %s has conflicts with %s.
+
+Please rebase your changes:
+  git fetch origin
+  git rebase origin/%s
+  git push -f
+
+Then the Refinery will retry the merge.`,
+			mr.Branch, mr.TargetBranch, mr.TargetBranch),
+	)
+	msg.Priority = mail.PriorityHigh
+	router.Send(msg)
+}
+
+// notifyWorkerMerged sends a success notification to a polecat.
+func (m *Manager) notifyWorkerMerged(mr *MergeRequest) {
+	townRoot := findTownRoot(m.workDir)
+	if townRoot == "" {
+		return
+	}
+
+	router := mail.NewRouter(townRoot)
+	msg := mail.NewMessage(
+		fmt.Sprintf("%s/refinery", m.rig.Name),
+		fmt.Sprintf("%s/%s", m.rig.Name, mr.Worker),
+		"Work merged successfully",
+		fmt.Sprintf(`Your branch %s has been merged to %s.
+
+Issue: %s
+Thank you for your contribution!`,
+			mr.Branch, mr.TargetBranch, mr.IssueID),
+	)
+	router.Send(msg)
+}
+
+// findTownRoot walks up directories to find the town root.
+func findTownRoot(startPath string) string {
+	path := startPath
+	for {
+		// Check for mayor/ subdirectory (indicates town root)
+		if _, err := os.Stat(filepath.Join(path, "mayor")); err == nil {
+			return path
+		}
+		// Check for config.json with type: workspace
+		configPath := filepath.Join(path, "config.json")
+		if data, err := os.ReadFile(configPath); err == nil {
+			if strings.Contains(string(data), `"type": "workspace"`) {
+				return path
+			}
+		}
+
+		parent := filepath.Dir(path)
+		if parent == path {
+			break // Reached root
+		}
+		path = parent
+	}
+	return ""
 }
