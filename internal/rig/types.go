@@ -1,0 +1,59 @@
+// Package rig provides rig management functionality.
+package rig
+
+import (
+	"github.com/steveyegge/gastown/internal/config"
+)
+
+// Rig represents a managed repository in the workspace.
+type Rig struct {
+	// Name is the rig identifier (directory name).
+	Name string `json:"name"`
+
+	// Path is the absolute path to the rig directory.
+	Path string `json:"path"`
+
+	// GitURL is the remote repository URL.
+	GitURL string `json:"git_url"`
+
+	// Config is the rig-level configuration.
+	Config *config.BeadsConfig `json:"config,omitempty"`
+
+	// Polecats is the list of polecat names in this rig.
+	Polecats []string `json:"polecats,omitempty"`
+
+	// HasWitness indicates if the rig has a witness agent.
+	HasWitness bool `json:"has_witness"`
+
+	// HasRefinery indicates if the rig has a refinery agent.
+	HasRefinery bool `json:"has_refinery"`
+
+	// HasMayor indicates if the rig has a mayor clone.
+	HasMayor bool `json:"has_mayor"`
+}
+
+// AgentDirs are the standard agent directories in a rig.
+var AgentDirs = []string{
+	"polecats",
+	"refinery/rig",
+	"witness/rig",
+	"mayor/rig",
+}
+
+// RigSummary provides a concise overview of a rig.
+type RigSummary struct {
+	Name        string `json:"name"`
+	PolecatCount int    `json:"polecat_count"`
+	HasWitness  bool   `json:"has_witness"`
+	HasRefinery bool   `json:"has_refinery"`
+}
+
+// Summary returns a RigSummary for this rig.
+func (r *Rig) Summary() RigSummary {
+	return RigSummary{
+		Name:        r.Name,
+		PolecatCount: len(r.Polecats),
+		HasWitness:  r.HasWitness,
+		HasRefinery: r.HasRefinery,
+	}
+}
