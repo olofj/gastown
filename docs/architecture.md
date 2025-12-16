@@ -13,11 +13,12 @@ A **Town** is a complete Gas Town installation - the workspace where everything 
 
 ### Rig
 
-A **Rig** is a managed project repository with its associated agents. Each rig is a git clone of a project that Gas Town manages. Within each rig:
-- The project's actual code lives at the rig root
-- Agent directories are git-ignored via `.git/info/exclude`
-- Each rig has its own Witness, Refinery, and Polecats
-- Mayor has a clone in each rig for rig-specific work
+A **Rig** is a container directory for managing a project and its agents. Importantly, the rig itself is NOT a git clone - it's a pure container that holds:
+- Rig configuration (`config.json`)
+- Rig-level beads database (`.beads/`) for coordinating work
+- Agent directories, each with their own git clone
+
+This design prevents agent confusion: each agent has exactly one place to work (their own clone), with no ambiguous "rig root" that could tempt a lost agent.
 
 ### Agents
 
@@ -71,31 +72,36 @@ Polecats have direct beads write access and file their own issues.
 ### Rig Level
 
 ```
-wyvern/                            # Rig = clone of project repo
-├── .git/
-│   └── info/exclude               # Contains: polecats/ refinery/ witness/ mayor/
-├── .beads/                        # Beads (if project uses it)
-├── [project files]                # Clean project code on main branch
+wyvern/                            # Rig = container (NOT a git clone)
+├── config.json                    # Rig configuration
+├── .beads/                        # Rig-level issue tracking
+│   ├── beads.db                   # SQLite database
+│   └── issues.jsonl               # Git-synced issues
 │
-├── polecats/                      # Worker clones (gitignored)
-│   ├── Nux/                       # Each polecat has a full clone
-│   ├── Toast/
-│   └── Capable/
+├── polecats/                      # Worker directories
+│   ├── Nux/                       # Full git clone (BEADS_DIR=../.beads)
+│   ├── Toast/                     # Full git clone (BEADS_DIR=../.beads)
+│   └── Capable/                   # Full git clone (BEADS_DIR=../.beads)
 │
 ├── refinery/                      # Refinery agent
-│   ├── rig/                       # Refinery's working clone
+│   ├── rig/                       # Authoritative "main" clone
 │   ├── state.json
 │   └── mail/inbox.jsonl
 │
 ├── witness/                       # Witness agent (per-rig pit boss)
-│   ├── rig/                       # Witness's working clone
-│   ├── state.json
+│   ├── state.json                 # May not need its own clone
 │   └── mail/inbox.jsonl
 │
 └── mayor/                         # Mayor's presence in this rig
     ├── rig/                       # Mayor's rig-specific clone
     └── state.json
 ```
+
+**Key points:**
+- The rig root has no `.git/` - it's not a repository
+- All agents use `BEADS_DIR` to point to the rig's `.beads/`
+- Refinery's clone is the authoritative "main branch" view
+- Witness may not need its own clone (just monitors polecat state)
 
 ### Why Decentralized?
 
@@ -238,6 +244,33 @@ When an agent's context fills, it hands off to its next session:
 
 **Rationale**: AI models often miss hidden directories. Visible is better.
 
+### 6. Rig as Container, Not Clone
+
+**Decision**: The rig directory is a pure container, not a git clone of the project.
+
+**Rationale**:
+- **Prevents confusion**: Agents historically get lost (polecats in refinery, mayor in polecat dirs). If the rig root were a clone, it's another tempting target for confused agents. Two confused agents at once = collision disaster.
+- **Single work location**: Each agent has exactly one place to work (their own `/rig/` clone)
+- **Clear role detection**: "Am I in a `/rig/` directory?" = I'm in an agent clone
+- **Refinery is canonical main**: Refinery's clone serves as the authoritative "main branch" - it pulls, merges PRs, and pushes. No need for a separate rig-root clone.
+
+### 7. Rig-Level Beads via BEADS_DIR
+
+**Decision**: Each rig has its own `.beads/` directory. Agents use the `BEADS_DIR` environment variable to point to it.
+
+**Rationale**:
+- **Centralized issue tracking**: All polecats in a rig share the same beads database
+- **Project separation**: Even if the project repo has its own `.beads/`, Gas Town agents use the rig's beads instead
+- **OSS-friendly**: For contributing to projects you don't own, rig beads stay separate from upstream
+- **Already supported**: Beads supports `BEADS_DIR` env var (see beads `internal/beads/beads.go`)
+
+**Configuration**: Gas Town sets `BEADS_DIR` when spawning agents:
+```bash
+export BEADS_DIR=/path/to/rig/.beads
+```
+
+**See also**: beads issue `bd-411u` for documentation of this pattern.
+
 ## Configuration
 
 ### town.json
@@ -265,22 +298,29 @@ When an agent's context fills, it hands off to its next session:
 }
 ```
 
-### Per-Rig Beads Config
+### rig.json (Per-Rig Config)
 
-Each rig can configure where polecats file beads:
+Each rig has a `config.json` at its root:
 
 ```json
 {
+  "type": "rig",
+  "version": 1,
+  "name": "wyvern",
+  "git_url": "https://github.com/steveyegge/wyvern",
   "beads": {
-    "repo": "local",       // "local" | "/path/to/beads" | "git-url"
-    "prefix": "wyv"
+    "prefix": "wyv",
+    "sync_remote": "origin"    // Optional: git remote for bd sync
   }
 }
 ```
 
-- `"local"`: Use project's `.beads/` (default, for your own projects)
-- Path: Use beads at specific location (for OSS contributions)
-- Git URL: Clone and use shared team beads
+The rig's `.beads/` directory is always at the rig root. Gas Town:
+1. Creates `.beads/` when adding a rig (`gt rig add`)
+2. Runs `bd init --prefix <prefix>` to initialize it
+3. Sets `BEADS_DIR` environment variable when spawning agents
+
+This ensures all agents in the rig share a single beads database, separate from any beads the project itself might use.
 
 ## CLI Commands
 
