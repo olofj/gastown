@@ -254,6 +254,19 @@ When an agent's context fills, it hands off to its next session:
 - **Clear role detection**: "Am I in a `/rig/` directory?" = I'm in an agent clone
 - **Refinery is canonical main**: Refinery's clone serves as the authoritative "main branch" - it pulls, merges PRs, and pushes. No need for a separate rig-root clone.
 
+### 8. Plugins as Agents
+
+**Decision**: Plugins are just additional agents with identities, mailboxes, and access to beads. No special plugin infrastructure.
+
+**Rationale**:
+- Fits Gas Town's intentionally rough aesthetic
+- Zero new infrastructure needed (uses existing mail, beads, identities)
+- Composable - plugins can invoke other plugins via mail
+- Debuggable - just look at mail logs and bead history
+- Extensible - anyone can add a plugin by creating a directory
+
+**Structure**: `<rig>/plugins/<name>/` with optional `rig/`, `CLAUDE.md`, `mail/`, `state.json`.
+
 ### 7. Rig-Level Beads via BEADS_DIR
 
 **Decision**: Each rig has its own `.beads/` directory. Agents use the `BEADS_DIR` environment variable to point to it.
@@ -357,6 +370,117 @@ gt kill <polecat>      # Kill polecat session
 gt wake <polecat>      # Mark polecat as active
 gt sleep <polecat>     # Mark polecat as inactive
 ```
+
+## Plugins
+
+Gas Town supports **plugins** - but in the simplest possible way: plugins are just more agents.
+
+### Philosophy
+
+Gas Town is intentionally rough and lightweight. A "credible plugin system" with manifests, schemas, and invocation frameworks would be pretentious for a project named after a Mad Max wasteland. Instead, plugins follow the same patterns as all Gas Town agents:
+
+- **Identity**: Plugins have persistent identities like polecats and witnesses
+- **Communication**: Plugins use mail for input/output
+- **Artifacts**: Plugins produce beads, files, or other handoff artifacts
+- **Lifecycle**: Plugins can be invoked on-demand or at specific workflow points
+
+### Plugin Structure
+
+Plugins live in a rig's `plugins/` directory:
+
+```
+wyvern/                            # Rig
+├── plugins/
+│   └── merge-oracle/              # A plugin
+│       ├── rig/                   # Plugin's git clone (if needed)
+│       ├── CLAUDE.md              # Plugin's instructions/prompts
+│       ├── mail/inbox.jsonl       # Plugin's mailbox
+│       └── state.json             # Plugin state (optional)
+```
+
+That's it. No plugin.yaml, no special registration. If the directory exists, the plugin exists.
+
+### Invoking Plugins
+
+Plugins are invoked like any other agent - via mail:
+
+```bash
+# Refinery asks merge-oracle to analyze pending changesets
+gt send wyvern/plugins/merge-oracle -s "Analyze merge queue" -m "..."
+
+# Mayor asks plan-oracle for a work breakdown
+gt send beads/plugins/plan-oracle -s "Plan for bd-xyz" -m "..."
+```
+
+Plugins do their work (potentially spawning Claude sessions) and respond via mail, creating any necessary artifacts (beads, files, branches).
+
+### Hook Points
+
+Existing agents can be configured to notify plugins at specific points. This is just convention - agents check if a plugin exists and mail it:
+
+| Workflow Point | Agent | Example Plugin |
+|----------------|-------|----------------|
+| Before merge processing | Refinery | merge-oracle |
+| Before swarm dispatch | Mayor | plan-oracle |
+| On worker stuck | Witness | debug-oracle |
+| On PR ready | Refinery | review-oracle |
+
+Configuration is minimal - perhaps a line in the agent's CLAUDE.md or state.json noting which plugins to consult.
+
+### Example: Merge Oracle
+
+The **merge-oracle** plugin analyzes changesets before the Refinery processes them:
+
+**Input** (via mail from Refinery):
+- List of pending changesets
+- Current merge queue state
+
+**Processing**:
+1. Build overlap graph (which changesets touch same files/regions)
+2. Classify disjointness (fully disjoint → parallel safe, overlapping → needs sequencing)
+3. Use LLM to assess semantic complexity of overlapping components
+4. Identify high-risk patterns (deletions vs modifications, conflicting business logic)
+
+**Output**:
+- Bead with merge plan (parallel groups, sequential chains)
+- Mail to Refinery with recommendation (proceed / escalate to Mayor)
+- If escalation needed: mail to Mayor with explanation
+
+The merge-oracle's `CLAUDE.md` contains the prompts and classification criteria. Gas Town doesn't need to know the internals.
+
+### Example: Plan Oracle
+
+The **plan-oracle** plugin helps decompose work:
+
+**Input**: An issue/epic that needs breakdown
+
+**Processing**:
+1. Analyze the scope and requirements
+2. Identify dependencies and blockers
+3. Estimate complexity (for parallelization decisions)
+4. Suggest task breakdown
+
+**Output**:
+- Beads for the sub-tasks (created via `bd create`)
+- Dependency links (via `bd dep add`)
+- Mail back with summary and recommendations
+
+### Why This Design
+
+1. **Fits Gas Town's aesthetic**: Rough, text-based, agent-shaped
+2. **Zero new infrastructure**: Uses existing mail, beads, identities
+3. **Composable**: Plugins can invoke other plugins
+4. **Debuggable**: Just look at mail logs and bead history
+5. **Extensible**: Anyone can add a plugin by creating a directory
+
+### Plugin Discovery
+
+```bash
+gt plugins <rig>           # List plugins in a rig
+gt plugin status <name>    # Check plugin state
+```
+
+Or just `ls <rig>/plugins/`.
 
 ## Future: Federation
 
