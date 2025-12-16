@@ -1,0 +1,391 @@
+package cmd
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/steveyegge/gastown/internal/config"
+	"github.com/steveyegge/gastown/internal/git"
+	"github.com/steveyegge/gastown/internal/rig"
+	"github.com/steveyegge/gastown/internal/session"
+	"github.com/steveyegge/gastown/internal/style"
+	"github.com/steveyegge/gastown/internal/tmux"
+	"github.com/steveyegge/gastown/internal/workspace"
+)
+
+// Session command flags
+var (
+	sessionIssue     string
+	sessionForce     bool
+	sessionLines     int
+	sessionMessage   string
+	sessionFile      string
+	sessionRigFilter string
+	sessionListJSON  bool
+)
+
+var sessionCmd = &cobra.Command{
+	Use:   "session",
+	Short: "Manage polecat sessions",
+	Long: `Manage tmux sessions for polecats.
+
+Sessions are tmux sessions running Claude for each polecat.
+Use the subcommands to start, stop, attach, and monitor sessions.`,
+}
+
+var sessionStartCmd = &cobra.Command{
+	Use:   "start <rig>/<polecat>",
+	Short: "Start a polecat session",
+	Long: `Start a new tmux session for a polecat.
+
+Creates a tmux session, navigates to the polecat's working directory,
+and launches claude. Optionally inject an initial issue to work on.
+
+Examples:
+  gt session start wyvern/Toast
+  gt session start wyvern/Toast --issue gt-123`,
+	Args: cobra.ExactArgs(1),
+	RunE: runSessionStart,
+}
+
+var sessionStopCmd = &cobra.Command{
+	Use:   "stop <rig>/<polecat>",
+	Short: "Stop a polecat session",
+	Long: `Stop a running polecat session.
+
+Attempts graceful shutdown first (Ctrl-C), then kills the tmux session.
+Use --force to skip graceful shutdown.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runSessionStop,
+}
+
+var sessionAtCmd = &cobra.Command{
+	Use:     "at <rig>/<polecat>",
+	Aliases: []string{"attach"},
+	Short:   "Attach to a running session",
+	Long: `Attach to a running polecat session.
+
+Attaches the current terminal to the tmux session. Detach with Ctrl-B D.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runSessionAttach,
+}
+
+var sessionListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all sessions",
+	Long: `List all running polecat sessions.
+
+Shows session status, rig, and polecat name. Use --rig to filter by rig.`,
+	RunE: runSessionList,
+}
+
+var sessionCaptureCmd = &cobra.Command{
+	Use:   "capture <rig>/<polecat>",
+	Short: "Capture recent session output",
+	Long: `Capture recent output from a polecat session.
+
+Returns the last N lines of terminal output. Useful for checking progress.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runSessionCapture,
+}
+
+var sessionInjectCmd = &cobra.Command{
+	Use:   "inject <rig>/<polecat>",
+	Short: "Send message to session",
+	Long: `Send a message to a polecat session.
+
+Injects text into the session via tmux send-keys. Useful for nudges or notifications.
+
+Examples:
+  gt session inject wyvern/Toast -m "Check your mail"
+  gt session inject wyvern/Toast -f prompt.txt`,
+	Args: cobra.ExactArgs(1),
+	RunE: runSessionInject,
+}
+
+func init() {
+	// Start flags
+	sessionStartCmd.Flags().StringVar(&sessionIssue, "issue", "", "Issue ID to work on")
+
+	// Stop flags
+	sessionStopCmd.Flags().BoolVarP(&sessionForce, "force", "f", false, "Force immediate shutdown")
+
+	// List flags
+	sessionListCmd.Flags().StringVar(&sessionRigFilter, "rig", "", "Filter by rig name")
+	sessionListCmd.Flags().BoolVar(&sessionListJSON, "json", false, "Output as JSON")
+
+	// Capture flags
+	sessionCaptureCmd.Flags().IntVarP(&sessionLines, "lines", "n", 100, "Number of lines to capture")
+
+	// Inject flags
+	sessionInjectCmd.Flags().StringVarP(&sessionMessage, "message", "m", "", "Message to inject")
+	sessionInjectCmd.Flags().StringVarP(&sessionFile, "file", "f", "", "File to read message from")
+
+	// Add subcommands
+	sessionCmd.AddCommand(sessionStartCmd)
+	sessionCmd.AddCommand(sessionStopCmd)
+	sessionCmd.AddCommand(sessionAtCmd)
+	sessionCmd.AddCommand(sessionListCmd)
+	sessionCmd.AddCommand(sessionCaptureCmd)
+	sessionCmd.AddCommand(sessionInjectCmd)
+
+	rootCmd.AddCommand(sessionCmd)
+}
+
+// parseAddress parses "rig/polecat" format.
+func parseAddress(addr string) (rigName, polecatName string, err error) {
+	parts := strings.SplitN(addr, "/", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("invalid address format: expected 'rig/polecat', got '%s'", addr)
+	}
+	return parts[0], parts[1], nil
+}
+
+// getSessionManager creates a session manager for the given rig.
+func getSessionManager(rigName string) (*session.Manager, *rig.Rig, error) {
+	// Find town root
+	townRoot, err := workspace.FindFromCwdOrError()
+	if err != nil {
+		return nil, nil, fmt.Errorf("not in a Gas Town workspace: %w", err)
+	}
+
+	// Load rigs config
+	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
+	if err != nil {
+		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}
+	}
+
+	// Get rig
+	g := git.NewGit(townRoot)
+	rigMgr := rig.NewManager(townRoot, rigsConfig, g)
+	r, err := rigMgr.GetRig(rigName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("rig '%s' not found", rigName)
+	}
+
+	// Create session manager
+	t := tmux.NewTmux()
+	mgr := session.NewManager(t, r)
+
+	return mgr, r, nil
+}
+
+func runSessionStart(cmd *cobra.Command, args []string) error {
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+
+	mgr, r, err := getSessionManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	// Check polecat exists
+	found := false
+	for _, p := range r.Polecats {
+		if p == polecatName {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("polecat '%s' not found in rig '%s'", polecatName, rigName)
+	}
+
+	opts := session.StartOptions{
+		Issue: sessionIssue,
+	}
+
+	fmt.Printf("Starting session for %s/%s...\n", rigName, polecatName)
+	if err := mgr.Start(polecatName, opts); err != nil {
+		return fmt.Errorf("starting session: %w", err)
+	}
+
+	fmt.Printf("%s Session started. Attach with: %s\n",
+		style.Bold.Render("✓"),
+		style.Dim.Render(fmt.Sprintf("gt session at %s/%s", rigName, polecatName)))
+
+	return nil
+}
+
+func runSessionStop(cmd *cobra.Command, args []string) error {
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+
+	mgr, _, err := getSessionManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Stopping session for %s/%s...\n", rigName, polecatName)
+	if err := mgr.Stop(polecatName); err != nil {
+		return fmt.Errorf("stopping session: %w", err)
+	}
+
+	fmt.Printf("%s Session stopped.\n", style.Bold.Render("✓"))
+	return nil
+}
+
+func runSessionAttach(cmd *cobra.Command, args []string) error {
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+
+	mgr, _, err := getSessionManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	// Attach (this replaces the process)
+	return mgr.Attach(polecatName)
+}
+
+// SessionListItem represents a session in list output.
+type SessionListItem struct {
+	Rig       string `json:"rig"`
+	Polecat   string `json:"polecat"`
+	SessionID string `json:"session_id"`
+	Running   bool   `json:"running"`
+}
+
+func runSessionList(cmd *cobra.Command, args []string) error {
+	// Find town root
+	townRoot, err := workspace.FindFromCwdOrError()
+	if err != nil {
+		return fmt.Errorf("not in a Gas Town workspace: %w", err)
+	}
+
+	// Load rigs config
+	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
+	if err != nil {
+		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}
+	}
+
+	// Get all rigs
+	g := git.NewGit(townRoot)
+	rigMgr := rig.NewManager(townRoot, rigsConfig, g)
+	rigs, err := rigMgr.DiscoverRigs()
+	if err != nil {
+		return fmt.Errorf("discovering rigs: %w", err)
+	}
+
+	// Filter if requested
+	if sessionRigFilter != "" {
+		var filtered []*rig.Rig
+		for _, r := range rigs {
+			if r.Name == sessionRigFilter {
+				filtered = append(filtered, r)
+			}
+		}
+		rigs = filtered
+	}
+
+	// Collect sessions from all rigs
+	t := tmux.NewTmux()
+	var allSessions []SessionListItem
+
+	for _, r := range rigs {
+		mgr := session.NewManager(t, r)
+		infos, err := mgr.List()
+		if err != nil {
+			continue
+		}
+
+		for _, info := range infos {
+			allSessions = append(allSessions, SessionListItem{
+				Rig:       r.Name,
+				Polecat:   info.Polecat,
+				SessionID: info.SessionID,
+				Running:   info.Running,
+			})
+		}
+	}
+
+	// Output
+	if sessionListJSON {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(allSessions)
+	}
+
+	if len(allSessions) == 0 {
+		fmt.Println("No active sessions.")
+		return nil
+	}
+
+	fmt.Printf("%s\n\n", style.Bold.Render("Active Sessions"))
+	for _, s := range allSessions {
+		status := style.Bold.Render("●")
+		if !s.Running {
+			status = style.Dim.Render("○")
+		}
+		fmt.Printf("  %s %s/%s\n", status, s.Rig, s.Polecat)
+		fmt.Printf("    %s\n", style.Dim.Render(s.SessionID))
+	}
+
+	return nil
+}
+
+func runSessionCapture(cmd *cobra.Command, args []string) error {
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+
+	mgr, _, err := getSessionManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	output, err := mgr.Capture(polecatName, sessionLines)
+	if err != nil {
+		return fmt.Errorf("capturing output: %w", err)
+	}
+
+	fmt.Print(output)
+	return nil
+}
+
+func runSessionInject(cmd *cobra.Command, args []string) error {
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+
+	// Get message
+	message := sessionMessage
+	if sessionFile != "" {
+		data, err := os.ReadFile(sessionFile)
+		if err != nil {
+			return fmt.Errorf("reading file: %w", err)
+		}
+		message = string(data)
+	}
+
+	if message == "" {
+		return fmt.Errorf("no message provided (use -m or -f)")
+	}
+
+	mgr, _, err := getSessionManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	if err := mgr.Inject(polecatName, message); err != nil {
+		return fmt.Errorf("injecting message: %w", err)
+	}
+
+	fmt.Printf("%s Message sent to %s/%s\n",
+		style.Bold.Render("✓"), rigName, polecatName)
+	return nil
+}
