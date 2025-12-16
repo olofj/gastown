@@ -498,7 +498,7 @@ func runSwarmLand(cmd *cobra.Command, args []string) error {
 	swarmID := args[0]
 
 	// Find the swarm
-	rigs, _, err := getAllRigs()
+	rigs, townRoot, err := getAllRigs()
 	if err != nil {
 		return err
 	}
@@ -525,9 +525,9 @@ func runSwarmLand(cmd *cobra.Command, args []string) error {
 
 	sw := store.Swarms[swarmID]
 
-	// Check state
-	if sw.State != swarm.SwarmMerging {
-		return fmt.Errorf("swarm must be in 'merging' state to land (current: %s)", sw.State)
+	// Check state - allow merging or active
+	if sw.State != swarm.SwarmMerging && sw.State != swarm.SwarmActive {
+		return fmt.Errorf("swarm must be in 'active' or 'merging' state to land (current: %s)", sw.State)
 	}
 
 	// Create manager and land
@@ -538,11 +538,25 @@ func runSwarmLand(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Landing swarm %s to %s...\n", swarmID, sw.TargetBranch)
 
+	// First, merge integration branch to main
 	if err := mgr.LandToMain(swarmID); err != nil {
 		return fmt.Errorf("landing swarm: %w", err)
 	}
 
-	// Update state
+	// Execute full landing protocol (stop sessions, audit, cleanup)
+	config := swarm.LandingConfig{
+		TownRoot: townRoot,
+	}
+	result, err := mgr.ExecuteLanding(swarmID, config)
+	if err != nil {
+		return fmt.Errorf("landing protocol: %w", err)
+	}
+
+	if !result.Success {
+		return fmt.Errorf("landing failed: %s", result.Error)
+	}
+
+	// Update store
 	sw.State = swarm.SwarmLanded
 	sw.UpdatedAt = time.Now()
 	if err := store.Save(); err != nil {
@@ -550,6 +564,8 @@ func runSwarmLand(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("%s Swarm %s landed to %s\n", style.Bold.Render("✓"), swarmID, sw.TargetBranch)
+	fmt.Printf("  Sessions stopped: %d\n", result.SessionsStopped)
+	fmt.Printf("  Branches cleaned: %d\n", result.BranchesCleaned)
 	return nil
 }
 
