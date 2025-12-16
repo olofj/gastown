@@ -113,6 +113,37 @@ flowchart LR
 
 Polecats have direct beads write access and file their own issues.
 
+#### Beads Configuration for Multi-Agent
+
+Gas Town uses beads in a **shared database** configuration where all agents in a rig share one `.beads/` directory. This requires careful configuration:
+
+| Agent Type | BEADS_DIR | BEADS_NO_DAEMON | sync-branch | Notes |
+|------------|-----------|-----------------|-------------|-------|
+| Polecat (worktree) | rig/.beads | **YES (required)** | recommended | Daemon can't handle worktrees |
+| Polecat (full clone) | rig/.beads | Optional | recommended | Daemon safe but sync-branch helps |
+| Refinery | rig/.beads | No | optional | Owns main, daemon is fine |
+| Witness | rig/.beads | No | optional | Read-mostly access |
+| Mayor | rig/.beads | No | optional | Infrequent access |
+
+**Critical: Worktrees require no-daemon mode.** The beads daemon doesn't know which branch each worktree has checked out, and can commit/push to the wrong branch.
+
+**Environment setup when spawning agents:**
+
+```bash
+# For worktree polecats (REQUIRED)
+export BEADS_DIR=/path/to/rig/.beads
+export BEADS_NO_DAEMON=1
+
+# For full-clone polecats (recommended)
+export BEADS_DIR=/path/to/rig/.beads
+# Daemon is safe, but consider sync-branch for coordination
+
+# Rig beads config.yaml should include:
+sync-branch: beads-sync    # Separate branch for beads commits
+```
+
+**Why sync-branch?** When multiple agents share a beads database, using a dedicated sync branch prevents beads commits from interleaving with code commits on feature branches.
+
 ## Directory Structure
 
 ### Town Level
@@ -199,6 +230,67 @@ graph TB
     Beads -.->|BEADS_DIR| Capable
 ```
 
+### ASCII Directory Layout
+
+For reference without mermaid rendering:
+
+```
+~/ai/                                    # TOWN ROOT
+├── config/                              # Town configuration (visible)
+│   ├── town.json                        # {"type": "town", "name": "..."}
+│   ├── rigs.json                        # Registry of managed rigs
+│   └── federation.json                  # Remote machine config (future)
+│
+├── mayor/                               # Mayor's home (at town level)
+│   ├── CLAUDE.md                        # Mayor role prompting
+│   ├── mail/inbox.jsonl                 # Mayor's inbox
+│   └── state.json                       # Mayor state
+│
+├── wyvern/                              # RIG (container, NOT a git clone)
+│   ├── config.json                      # Rig configuration
+│   ├── .beads/                          # Rig-level issue tracking
+│   │   ├── beads.db                     # SQLite (gitignored)
+│   │   ├── issues.jsonl                 # Git-tracked issues
+│   │   └── config.yaml                  # Beads config (sync-branch, etc.)
+│   │
+│   ├── polecats/                        # Worker directories
+│   │   ├── Nux/                         # Full clone (BEADS_DIR=../../.beads)
+│   │   │   ├── .git/                    # Independent .git
+│   │   │   └── <project files>
+│   │   ├── Toast/                       # Full clone
+│   │   └── Capable/                     # Full clone
+│   │
+│   ├── refinery/                        # Refinery agent
+│   │   ├── rig/                         # Canonical "main" clone
+│   │   │   ├── .git/
+│   │   │   └── <project files>
+│   │   ├── mail/inbox.jsonl
+│   │   └── state.json
+│   │
+│   ├── witness/                         # Witness agent (pit boss)
+│   │   ├── mail/inbox.jsonl
+│   │   └── state.json
+│   │
+│   ├── mayor/                           # Mayor's rig-specific clone
+│   │   ├── rig/                         # Mayor's clone for this rig
+│   │   │   ├── .git/
+│   │   │   └── <project files>
+│   │   └── state.json
+│   │
+│   └── plugins/                         # Optional plugins
+│       └── merge-oracle/
+│           ├── CLAUDE.md
+│           └── mail/inbox.jsonl
+│
+└── beads/                               # Another rig (same structure)
+    ├── config.json
+    ├── .beads/
+    ├── polecats/
+    ├── refinery/
+    ├── witness/
+    └── mayor/
+```
+
 ### Why Decentralized?
 
 Agents live IN rigs rather than in a central location:
@@ -250,6 +342,63 @@ flowchart LR
         R -->|conflict| P1
     end
 ```
+
+#### Direct Landing (Bypass Merge Queue)
+
+Sometimes Mayor needs to land a polecat's work directly, skipping the Refinery:
+
+| Scenario | Use Direct Landing? |
+|----------|---------------------|
+| Single polecat, simple change | Yes |
+| Urgent hotfix | Yes |
+| Refinery unavailable | Yes |
+| Multiple polecats, potential conflicts | No - use Refinery |
+| Complex changes needing review | No - use Refinery |
+
+**Commands:**
+
+```bash
+# Normal flow (through Refinery)
+gt merge-queue add <rig> <polecat>     # Polecat signals PR ready
+gt refinery process <rig>               # Refinery processes queue
+
+# Direct landing (Mayor bypasses Refinery)
+gt land --direct <rig>/<polecat>        # Land directly to main
+gt land --direct --force <rig>/<polecat> # Skip safety checks
+gt land --direct --skip-tests <rig>/<polecat>  # Skip test run
+gt land --direct --dry-run <rig>/<polecat>     # Preview only
+```
+
+**Direct landing workflow:**
+
+```mermaid
+sequenceDiagram
+    participant M as 🎩 Mayor
+    participant R as Refinery Clone
+    participant P as Polecat Branch
+    participant B as 📦 Beads
+
+    M->>M: Verify polecat session terminated
+    M->>P: Check git state clean
+    M->>R: Fetch polecat branch
+    M->>R: Merge to main (fast-forward or merge commit)
+    M->>R: Run tests (optional)
+    M->>R: Push to origin
+    M->>B: Close associated issue
+    M->>P: Delete polecat branch (cleanup)
+```
+
+**Safety checks (skippable with --force):**
+1. Polecat session must be terminated
+2. Git working tree must be clean
+3. No merge conflicts with main
+4. Tests pass (skippable with --skip-tests)
+
+**When direct landing makes sense:**
+- Mayor is doing sequential, non-swarming work (like GGT scaffolding)
+- Single worker completed an isolated task
+- Hotfix needs to land immediately
+- Refinery agent is down or unavailable
 
 ### Polecat
 
@@ -436,6 +585,48 @@ export BEADS_DIR=/path/to/rig/.beads
 
 **See also**: beads issue `bd-411u` for documentation of this pattern.
 
+### 9. Direct Landing Option
+
+**Decision**: Mayor can land polecat work directly, bypassing the Refinery merge queue.
+
+**Rationale**:
+- **Flexibility**: Not all work needs merge queue overhead
+- **Sequential work**: Mayor doing non-swarming work (like GGT scaffolding) shouldn't need Refinery
+- **Emergency path**: Hotfixes can land immediately
+- **Resilience**: System works even if Refinery is down
+
+**Constraints**:
+- Direct landing still uses Refinery's clone as the canonical main
+- Safety checks prevent landing dirty or conflicting work
+- Mayor takes responsibility for quality (no Refinery review)
+
+**Commands**:
+```bash
+gt land --direct <rig>/<polecat>        # Standard direct land
+gt land --direct --force <rig>/<polecat> # Skip safety checks
+```
+
+### 10. Beads Daemon Awareness
+
+**Decision**: Gas Town must disable the beads daemon for worktree-based polecats.
+
+**Rationale**:
+- The beads daemon doesn't track which branch each worktree has checked out
+- Daemon can commit beads changes to the wrong branch
+- This is a beads limitation, not a Gas Town bug
+- Full clones don't have this problem
+
+**Configuration**:
+```bash
+# For worktree polecats (REQUIRED)
+export BEADS_NO_DAEMON=1
+
+# For full-clone polecats (optional)
+# Daemon is safe, no special config needed
+```
+
+**See also**: beads docs/WORKTREES.md and docs/DAEMON.md for details.
+
 ## Configuration
 
 ### town.json
@@ -521,6 +712,19 @@ gt spawn --issue <id>  # Start polecat on issue
 gt kill <polecat>      # Kill polecat session
 gt wake <polecat>      # Mark polecat as active
 gt sleep <polecat>     # Mark polecat as inactive
+```
+
+### Landing & Merge Queue
+
+```bash
+gt merge-queue add <rig> <polecat>  # Add to merge queue (normal flow)
+gt merge-queue list <rig>           # Show pending merges
+gt refinery process <rig>           # Trigger Refinery to process queue
+
+gt land --direct <rig>/<polecat>    # Direct landing (bypass Refinery)
+gt land --direct --force ...        # Skip safety checks
+gt land --direct --skip-tests ...   # Skip test verification
+gt land --direct --dry-run ...      # Preview only
 ```
 
 ### Emergency Operations
