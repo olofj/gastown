@@ -750,6 +750,27 @@ sequenceDiagram
 - If at limit, wait for workers to complete
 - Prioritize higher-priority ready issues
 
+### 14. Outpost Abstraction for Federation
+
+**Decision**: Federation uses an "Outpost" abstraction to support multiple compute backends (local, SSH/VM, Cloud Run, etc.) through a unified interface.
+
+**Rationale**:
+- Different workloads need different compute: burst vs long-running, cheap vs fast
+- Cloud Run's pay-per-use model is ideal for elastic burst capacity
+- VMs are better for autonomous long-running work
+- Local is always the default for development
+- Platform flexibility lets users choose based on their needs and budget
+
+**Key insight**: Cloud Run's persistent HTTP/2 connections solve the "zero to one" cold start problem, making container workers viable for interactive-ish work at ~$0.017 per 5-minute session.
+
+**Design principles**:
+1. **Local-first** - Remote outposts are overflow, not primary
+2. **Git remains source of truth** - All outposts sync via git
+3. **HTTP for Cloud Run** - Don't force filesystem mail onto containers
+4. **Graceful degradation** - System works with any subset of outposts
+
+**See**: `docs/federation-design.md` for full architectural analysis.
+
 ## Multi-Wave Work Processing
 
 For large task trees (like implementing GGT itself), workers can process multiple "waves" of work automatically based on the dependency graph.
@@ -1070,13 +1091,147 @@ Gas Town is designed for resilience. Common failure modes and their recovery:
 
 Run `gt doctor` regularly. Run `gt doctor --fix` to auto-repair issues.
 
-## Future: Federation
+## Federation: Outposts
 
-Federation enables work distribution across multiple machines via SSH. Not yet implemented, but the architecture supports:
-- Machine registry (local, ssh, gcp)
-- Extended addressing: `[machine:]rig/polecat`
-- Cross-machine mail routing
-- Remote session management
+Federation enables Gas Town to scale across machines via **Outposts** - remote compute environments that can run workers.
+
+**Full design**: See `docs/federation-design.md`
+
+### Outpost Types
+
+| Type | Description | Cost Model | Best For |
+|------|-------------|------------|----------|
+| Local | Current tmux model | Free | Development, primary work |
+| SSH/VM | Full Gas Town clone on VM | Always-on | Long-running, autonomous |
+| CloudRun | Container workers on GCP | Pay-per-use | Burst, elastic, background |
+
+### Core Abstraction
+
+```go
+type Outpost interface {
+    Name() string
+    Type() OutpostType  // local, ssh, cloudrun
+    MaxWorkers() int
+    ActiveWorkers() int
+    Spawn(issue string, config WorkerConfig) (Worker, error)
+    Workers() []Worker
+    Ping() error
+}
+
+type Worker interface {
+    ID() string
+    Outpost() string
+    Status() WorkerStatus  // idle, working, done, failed
+    Issue() string
+    Attach() error         // for interactive outposts
+    Logs() (io.Reader, error)
+    Stop() error
+}
+```
+
+### Configuration
+
+```yaml
+# ~/ai/config/outposts.yaml
+outposts:
+  - name: local
+    type: local
+    max_workers: 4
+
+  - name: gce-burst
+    type: ssh
+    host: 10.0.0.5
+    user: steve
+    town_path: /home/steve/ai
+    max_workers: 8
+
+  - name: cloudrun-burst
+    type: cloudrun
+    project: my-gcp-project
+    region: us-central1
+    service: gastown-worker
+    max_workers: 20
+    cost_cap_hourly: 5.00
+
+policy:
+  default_preference: [local, gce-burst, cloudrun-burst]
+```
+
+### Cloud Run Workers
+
+Cloud Run enables elastic, pay-per-use workers:
+- **Persistent HTTP/2 connections** solve cold start (zero-to-one) problem
+- **Cost**: ~$0.017 per 5-minute worker session
+- **Scaling**: 0→N automatically based on demand
+- **When idle**: Scales to zero, costs nothing
+
+Workers receive work via HTTP, clone code from git, run Claude, push results. No filesystem mail needed - HTTP is the control plane.
+
+### SSH/VM Outposts
+
+Full Gas Town clone on remote machines:
+- **Model**: Complete town installation via SSH
+- **Workers**: Remote tmux sessions
+- **Sync**: Git for code and beads
+- **Good for**: Long-running work, full autonomy if disconnected
+
+### Design Principles
+
+1. **Outpost abstraction** - Support multiple backends via unified interface
+2. **Local-first** - Remote outposts are for overflow/burst, not primary
+3. **Git as source of truth** - Code and beads sync everywhere
+4. **HTTP for Cloud Run** - Don't force mail onto stateless containers
+5. **Graceful degradation** - System works with any subset of outposts
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         MAYOR                                │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │               Outpost Manager                         │   │
+│  │  - Tracks all registered outposts                     │   │
+│  │  - Routes work to appropriate outpost                 │   │
+│  │  - Monitors worker status across outposts             │   │
+│  └──────────────────────────────────────────────────────┘   │
+│         │              │                │                    │
+│         ▼              ▼                ▼                    │
+│  ┌──────────┐   ┌──────────┐     ┌──────────────┐           │
+│  │  Local   │   │   SSH    │     │   CloudRun   │           │
+│  │ Outpost  │   │ Outpost  │     │   Outpost    │           │
+│  └────┬─────┘   └────┬─────┘     └──────┬───────┘           │
+└───────┼──────────────┼──────────────────┼───────────────────┘
+        │              │                  │
+        ▼              ▼                  ▼
+   ┌─────────┐   ┌─────────┐        ┌─────────────┐
+   │  tmux   │   │  SSH    │        │  HTTP/2     │
+   │ panes   │   │sessions │        │ connections │
+   └─────────┘   └─────────┘        └─────────────┘
+        │              │                  │
+        └──────────────┼──────────────────┘
+                       ▼
+              ┌─────────────────┐
+              │   Git Repos     │
+              │  (code + beads) │
+              └─────────────────┘
+```
+
+### CLI Commands
+
+```bash
+gt outpost list              # List configured outposts
+gt outpost status [name]     # Detailed status
+gt outpost add <type> ...    # Add new outpost
+gt outpost ping <name>       # Test connectivity
+```
+
+### Implementation Status
+
+Federation is tracked in **gt-9a2** (P3 epic). Key tasks:
+- `gt-9a2.1`: Outpost/Worker interfaces
+- `gt-9a2.2`: LocalOutpost (refactor current spawning)
+- `gt-9a2.5`: SSHOutpost
+- `gt-9a2.8`: CloudRunOutpost
 
 ## Implementation Status
 
