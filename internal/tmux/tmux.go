@@ -107,9 +107,15 @@ func (t *Tmux) ListSessions() ([]string, error) {
 	return strings.Split(out, "\n"), nil
 }
 
-// SendKeys sends keystrokes to a session.
+// SendKeys sends keystrokes to a session and presses Enter.
+// Always sends Enter as a separate command for reliability.
 func (t *Tmux) SendKeys(session, keys string) error {
-	_, err := t.run("send-keys", "-t", session, keys, "Enter")
+	// Send text using literal mode (-l) to handle special chars
+	if _, err := t.run("send-keys", "-t", session, "-l", keys); err != nil {
+		return err
+	}
+	// Send Enter separately - more reliable than appending to send-keys
+	_, err := t.run("send-keys", "-t", session, "Enter")
 	return err
 }
 
