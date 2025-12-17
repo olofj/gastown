@@ -94,6 +94,16 @@ func (m *Manager) loadRig(name string, entry config.RigEntry) (*Rig, error) {
 		}
 	}
 
+	// Scan for crew workers
+	crewDir := filepath.Join(rigPath, "crew")
+	if entries, err := os.ReadDir(crewDir); err == nil {
+		for _, e := range entries {
+			if e.IsDir() {
+				rig.Crew = append(rig.Crew, e.Name())
+			}
+		}
+	}
+
 	// Check for witness
 	witnessPath := filepath.Join(rigPath, "witness", "rig")
 	if _, err := os.Stat(witnessPath); err == nil {

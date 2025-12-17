@@ -22,6 +22,10 @@ type Rig struct {
 	// Polecats is the list of polecat names in this rig.
 	Polecats []string `json:"polecats,omitempty"`
 
+	// Crew is the list of crew worker names in this rig.
+	// Crew workers are user-managed persistent workspaces.
+	Crew []string `json:"crew,omitempty"`
+
 	// HasWitness indicates if the rig has a witness agent.
 	HasWitness bool `json:"has_witness"`
 
@@ -35,6 +39,7 @@ type Rig struct {
 // AgentDirs are the standard agent directories in a rig.
 var AgentDirs = []string{
 	"polecats",
+	"crew",
 	"refinery/rig",
 	"witness/rig",
 	"mayor/rig",
@@ -42,18 +47,20 @@ var AgentDirs = []string{
 
 // RigSummary provides a concise overview of a rig.
 type RigSummary struct {
-	Name        string `json:"name"`
+	Name         string `json:"name"`
 	PolecatCount int    `json:"polecat_count"`
-	HasWitness  bool   `json:"has_witness"`
-	HasRefinery bool   `json:"has_refinery"`
+	CrewCount    int    `json:"crew_count"`
+	HasWitness   bool   `json:"has_witness"`
+	HasRefinery  bool   `json:"has_refinery"`
 }
 
 // Summary returns a RigSummary for this rig.
 func (r *Rig) Summary() RigSummary {
 	return RigSummary{
-		Name:        r.Name,
+		Name:         r.Name,
 		PolecatCount: len(r.Polecats),
-		HasWitness:  r.HasWitness,
-		HasRefinery: r.HasRefinery,
+		CrewCount:    len(r.Crew),
+		HasWitness:   r.HasWitness,
+		HasRefinery:  r.HasRefinery,
 	}
 }
