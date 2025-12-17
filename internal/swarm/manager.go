@@ -278,8 +278,8 @@ func isValidTransition(from, to SwarmState) bool {
 
 // loadTasksFromBeads loads child issues from beads CLI.
 func (m *Manager) loadTasksFromBeads(epicID string) ([]SwarmTask, error) {
-	// Run: bd list --parent <epicID> --json
-	cmd := exec.Command("bd", "list", "--parent", epicID, "--json")
+	// Run: bd show <epicID> --json to get epic with children
+	cmd := exec.Command("bd", "show", epicID, "--json")
 	cmd.Dir = m.workDir
 
 	var stdout, stderr bytes.Buffer
@@ -287,24 +287,39 @@ func (m *Manager) loadTasksFromBeads(epicID string) ([]SwarmTask, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("bd list: %s", strings.TrimSpace(stderr.String()))
+		return nil, fmt.Errorf("bd show: %s", strings.TrimSpace(stderr.String()))
 	}
 
-	// Parse JSON output
+	// Parse JSON output - bd show returns an array
 	var issues []struct {
-		ID     string `json:"id"`
-		Title  string `json:"title"`
-		Status string `json:"status"`
+		ID         string `json:"id"`
+		Title      string `json:"title"`
+		Status     string `json:"status"`
+		Dependents []struct {
+			ID             string `json:"id"`
+			Title          string `json:"title"`
+			Status         string `json:"status"`
+			DependencyType string `json:"dependency_type"`
+		} `json:"dependents"`
 	}
 
 	if err := json.Unmarshal(stdout.Bytes(), &issues); err != nil {
 		return nil, fmt.Errorf("parsing bd output: %w", err)
 	}
 
+	if len(issues) == 0 {
+		return nil, fmt.Errorf("epic not found: %s", epicID)
+	}
+
+	// Extract parent-child dependents as tasks
 	var tasks []SwarmTask
-	for _, issue := range issues {
+	for _, dep := range issues[0].Dependents {
+		if dep.DependencyType != "parent-child" {
+			continue
+		}
+
 		state := TaskPending
-		switch issue.Status {
+		switch dep.Status {
 		case "in_progress":
 			state = TaskInProgress
 		case "closed":
@@ -312,8 +327,8 @@ func (m *Manager) loadTasksFromBeads(epicID string) ([]SwarmTask, error) {
 		}
 
 		tasks = append(tasks, SwarmTask{
-			IssueID: issue.ID,
-			Title:   issue.Title,
+			IssueID: dep.ID,
+			Title:   dep.Title,
 			State:   state,
 		})
 	}

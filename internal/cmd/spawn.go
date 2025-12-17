@@ -60,7 +60,7 @@ type BeadsIssue struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Priority    int    `json:"priority"`
-	Type        string `json:"type"`
+	Type        string `json:"issue_type"`
 	Status      string `json:"status"`
 }
 
@@ -256,12 +256,16 @@ func fetchBeadsIssue(rigPath, issueID string) (*BeadsIssue, error) {
 		return nil, err
 	}
 
-	var issue BeadsIssue
-	if err := json.Unmarshal(stdout.Bytes(), &issue); err != nil {
+	// bd show --json returns an array, take the first element
+	var issues []BeadsIssue
+	if err := json.Unmarshal(stdout.Bytes(), &issues); err != nil {
 		return nil, fmt.Errorf("parsing issue: %w", err)
 	}
+	if len(issues) == 0 {
+		return nil, fmt.Errorf("issue not found: %s", issueID)
+	}
 
-	return &issue, nil
+	return &issues[0], nil
 }
 
 // buildSpawnContext creates the initial context message for the polecat.

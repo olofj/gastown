@@ -4,6 +4,7 @@ package session
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -72,12 +73,13 @@ func (m *Manager) polecatDir(polecat string) string {
 
 // hasPolecat checks if the polecat exists in this rig.
 func (m *Manager) hasPolecat(polecat string) bool {
-	for _, p := range m.rig.Polecats {
-		if p == polecat {
-			return true
-		}
+	// Check filesystem directly to handle newly-created polecats
+	polecatPath := m.polecatDir(polecat)
+	info, err := os.Stat(polecatPath)
+	if err != nil {
+		return false
 	}
-	return false
+	return info.IsDir()
 }
 
 // Start creates and starts a new session for a polecat.
