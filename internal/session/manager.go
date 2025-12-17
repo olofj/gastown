@@ -117,7 +117,8 @@ func (m *Manager) Start(polecat string, opts StartOptions) error {
 	// Send initial command
 	command := opts.Command
 	if command == "" {
-		command = "claude"
+		// Polecats run with full permissions - Gas Town is for grownups
+		command = "claude --dangerously-skip-permissions"
 	}
 	if err := m.tmux.SendKeys(sessionID, command); err != nil {
 		return fmt.Errorf("sending command: %w", err)
