@@ -440,6 +440,9 @@ Polecats are the workers that do actual implementation:
 - **Self-verification**: Run decommission checklist before signaling done
 - **Beads access**: Create issues for discovered work, close completed work
 - **Clean handoff**: Ensure git state is clean for Witness verification
+- **Shutdown request**: Request own termination via `gt handoff` (bottom-up lifecycle)
+
+**Polecats are ephemeral**: They exist only while working. When done, they request shutdown and are deleted (worktree removed, branch deleted). There is no "idle pool" of polecats.
 
 ## Key Workflows
 
@@ -505,6 +508,46 @@ sequenceDiagram
         end
     end
 ```
+
+### Polecat Shutdown Protocol (Bottom-Up)
+
+Polecats initiate their own shutdown. This enables streaming - workers come and go continuously without artificial batch boundaries.
+
+```mermaid
+sequenceDiagram
+    participant P as 🐱 Polecat
+    participant R as 🔧 Refinery
+    participant W as 👁 Witness
+
+    P->>P: Complete work
+    P->>R: Submit to merge queue
+    P->>P: Run gt handoff
+
+    Note over P: Verify git clean,<br/>PR exists
+
+    P->>W: Mail: "Shutdown request"
+    P->>P: Set state = pending_shutdown
+
+    W->>W: Verify safe to kill
+    W->>P: Kill session
+    W->>W: git worktree remove
+    W->>W: git branch -d
+```
+
+**gt handoff command** (run by polecat):
+1. Verify git state clean (no uncommitted changes)
+2. Verify work handed off (PR created or in queue)
+3. Send mail to Witness requesting shutdown
+4. Wait for Witness to kill session (don't self-exit)
+
+**Witness shutdown handler**:
+1. Receive shutdown request
+2. Verify PR merged or queued, no data loss risk
+3. Kill session: `gt session stop <rig>/<polecat>`
+4. Remove worktree: `git worktree remove polecats/<name>`
+5. Delete branch: `git branch -d polecat/<name>`
+
+**Why bottom-up?** In streaming, there's no "swarm end" to trigger cleanup. Each worker manages its own lifecycle. The Witness is the lifecycle authority that executes the actual termination.
 
 ### Session Cycling (Mail-to-Self)
 
@@ -940,11 +983,12 @@ gt capture <polecat> "<cmd>"     # Run command in polecat session
 ### Session Management
 
 ```bash
-gt spawn --issue <id>  # Start polecat on issue
-gt kill <polecat>      # Kill polecat session
-gt wake <polecat>      # Mark polecat as active
-gt sleep <polecat>     # Mark polecat as inactive
+gt spawn --issue <id>  # Start polecat on issue (creates fresh worktree)
+gt handoff             # Polecat requests shutdown (run when done)
+gt session stop <p>    # Kill polecat session (Witness uses this)
 ```
+
+**Note**: `gt wake` and `gt sleep` are deprecated - polecats are ephemeral, not pooled.
 
 ### Landing & Merge Queue
 
