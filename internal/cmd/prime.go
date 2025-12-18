@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/gastown/internal/style"
+	"github.com/steveyegge/gastown/internal/templates"
 	"github.com/steveyegge/gastown/internal/workspace"
 )
 
@@ -19,6 +20,7 @@ const (
 	RoleWitness  Role = "witness"
 	RoleRefinery Role = "refinery"
 	RolePolecat  Role = "polecat"
+	RoleCrew     Role = "crew"
 	RoleUnknown  Role = "unknown"
 )
 
@@ -126,11 +128,63 @@ func detectRole(cwd, townRoot string) RoleContext {
 		return ctx
 	}
 
+	// Check for crew: <rig>/crew/<name>/
+	if len(parts) >= 3 && parts[1] == "crew" {
+		ctx.Role = RoleCrew
+		ctx.Polecat = parts[2] // Use Polecat field for crew member name
+		return ctx
+	}
+
 	// Default: could be rig root - treat as unknown
 	return ctx
 }
 
 func outputPrimeContext(ctx RoleContext) error {
+	// Try to use templates first
+	tmpl, err := templates.New()
+	if err != nil {
+		// Fall back to hardcoded output if templates fail
+		return outputPrimeContextFallback(ctx)
+	}
+
+	// Map role to template name
+	var roleName string
+	switch ctx.Role {
+	case RoleMayor:
+		roleName = "mayor"
+	case RoleWitness:
+		roleName = "witness"
+	case RoleRefinery:
+		roleName = "refinery"
+	case RolePolecat:
+		roleName = "polecat"
+	case RoleCrew:
+		roleName = "crew"
+	default:
+		// Unknown role - use fallback
+		return outputPrimeContextFallback(ctx)
+	}
+
+	// Build template data
+	data := templates.RoleData{
+		Role:     roleName,
+		RigName:  ctx.Rig,
+		TownRoot: ctx.TownRoot,
+		WorkDir:  ctx.WorkDir,
+		Polecat:  ctx.Polecat,
+	}
+
+	// Render and output
+	output, err := tmpl.RenderRole(roleName, data)
+	if err != nil {
+		return fmt.Errorf("rendering template: %w", err)
+	}
+
+	fmt.Print(output)
+	return nil
+}
+
+func outputPrimeContextFallback(ctx RoleContext) error {
 	switch ctx.Role {
 	case RoleMayor:
 		outputMayorContext(ctx)
@@ -140,6 +194,8 @@ func outputPrimeContext(ctx RoleContext) error {
 		outputRefineryContext(ctx)
 	case RolePolecat:
 		outputPolecatContext(ctx)
+	case RoleCrew:
+		outputCrewContext(ctx)
 	default:
 		outputUnknownContext(ctx)
 	}
@@ -214,6 +270,25 @@ func outputPolecatContext(ctx RoleContext) {
 	fmt.Println("- `gt done` - Signal work ready for merge")
 	fmt.Println()
 	fmt.Printf("Polecat: %s | Rig: %s\n",
+		style.Dim.Render(ctx.Polecat), style.Dim.Render(ctx.Rig))
+}
+
+func outputCrewContext(ctx RoleContext) {
+	fmt.Printf("%s\n\n", style.Bold.Render("# Crew Worker Context"))
+	fmt.Printf("You are crew worker **%s** in rig: %s\n\n",
+		style.Bold.Render(ctx.Polecat), style.Bold.Render(ctx.Rig))
+	fmt.Println("## About Crew Workers")
+	fmt.Println("- Persistent workspace (not auto-garbage-collected)")
+	fmt.Println("- User-managed (not Witness-monitored)")
+	fmt.Println("- Long-lived identity across sessions")
+	fmt.Println()
+	fmt.Println("## Key Commands")
+	fmt.Println("- `gt mail inbox` - Check your inbox")
+	fmt.Println("- `bd ready` - Available issues")
+	fmt.Println("- `bd show <issue>` - View issue details")
+	fmt.Println("- `bd close <issue>` - Mark issue complete")
+	fmt.Println()
+	fmt.Printf("Crew: %s | Rig: %s\n",
 		style.Dim.Render(ctx.Polecat), style.Dim.Render(ctx.Rig))
 }
 
