@@ -29,8 +29,9 @@ var (
 )
 
 var spawnCmd = &cobra.Command{
-	Use:   "spawn <rig/polecat> | <rig>",
-	Short: "Spawn a polecat with work assignment",
+	Use:     "spawn <rig/polecat> | <rig>",
+	Aliases: []string{"sp"},
+	Short:   "Spawn a polecat with work assignment",
 	Long: `Spawn a polecat with a work assignment.
 
 Assigns an issue or task to a polecat and starts a session. If no polecat

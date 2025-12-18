@@ -26,8 +26,9 @@ var (
 )
 
 var polecatCmd = &cobra.Command{
-	Use:   "polecat",
-	Short: "Manage polecats in rigs",
+	Use:     "polecat",
+	Aliases: []string{"cat"},
+	Short:   "Manage polecats in rigs",
 	Long: `Manage polecat lifecycle in rigs.
 
 Polecats are worker agents that operate in their own git clones.

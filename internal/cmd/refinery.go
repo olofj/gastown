@@ -23,8 +23,9 @@ var (
 )
 
 var refineryCmd = &cobra.Command{
-	Use:   "refinery",
-	Short: "Manage the merge queue processor",
+	Use:     "refinery",
+	Aliases: []string{"ref"},
+	Short:   "Manage the merge queue processor",
 	Long: `Manage the Refinery merge queue processor for a rig.
 
 The Refinery processes merge requests from polecats, merging their work

@@ -17,8 +17,9 @@ import (
 var statusJSON bool
 
 var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "Show overall town status",
+	Use:     "status",
+	Aliases: []string{"stat"},
+	Short:   "Show overall town status",
 	Long: `Display the current status of the Gas Town workspace.
 
 Shows town name, registered rigs, active polecats, and witness status.`,

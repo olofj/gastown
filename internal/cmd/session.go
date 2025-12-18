@@ -29,8 +29,9 @@ var (
 )
 
 var sessionCmd = &cobra.Command{
-	Use:   "session",
-	Short: "Manage polecat sessions",
+	Use:     "session",
+	Aliases: []string{"sess"},
+	Short:   "Manage polecat sessions",
 	Long: `Manage tmux sessions for polecats.
 
 Sessions are tmux sessions running Claude for each polecat.
