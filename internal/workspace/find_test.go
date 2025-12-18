@@ -18,11 +18,11 @@ func realPath(t *testing.T, path string) string {
 func TestFindWithPrimaryMarker(t *testing.T) {
 	// Create temp workspace structure
 	root := realPath(t, t.TempDir())
-	configDir := filepath.Join(root, "config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	mayorDir := filepath.Join(root, "mayor")
+	if err := os.MkdirAll(mayorDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	townFile := filepath.Join(configDir, "town.json")
+	townFile := filepath.Join(mayorDir, "town.json")
 	if err := os.WriteFile(townFile, []byte(`{"type":"town"}`), 0644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
@@ -92,11 +92,11 @@ func TestFindOrErrorNotFound(t *testing.T) {
 func TestFindAtRoot(t *testing.T) {
 	// Create workspace at temp root level
 	root := realPath(t, t.TempDir())
-	configDir := filepath.Join(root, "config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	mayorDir := filepath.Join(root, "mayor")
+	if err := os.MkdirAll(mayorDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	townFile := filepath.Join(configDir, "town.json")
+	townFile := filepath.Join(mayorDir, "town.json")
 	if err := os.WriteFile(townFile, []byte(`{"type":"town"}`), 0644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
@@ -123,12 +123,12 @@ func TestIsWorkspace(t *testing.T) {
 		t.Error("expected not a workspace initially")
 	}
 
-	// Add primary marker
-	configDir := filepath.Join(root, "config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	// Add primary marker (mayor/town.json)
+	mayorDir := filepath.Join(root, "mayor")
+	if err := os.MkdirAll(mayorDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	townFile := filepath.Join(configDir, "town.json")
+	townFile := filepath.Join(mayorDir, "town.json")
 	if err := os.WriteFile(townFile, []byte(`{"type":"town"}`), 0644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
@@ -146,11 +146,11 @@ func TestIsWorkspace(t *testing.T) {
 func TestFindFollowsSymlinks(t *testing.T) {
 	// Create workspace
 	root := realPath(t, t.TempDir())
-	configDir := filepath.Join(root, "config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	mayorDir := filepath.Join(root, "mayor")
+	if err := os.MkdirAll(mayorDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	townFile := filepath.Join(configDir, "town.json")
+	townFile := filepath.Join(mayorDir, "town.json")
 	if err := os.WriteFile(townFile, []byte(`{"type":"town"}`), 0644); err != nil {
 		t.Fatalf("write: %v", err)
 	}

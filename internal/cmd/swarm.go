@@ -189,7 +189,7 @@ func getSwarmRig(rigName string) (*rig.Rig, string, error) {
 		return nil, "", fmt.Errorf("not in a Gas Town workspace: %w", err)
 	}
 
-	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
 	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
 	if err != nil {
 		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}
@@ -212,7 +212,7 @@ func getAllRigs() ([]*rig.Rig, string, error) {
 		return nil, "", fmt.Errorf("not in a Gas Town workspace: %w", err)
 	}
 
-	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
 	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
 	if err != nil {
 		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}

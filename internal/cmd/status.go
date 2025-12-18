@@ -63,7 +63,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	// Load town config
-	townConfigPath := filepath.Join(townRoot, "config", "town.json")
+	townConfigPath := filepath.Join(townRoot, "mayor", "town.json")
 	townConfig, err := config.LoadTownConfig(townConfigPath)
 	if err != nil {
 		// Try to continue without config
@@ -71,7 +71,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	// Load rigs config
-	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
 	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
 	if err != nil {
 		// Empty config if file doesn't exist

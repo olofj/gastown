@@ -26,9 +26,9 @@ var installCmd = &cobra.Command{
 	Long: `Create a new Gas Town harness at the specified path.
 
 A harness is the top-level directory where Gas Town is installed. It contains:
-  - config/town.json     Town configuration
-  - config/rigs.json     Registry of managed rigs
-  - mayor/               Mayor agent home
+  - CLAUDE.md            Mayor role context (Mayor runs from harness root)
+  - mayor/               Mayor config, state, and mail
+  - rigs/                Managed rig clones (created by 'gt rig add')
   - .beads/redirect      (optional) Default beads location
 
 If path is omitted, uses the current directory.
@@ -94,43 +94,43 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("creating directory: %w", err)
 	}
 
-	// Create config directory
-	configDir := filepath.Join(absPath, "config")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return fmt.Errorf("creating config directory: %w", err)
+	// Create mayor directory (holds config, state, and mail)
+	mayorDir := filepath.Join(absPath, "mayor")
+	if err := os.MkdirAll(mayorDir, 0755); err != nil {
+		return fmt.Errorf("creating mayor directory: %w", err)
 	}
-	fmt.Printf("   ✓ Created config/\n")
+	fmt.Printf("   ✓ Created mayor/\n")
 
-	// Create town.json
+	// Create town.json in mayor/
 	townConfig := &config.TownConfig{
 		Type:      "town",
 		Version:   config.CurrentTownVersion,
 		Name:      townName,
 		CreatedAt: time.Now(),
 	}
-	townPath := filepath.Join(configDir, "town.json")
+	townPath := filepath.Join(mayorDir, "town.json")
 	if err := config.SaveTownConfig(townPath, townConfig); err != nil {
 		return fmt.Errorf("writing town.json: %w", err)
 	}
-	fmt.Printf("   ✓ Created config/town.json\n")
+	fmt.Printf("   ✓ Created mayor/town.json\n")
 
-	// Create rigs.json
+	// Create rigs.json in mayor/
 	rigsConfig := &config.RigsConfig{
 		Version: config.CurrentRigsVersion,
 		Rigs:    make(map[string]config.RigEntry),
 	}
-	rigsPath := filepath.Join(configDir, "rigs.json")
+	rigsPath := filepath.Join(mayorDir, "rigs.json")
 	if err := config.SaveRigsConfig(rigsPath, rigsConfig); err != nil {
 		return fmt.Errorf("writing rigs.json: %w", err)
 	}
-	fmt.Printf("   ✓ Created config/rigs.json\n")
+	fmt.Printf("   ✓ Created mayor/rigs.json\n")
 
-	// Create mayor directory
-	mayorDir := filepath.Join(absPath, "mayor")
-	if err := os.MkdirAll(mayorDir, 0755); err != nil {
-		return fmt.Errorf("creating mayor directory: %w", err)
+	// Create rigs directory (for managed rig clones)
+	rigsDir := filepath.Join(absPath, "rigs")
+	if err := os.MkdirAll(rigsDir, 0755); err != nil {
+		return fmt.Errorf("creating rigs directory: %w", err)
 	}
-	fmt.Printf("   ✓ Created mayor/\n")
+	fmt.Printf("   ✓ Created rigs/\n")
 
 	// Create mayor mail directory
 	mailDir := filepath.Join(mayorDir, "mail")
@@ -156,22 +156,11 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Printf("   ✓ Created mayor/state.json\n")
 
-	// Create mayor config.json (this is what distinguishes town-level mayor)
-	mayorConfig := map[string]interface{}{
-		"type":    "mayor",
-		"version": 1,
-	}
-	mayorConfigPath := filepath.Join(mayorDir, "config.json")
-	if err := writeJSON(mayorConfigPath, mayorConfig); err != nil {
-		return fmt.Errorf("writing mayor config: %w", err)
-	}
-	fmt.Printf("   ✓ Created mayor/config.json\n")
-
-	// Create Mayor CLAUDE.md from template
-	if err := createMayorCLAUDEmd(mayorDir, absPath); err != nil {
+	// Create Mayor CLAUDE.md at harness root (Mayor runs from there)
+	if err := createMayorCLAUDEmd(absPath, absPath); err != nil {
 		fmt.Printf("   %s Could not create CLAUDE.md: %v\n", style.Dim.Render("⚠"), err)
 	} else {
-		fmt.Printf("   ✓ Created mayor/CLAUDE.md\n")
+		fmt.Printf("   ✓ Created CLAUDE.md\n")
 	}
 
 	// Create .beads directory with redirect (optional)
@@ -201,7 +190,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func createMayorCLAUDEmd(mayorDir, townRoot string) error {
+func createMayorCLAUDEmd(harnessRoot, townRoot string) error {
 	tmpl, err := templates.New()
 	if err != nil {
 		return err
@@ -210,7 +199,7 @@ func createMayorCLAUDEmd(mayorDir, townRoot string) error {
 	data := templates.RoleData{
 		Role:     "mayor",
 		TownRoot: townRoot,
-		WorkDir:  mayorDir,
+		WorkDir:  harnessRoot,
 	}
 
 	content, err := tmpl.RenderRole("mayor", data)
@@ -218,7 +207,7 @@ func createMayorCLAUDEmd(mayorDir, townRoot string) error {
 		return err
 	}
 
-	claudePath := filepath.Join(mayorDir, "CLAUDE.md")
+	claudePath := filepath.Join(harnessRoot, "CLAUDE.md")
 	return os.WriteFile(claudePath, []byte(content), 0644)
 }
 

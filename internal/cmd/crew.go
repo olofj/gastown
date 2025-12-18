@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -83,7 +84,7 @@ Examples:
 }
 
 var crewAtCmd = &cobra.Command{
-	Use:     "at <name>",
+	Use:     "at [name]",
 	Aliases: []string{"attach"},
 	Short:   "Attach to crew workspace session",
 	Long: `Start or attach to a tmux session for a crew workspace.
@@ -91,10 +92,16 @@ var crewAtCmd = &cobra.Command{
 Creates a new tmux session if none exists, or attaches to existing.
 Use --no-tmux to just print the directory path instead.
 
+Role Discovery:
+  If no name is provided, attempts to detect the crew workspace from the
+  current directory. If you're in <rig>/crew/<name>/, it will attach to
+  that workspace automatically.
+
 Examples:
   gt crew at dave                 # Attach to dave's session
+  gt crew at                      # Auto-detect from cwd
   gt crew at dave --no-tmux       # Just print path`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: runCrewAt,
 }
 
@@ -184,7 +191,7 @@ func runCrewAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Load rigs config
-	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
 	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
 	if err != nil {
 		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}
@@ -274,7 +281,7 @@ func getCrewManager(rigName string) (*crew.Manager, *rig.Rig, error) {
 	}
 
 	// Load rigs config
-	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
 	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
 	if err != nil {
 		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}
@@ -386,7 +393,23 @@ func runCrewList(cmd *cobra.Command, args []string) error {
 }
 
 func runCrewAt(cmd *cobra.Command, args []string) error {
-	name := args[0]
+	var name string
+
+	// Determine crew name: from arg, or auto-detect from cwd
+	if len(args) > 0 {
+		name = args[0]
+	} else {
+		// Try to detect from current directory
+		detected, err := detectCrewFromCwd()
+		if err != nil {
+			return fmt.Errorf("could not detect crew workspace from current directory: %w\n\nUsage: gt crew at <name>", err)
+		}
+		name = detected.crewName
+		if crewRig == "" {
+			crewRig = detected.rigName
+		}
+		fmt.Printf("Detected crew workspace: %s/%s\n", detected.rigName, name)
+	}
 
 	crewMgr, r, err := getCrewManager(crewRig)
 	if err != nil {
@@ -426,17 +449,89 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 		t.SetEnvironment(sessionID, "GT_RIG", r.Name)
 		t.SetEnvironment(sessionID, "GT_CREW", name)
 
-		// Start claude
-		if err := t.SendKeys(sessionID, "claude"); err != nil {
+		// Start claude with skip permissions (crew workers are trusted like Mayor)
+		if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
 			return fmt.Errorf("starting claude: %w", err)
+		}
+
+		// Wait a moment for Claude to initialize, then prime it
+		// We send gt prime after a short delay to ensure Claude is ready
+		if err := t.SendKeysDelayed(sessionID, "gt prime", 2000); err != nil {
+			// Non-fatal: Claude started but priming failed
+			fmt.Printf("Warning: Could not send prime command: %v\n", err)
 		}
 
 		fmt.Printf("%s Created session for %s/%s\n",
 			style.Bold.Render("✓"), r.Name, name)
 	}
 
-	// Attach to session
-	return t.AttachSession(sessionID)
+	// Attach to session using exec to properly forward TTY
+	return attachToTmuxSession(sessionID)
+}
+
+// attachToTmuxSession attaches to a tmux session with proper TTY forwarding.
+func attachToTmuxSession(sessionID string) error {
+	tmuxPath, err := exec.LookPath("tmux")
+	if err != nil {
+		return fmt.Errorf("tmux not found: %w", err)
+	}
+
+	cmd := exec.Command(tmuxPath, "attach-session", "-t", sessionID)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// crewDetection holds the result of detecting crew workspace from cwd.
+type crewDetection struct {
+	rigName  string
+	crewName string
+}
+
+// detectCrewFromCwd attempts to detect the crew workspace from the current directory.
+// It looks for the pattern <town>/<rig>/crew/<name>/ in the current path.
+func detectCrewFromCwd() (*crewDetection, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("getting cwd: %w", err)
+	}
+
+	// Find town root
+	townRoot, err := workspace.FindFromCwd()
+	if err != nil {
+		return nil, fmt.Errorf("not in Gas Town workspace: %w", err)
+	}
+	if townRoot == "" {
+		return nil, fmt.Errorf("not in Gas Town workspace")
+	}
+
+	// Get relative path from town root
+	relPath, err := filepath.Rel(townRoot, cwd)
+	if err != nil {
+		return nil, fmt.Errorf("getting relative path: %w", err)
+	}
+
+	// Normalize and split path
+	relPath = filepath.ToSlash(relPath)
+	parts := strings.Split(relPath, "/")
+
+	// Look for pattern: <rig>/crew/<name>/...
+	// Minimum: rig, crew, name = 3 parts
+	if len(parts) < 3 {
+		return nil, fmt.Errorf("not in a crew workspace (path too short)")
+	}
+
+	rigName := parts[0]
+	if parts[1] != "crew" {
+		return nil, fmt.Errorf("not in a crew workspace (not in crew/ directory)")
+	}
+	crewName := parts[2]
+
+	return &crewDetection{
+		rigName:  rigName,
+		crewName: crewName,
+	}, nil
 }
 
 func runCrewRemove(cmd *cobra.Command, args []string) error {

@@ -102,7 +102,7 @@ func getRefineryManager(rigName string) (*refinery.Manager, *rig.Rig, error) {
 		return nil, nil, fmt.Errorf("not in a Gas Town workspace: %w", err)
 	}
 
-	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
 	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
 	if err != nil {
 		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}

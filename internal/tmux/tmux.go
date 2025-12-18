@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // Common errors
@@ -123,6 +124,13 @@ func (t *Tmux) SendKeys(session, keys string) error {
 func (t *Tmux) SendKeysRaw(session, keys string) error {
 	_, err := t.run("send-keys", "-t", session, keys)
 	return err
+}
+
+// SendKeysDelayed sends keystrokes after a delay (in milliseconds).
+// Useful for waiting for a process to be ready before sending input.
+func (t *Tmux) SendKeysDelayed(session, keys string, delayMs int) error {
+	time.Sleep(time.Duration(delayMs) * time.Millisecond)
+	return t.SendKeys(session, keys)
 }
 
 // CapturePane captures the visible content of a pane.

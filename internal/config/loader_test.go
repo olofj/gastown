@@ -8,7 +8,7 @@ import (
 
 func TestTownConfigRoundTrip(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "config", "town.json")
+	path := filepath.Join(dir, "mayor", "town.json")
 
 	original := &TownConfig{
 		Type:      "town",
@@ -36,7 +36,7 @@ func TestTownConfigRoundTrip(t *testing.T) {
 
 func TestRigsConfigRoundTrip(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "config", "rigs.json")
+	path := filepath.Join(dir, "mayor", "rigs.json")
 
 	original := &RigsConfig{
 		Version: 1,

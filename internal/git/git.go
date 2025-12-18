@@ -246,3 +246,82 @@ func (g *Git) IsAncestor(ancestor, descendant string) (bool, error) {
 	}
 	return true, nil
 }
+
+// WorktreeAdd creates a new worktree at the given path with a new branch.
+// The new branch is created from the current HEAD.
+func (g *Git) WorktreeAdd(path, branch string) error {
+	_, err := g.run("worktree", "add", "-b", branch, path)
+	return err
+}
+
+// WorktreeAddDetached creates a new worktree at the given path with a detached HEAD.
+func (g *Git) WorktreeAddDetached(path, ref string) error {
+	_, err := g.run("worktree", "add", "--detach", path, ref)
+	return err
+}
+
+// WorktreeAddExisting creates a new worktree at the given path for an existing branch.
+func (g *Git) WorktreeAddExisting(path, branch string) error {
+	_, err := g.run("worktree", "add", path, branch)
+	return err
+}
+
+// WorktreeRemove removes a worktree.
+func (g *Git) WorktreeRemove(path string, force bool) error {
+	args := []string{"worktree", "remove", path}
+	if force {
+		args = append(args, "--force")
+	}
+	_, err := g.run(args...)
+	return err
+}
+
+// WorktreePrune removes worktree entries for deleted paths.
+func (g *Git) WorktreePrune() error {
+	_, err := g.run("worktree", "prune")
+	return err
+}
+
+// Worktree represents a git worktree.
+type Worktree struct {
+	Path   string
+	Branch string
+	Commit string
+}
+
+// WorktreeList returns all worktrees for this repository.
+func (g *Git) WorktreeList() ([]Worktree, error) {
+	out, err := g.run("worktree", "list", "--porcelain")
+	if err != nil {
+		return nil, err
+	}
+
+	var worktrees []Worktree
+	var current Worktree
+
+	for _, line := range strings.Split(out, "\n") {
+		if line == "" {
+			if current.Path != "" {
+				worktrees = append(worktrees, current)
+				current = Worktree{}
+			}
+			continue
+		}
+
+		switch {
+		case strings.HasPrefix(line, "worktree "):
+			current.Path = strings.TrimPrefix(line, "worktree ")
+		case strings.HasPrefix(line, "HEAD "):
+			current.Commit = strings.TrimPrefix(line, "HEAD ")
+		case strings.HasPrefix(line, "branch "):
+			current.Branch = strings.TrimPrefix(line, "branch refs/heads/")
+		}
+	}
+
+	// Don't forget the last one
+	if current.Path != "" {
+		worktrees = append(worktrees, current)
+	}
+
+	return worktrees, nil
+}

@@ -14,11 +14,8 @@ var ErrNotFound = errors.New("not in a Gas Town workspace")
 // Markers used to detect a Gas Town workspace.
 const (
 	// PrimaryMarker is the main config file that identifies a workspace.
-	PrimaryMarker = "config/town.json"
-
-	// AlternativePrimaryMarker is the town-level mayor config file.
-	// This distinguishes a town mayor from a rig-level mayor clone.
-	AlternativePrimaryMarker = "mayor/config.json"
+	// The town.json file lives in mayor/ along with other mayor config.
+	PrimaryMarker = "mayor/town.json"
 
 	// SecondaryMarker is an alternative indicator at the town level.
 	// Note: This can match rig-level mayors too, so we continue searching
@@ -27,8 +24,7 @@ const (
 )
 
 // Find locates the town root by walking up from the given directory.
-// It looks for config/town.json or mayor/config.json (primary markers)
-// or mayor/ directory (secondary marker).
+// It looks for mayor/town.json (primary marker) or mayor/ directory (secondary marker).
 //
 // To avoid matching rig-level mayor directories, we continue searching
 // upward after finding a secondary marker, preferring primary matches.
@@ -50,16 +46,9 @@ func Find(startDir string) (string, error) {
 	// Walk up the directory tree
 	current := absDir
 	for {
-		// Check for primary marker (config/town.json)
+		// Check for primary marker (mayor/town.json)
 		primaryPath := filepath.Join(current, PrimaryMarker)
 		if _, err := os.Stat(primaryPath); err == nil {
-			return current, nil
-		}
-
-		// Check for alternative primary marker (mayor/config.json)
-		// This distinguishes a town-level mayor from a rig-level mayor clone
-		altPrimaryPath := filepath.Join(current, AlternativePrimaryMarker)
-		if _, err := os.Stat(altPrimaryPath); err == nil {
 			return current, nil
 		}
 
@@ -114,27 +103,21 @@ func FindFromCwdOrError() (string, error) {
 }
 
 // IsWorkspace checks if the given directory is a Gas Town workspace root.
-// A directory is a workspace if it has primary markers (config/town.json
-// or mayor/config.json) or a secondary marker (mayor/ directory).
+// A directory is a workspace if it has a primary marker (mayor/town.json)
+// or a secondary marker (mayor/ directory).
 func IsWorkspace(dir string) (bool, error) {
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
 		return false, fmt.Errorf("resolving path: %w", err)
 	}
 
-	// Check for primary marker
+	// Check for primary marker (mayor/town.json)
 	primaryPath := filepath.Join(absDir, PrimaryMarker)
 	if _, err := os.Stat(primaryPath); err == nil {
 		return true, nil
 	}
 
-	// Check for alternative primary marker
-	altPrimaryPath := filepath.Join(absDir, AlternativePrimaryMarker)
-	if _, err := os.Stat(altPrimaryPath); err == nil {
-		return true, nil
-	}
-
-	// Check for secondary marker
+	// Check for secondary marker (mayor/ directory)
 	secondaryPath := filepath.Join(absDir, SecondaryMarker)
 	info, err := os.Stat(secondaryPath)
 	if err == nil && info.IsDir() {

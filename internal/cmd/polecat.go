@@ -145,7 +145,7 @@ func getPolecatManager(rigName string) (*polecat.Manager, *rig.Rig, error) {
 	}
 
 	// Load rigs config
-	rigsConfigPath := filepath.Join(townRoot, "config", "rigs.json")
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
 	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
 	if err != nil {
 		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}
@@ -303,8 +303,8 @@ func runPolecatRemove(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Removing polecat %s/%s...\n", rigName, polecatName)
 
-	if err := mgr.Remove(polecatName); err != nil {
-		if errors.Is(err, polecat.ErrHasChanges) && !polecatForce {
+	if err := mgr.Remove(polecatName, polecatForce); err != nil {
+		if errors.Is(err, polecat.ErrHasChanges) {
 			return fmt.Errorf("polecat has uncommitted changes. Use --force to remove anyway")
 		}
 		return fmt.Errorf("removing polecat: %w", err)

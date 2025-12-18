@@ -3,7 +3,7 @@ package config
 
 import "time"
 
-// TownConfig represents the main town configuration (config/town.json).
+// TownConfig represents the main town configuration (mayor/town.json).
 type TownConfig struct {
 	Type      string    `json:"type"`       // "town"
 	Version   int       `json:"version"`    // schema version
@@ -11,7 +11,7 @@ type TownConfig struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// RigsConfig represents the rigs registry (config/rigs.json).
+// RigsConfig represents the rigs registry (mayor/rigs.json).
 type RigsConfig struct {
 	Version int                 `json:"version"`
 	Rigs    map[string]RigEntry `json:"rigs"`

@@ -49,13 +49,15 @@ func (m *Manager) exists(name string) bool {
 	return err == nil
 }
 
-// Add creates a new polecat with a clone of the rig.
+// Add creates a new polecat as a git worktree from the refinery clone.
+// This is much faster than a full clone and shares objects with the refinery.
 func (m *Manager) Add(name string) (*Polecat, error) {
 	if m.exists(name) {
 		return nil, ErrPolecatExists
 	}
 
 	polecatPath := m.polecatDir(name)
+	branchName := fmt.Sprintf("polecat/%s", name)
 
 	// Create polecats directory if needed
 	polecatsDir := filepath.Join(m.rig.Path, "polecats")
@@ -63,21 +65,19 @@ func (m *Manager) Add(name string) (*Polecat, error) {
 		return nil, fmt.Errorf("creating polecats dir: %w", err)
 	}
 
-	// Clone the rig repo
-	if err := m.git.Clone(m.rig.GitURL, polecatPath); err != nil {
-		return nil, fmt.Errorf("cloning rig: %w", err)
+	// Use refinery clone as the base for worktrees
+	refineryPath := filepath.Join(m.rig.Path, "refinery", "rig")
+	refineryGit := git.NewGit(refineryPath)
+
+	// Verify refinery clone exists
+	if _, err := os.Stat(refineryPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("refinery clone not found at %s (run 'gt rig add' to set up rig structure)", refineryPath)
 	}
 
-	// Create working branch
-	polecatGit := git.NewGit(polecatPath)
-	branchName := fmt.Sprintf("polecat/%s", name)
-	if err := polecatGit.CreateBranch(branchName); err != nil {
-		os.RemoveAll(polecatPath)
-		return nil, fmt.Errorf("creating branch: %w", err)
-	}
-	if err := polecatGit.Checkout(branchName); err != nil {
-		os.RemoveAll(polecatPath)
-		return nil, fmt.Errorf("checking out branch: %w", err)
+	// Create worktree with new branch
+	// git worktree add -b polecat/<name> <path>
+	if err := refineryGit.WorktreeAdd(polecatPath, branchName); err != nil {
+		return nil, fmt.Errorf("creating worktree: %w", err)
 	}
 
 	// Create polecat state
@@ -94,15 +94,17 @@ func (m *Manager) Add(name string) (*Polecat, error) {
 
 	// Save state
 	if err := m.saveState(polecat); err != nil {
-		os.RemoveAll(polecatPath)
+		// Clean up worktree on failure
+		refineryGit.WorktreeRemove(polecatPath, true)
 		return nil, fmt.Errorf("saving state: %w", err)
 	}
 
 	return polecat, nil
 }
 
-// Remove deletes a polecat.
-func (m *Manager) Remove(name string) error {
+// Remove deletes a polecat worktree.
+// If force is true, removes even with uncommitted changes.
+func (m *Manager) Remove(name string, force bool) error {
 	if !m.exists(name) {
 		return ErrPolecatNotFound
 	}
@@ -110,16 +112,29 @@ func (m *Manager) Remove(name string) error {
 	polecatPath := m.polecatDir(name)
 	polecatGit := git.NewGit(polecatPath)
 
-	// Check for uncommitted changes
-	hasChanges, err := polecatGit.HasUncommittedChanges()
-	if err == nil && hasChanges {
-		return ErrHasChanges
+	// Check for uncommitted changes unless force
+	if !force {
+		hasChanges, err := polecatGit.HasUncommittedChanges()
+		if err == nil && hasChanges {
+			return ErrHasChanges
+		}
 	}
 
-	// Remove directory
-	if err := os.RemoveAll(polecatPath); err != nil {
-		return fmt.Errorf("removing polecat dir: %w", err)
+	// Use refinery to remove the worktree properly
+	refineryPath := filepath.Join(m.rig.Path, "refinery", "rig")
+	refineryGit := git.NewGit(refineryPath)
+
+	// Try to remove as a worktree first (use force flag for worktree removal too)
+	if err := refineryGit.WorktreeRemove(polecatPath, force); err != nil {
+		// Fall back to direct removal if worktree removal fails
+		// (e.g., if this is an old-style clone, not a worktree)
+		if removeErr := os.RemoveAll(polecatPath); removeErr != nil {
+			return fmt.Errorf("removing polecat dir: %w", removeErr)
+		}
 	}
+
+	// Prune any stale worktree entries
+	refineryGit.WorktreePrune()
 
 	return nil
 }

@@ -86,11 +86,22 @@ Gas Town has four AI agent roles:
 
 ### Mail
 
-Agents communicate via **mail** - JSONL-based inboxes for asynchronous messaging. Each agent has an inbox at `mail/inbox.jsonl`. Mail enables:
+Agents communicate via **mail** - messages stored as beads issues with `type=message`. Mail enables:
 - Work assignment (Mayor → Refinery → Polecat)
 - Status reporting (Polecat → Witness → Mayor)
 - Session handoff (Agent → Self for context cycling)
 - Escalation (Witness → Mayor for stuck workers)
+
+**Two-tier mail architecture:**
+- **Town beads** (prefix: `gm-`): Mayor inbox, cross-rig coordination, handoffs
+- **Rig beads** (prefix: varies): Rig-local agent communication
+
+Mail commands use `bd mail` under the hood:
+```bash
+gt mail send mayor/ -s "Subject" -m "Body"   # Uses bd mail send
+gt mail inbox                                  # Uses bd mail inbox
+gt mail read gm-abc                           # Uses bd mail read
+```
 
 ```mermaid
 flowchart LR
@@ -153,19 +164,20 @@ sync-branch: beads-sync    # Separate branch for beads commits
 ```
 ~/gt/                              # Town root (Gas Town harness)
 ├── CLAUDE.md                      # Mayor role prompting (at town root)
-├── .beads/                        # Town-level beads (optional)
+├── .beads/                        # Town-level beads (prefix: gm-)
+│   ├── beads.db                   # Mayor mail, coordination, handoffs
+│   └── config.yaml
 │
 ├── mayor/                         # Mayor's HOME at town level
 │   ├── town.json                  # {"type": "town", "name": "..."}
 │   ├── rigs.json                  # Registry of managed rigs
-│   ├── mail/inbox.jsonl           # Mayor's inbox
-│   └── state.json                 # Mayor state
-│
-├── rigs/                          # Empty by default, for future use
+│   └── state.json                 # Mayor state (NO mail/ directory)
 │
 ├── gastown/                       # A rig (project container)
 └── wyvern/                        # Another rig
 ```
+
+**Note**: Mayor's mail is now in town beads (`gm-*` issues), not JSONL files.
 
 ### Rig Level
 
@@ -174,27 +186,29 @@ Created by `gt rig add <name> <git-url>`:
 ```
 gastown/                           # Rig = container (NOT a git clone)
 ├── config.json                    # Rig configuration (git_url, beads prefix)
-├── .beads/                        # Rig-level issue tracking
-│   └── config.yaml                # Beads config (prefix, sync settings)
+├── .beads/ → refinery/rig/.beads  # Symlink to canonical beads in refinery
 │
 ├── refinery/                      # Refinery agent
 │   ├── rig/                       # Authoritative "main" clone
-│   └── state.json
-│
-├── mayor/                         # Mayor's presence in this rig
-│   ├── rig/                       # Mayor's rig-specific clone
+│   │   └── .beads/                # Canonical rig beads (prefix: gt-, etc.)
 │   └── state.json
 │
 ├── witness/                       # Witness agent (per-rig pit boss)
 │   └── state.json                 # No clone needed (monitors polecats)
 │
 ├── crew/                          # Overseer's personal workspaces
-│   └── main/                      # Default workspace (full git clone)
+│   └── <name>/                    # Workspace (full git clone)
 │
-└── polecats/                      # Worker directories (initially empty)
-    ├── Nux/                       # Full git clone (created by gt spawn)
-    └── Toast/                     # Full git clone (created by gt spawn)
+└── polecats/                      # Worker directories (git worktrees)
+    ├── Nux/                       # Worktree from refinery (faster than clone)
+    └── Toast/                     # Worktree from refinery
 ```
+
+**Beads architecture:**
+- Refinery's clone holds the canonical `.beads/` for the rig
+- Rig root symlinks `.beads/` → `refinery/rig/.beads`
+- All agents (crew, polecats) inherit beads via parent directory lookup
+- Polecats are git worktrees, not full clones (much faster)
 
 **Key points:**
 - The rig root has no `.git/` - it's not a repository
@@ -246,28 +260,23 @@ For reference without mermaid rendering:
 ```
 ~/gt/                                    # TOWN ROOT (Gas Town harness)
 ├── CLAUDE.md                            # Mayor role prompting
-├── .beads/                              # Town-level beads (optional)
+├── .beads/                              # Town-level beads (gm-* prefix)
+│   ├── beads.db                         # Mayor mail, coordination
+│   └── config.yaml
 │
 ├── mayor/                               # Mayor's home (at town level)
 │   ├── town.json                        # {"type": "town", "name": "..."}
 │   ├── rigs.json                        # Registry of managed rigs
-│   ├── mail/inbox.jsonl                 # Mayor's inbox
-│   └── state.json                       # Mayor state
+│   └── state.json                       # Mayor state (no mail/ dir)
 │
 ├── gastown/                             # RIG (container, NOT a git clone)
 │   ├── config.json                      # Rig configuration
-│   ├── .beads/                          # Rig-level issue tracking
-│   │   └── config.yaml                  # Beads config (prefix, sync settings)
+│   ├── .beads/ → refinery/rig/.beads    # Symlink to canonical beads
 │   │
 │   ├── refinery/                        # Refinery agent
 │   │   ├── rig/                         # Canonical "main" clone
 │   │   │   ├── .git/
-│   │   │   └── <project files>
-│   │   └── state.json
-│   │
-│   ├── mayor/                           # Mayor's rig-specific clone
-│   │   ├── rig/                         # Mayor's clone for this rig
-│   │   │   ├── .git/
+│   │   │   ├── .beads/                  # CANONICAL rig beads (gt-* prefix)
 │   │   │   └── <project files>
 │   │   └── state.json
 │   │
@@ -275,30 +284,34 @@ For reference without mermaid rendering:
 │   │   └── state.json                   # No clone needed
 │   │
 │   ├── crew/                            # Overseer's personal workspaces
-│   │   └── main/                        # Default workspace (full clone)
+│   │   └── <name>/                      # Full clone (inherits beads from rig)
 │   │       ├── .git/
 │   │       └── <project files>
 │   │
-│   ├── polecats/                        # Worker directories (initially empty)
-│   │   ├── Nux/                         # Full clone (BEADS_DIR=../../.beads)
-│   │   │   ├── .git/
-│   │   │   └── <project files>
-│   │   └── Toast/                       # Full clone
+│   ├── polecats/                        # Worker directories (worktrees)
+│   │   ├── Nux/                         # Git worktree from refinery
+│   │   │   └── <project files>          # (inherits beads from rig)
+│   │   └── Toast/                       # Git worktree from refinery
 │   │
 │   └── plugins/                         # Optional plugins
 │       └── merge-oracle/
 │           ├── CLAUDE.md
-│           └── mail/inbox.jsonl
+│           └── state.json
 │
 └── wyvern/                              # Another rig (same structure)
     ├── config.json
-    ├── .beads/
+    ├── .beads/ → refinery/rig/.beads
     ├── polecats/
     ├── refinery/
     ├── witness/
-    ├── crew/
-    └── mayor/
+    └── crew/
 ```
+
+**Key changes from earlier design:**
+- Town beads (`gm-*`) hold Mayor mail instead of JSONL files
+- Rig `.beads/` symlinks to refinery's canonical beads
+- Polecats use git worktrees (not full clones) for speed
+- No `mayor/rig/` in each rig (Mayor works from town level)
 
 ### Why Decentralized?
 
