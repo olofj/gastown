@@ -133,6 +133,16 @@ func (t *Tmux) SendKeysDelayed(session, keys string, delayMs int) error {
 	return t.SendKeys(session, keys)
 }
 
+// GetPaneCommand returns the current command running in a pane.
+// Returns "bash", "zsh", "claude", "node", etc.
+func (t *Tmux) GetPaneCommand(session string) (string, error) {
+	out, err := t.run("list-panes", "-t", session, "-F", "#{pane_current_command}")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(out), nil
+}
+
 // CapturePane captures the visible content of a pane.
 func (t *Tmux) CapturePane(session string, lines int) (string, error) {
 	return t.run("capture-pane", "-p", "-t", session, "-S", fmt.Sprintf("-%d", lines))

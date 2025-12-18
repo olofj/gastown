@@ -463,10 +463,35 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 
 		fmt.Printf("%s Created session for %s/%s\n",
 			style.Bold.Render("✓"), r.Name, name)
+	} else {
+		// Session exists - check if Claude is still running
+		paneCmd, err := t.GetPaneCommand(sessionID)
+		if err == nil && isShellCommand(paneCmd) {
+			// Claude has exited, restart it
+			fmt.Printf("Claude exited, restarting...\n")
+			if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
+				return fmt.Errorf("restarting claude: %w", err)
+			}
+			// Prime after restart
+			if err := t.SendKeysDelayed(sessionID, "gt prime", 2000); err != nil {
+				fmt.Printf("Warning: Could not send prime command: %v\n", err)
+			}
+		}
 	}
 
 	// Attach to session using exec to properly forward TTY
 	return attachToTmuxSession(sessionID)
+}
+
+// isShellCommand checks if the command is a shell (meaning Claude has exited).
+func isShellCommand(cmd string) bool {
+	shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+	for _, shell := range shells {
+		if cmd == shell {
+			return true
+		}
+	}
+	return false
 }
 
 // attachToTmuxSession attaches to a tmux session with proper TTY forwarding.
