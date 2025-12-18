@@ -17,8 +17,9 @@ import (
 const MayorSessionName = "gt-mayor"
 
 var mayorCmd = &cobra.Command{
-	Use:   "mayor",
-	Short: "Manage the Mayor session",
+	Use:     "mayor",
+	Aliases: []string{"may"},
+	Short:   "Manage the Mayor session",
 	Long: `Manage the Mayor tmux session.
 
 The Mayor is the global coordinator for Gas Town, running as a persistent
@@ -122,7 +123,8 @@ func startMayorSession(t *tmux.Tmux) error {
 	t.SetEnvironment(MayorSessionName, "GT_ROLE", "mayor")
 
 	// Launch Claude with full permissions (Mayor is trusted)
-	if err := t.SendKeys(MayorSessionName, "claude --dangerously-skip-permissions"); err != nil {
+	// Use exec to replace shell - when Claude exits, session closes
+	if err := t.SendKeys(MayorSessionName, "exec claude --dangerously-skip-permissions"); err != nil {
 		return fmt.Errorf("sending command: %w", err)
 	}
 
@@ -170,18 +172,19 @@ func runMayorAttach(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("checking session: %w", err)
 	}
 	if !running {
-		// Auto-start if not running
+		// Auto-start if not running (matches Python behavior)
 		fmt.Println("Mayor session not running, starting...")
 		if err := startMayorSession(t); err != nil {
 			return err
 		}
 	} else {
 		// Session exists - check if Claude is still running
+		// (With exec this rarely triggers, but handles edge cases)
 		paneCmd, err := t.GetPaneCommand(MayorSessionName)
 		if err == nil && isMayorShellCommand(paneCmd) {
-			// Claude has exited, restart it
+			// Claude has exited, restart it with exec
 			fmt.Println("Claude exited, restarting...")
-			if err := t.SendKeys(MayorSessionName, "claude --dangerously-skip-permissions"); err != nil {
+			if err := t.SendKeys(MayorSessionName, "exec claude --dangerously-skip-permissions"); err != nil {
 				return fmt.Errorf("restarting claude: %w", err)
 			}
 			// Prime after restart
