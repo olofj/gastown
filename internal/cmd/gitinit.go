@@ -1,0 +1,274 @@
+package cmd
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/steveyegge/gastown/internal/style"
+	"github.com/steveyegge/gastown/internal/workspace"
+)
+
+var (
+	gitInitGitHub  string
+	gitInitPrivate bool
+)
+
+var gitInitCmd = &cobra.Command{
+	Use:   "git-init",
+	Short: "Initialize git repository for a Gas Town harness",
+	Long: `Initialize or configure git for an existing Gas Town harness.
+
+This command:
+  1. Creates a comprehensive .gitignore for Gas Town
+  2. Initializes a git repository if not already present
+  3. Optionally creates a GitHub repository
+
+The .gitignore excludes:
+  - Polecats and rig clones (recreated with 'gt spawn' or 'gt rig add')
+  - Runtime state files (state.json, *.lock)
+  - OS and editor files
+
+And tracks:
+  - CLAUDE.md and role contexts
+  - .beads/ configuration and issues
+  - Rig configs and hop/ directory
+
+Examples:
+  gt git-init                              # Init git with .gitignore
+  gt git-init --github=user/repo           # Also create public GitHub repo
+  gt git-init --github=user/repo --private # Create private GitHub repo`,
+	RunE: runGitInit,
+}
+
+func init() {
+	gitInitCmd.Flags().StringVar(&gitInitGitHub, "github", "", "Create GitHub repo (format: owner/repo)")
+	gitInitCmd.Flags().BoolVar(&gitInitPrivate, "private", false, "Make GitHub repo private")
+	rootCmd.AddCommand(gitInitCmd)
+}
+
+// HarnessGitignore is the standard .gitignore for Gas Town harnesses
+const HarnessGitignore = `# Gas Town Harness .gitignore
+# Track: Role context, handoff docs, beads config/data, rig configs
+# Ignore: Git clones (polecats, mayor/refinery rigs), runtime state
+
+# =============================================================================
+# Runtime state files (ephemeral)
+# =============================================================================
+**/state.json
+**/*.lock
+**/registry.json
+
+# =============================================================================
+# Rig git clones (recreate with 'gt spawn' or 'gt rig add')
+# =============================================================================
+
+# Polecats - worker clones
+**/polecats/
+
+# Mayor rig clones
+**/mayor/rig/
+
+# Refinery working clones
+**/refinery/rig/
+
+# Crew workspaces (user-managed)
+**/crew/
+
+# =============================================================================
+# Rig runtime state directories
+# =============================================================================
+**/.gastown/
+
+# =============================================================================
+# Rig .beads symlinks (point to ignored mayor/rig/.beads, recreated on setup)
+# =============================================================================
+# Add rig-specific symlinks here, e.g.:
+# gastown/.beads
+
+# =============================================================================
+# Rigs directory (clones created by 'gt rig add')
+# =============================================================================
+/rigs/*/
+
+# =============================================================================
+# OS and editor files
+# =============================================================================
+.DS_Store
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# =============================================================================
+# Explicitly track (override above patterns)
+# =============================================================================
+# Note: .beads/ has its own .gitignore that handles SQLite files
+# and keeps issues.jsonl, metadata.json, config.yaml as source of truth
+`
+
+func runGitInit(cmd *cobra.Command, args []string) error {
+	// Find the harness root
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting current directory: %w", err)
+	}
+
+	harnessRoot, err := workspace.Find(cwd)
+	if err != nil || harnessRoot == "" {
+		return fmt.Errorf("not inside a Gas Town harness (run 'gt install' first)")
+	}
+
+	fmt.Printf("%s Initializing git for harness at %s\n\n",
+		style.Bold.Render("🔧"), style.Dim.Render(harnessRoot))
+
+	// Create .gitignore
+	gitignorePath := filepath.Join(harnessRoot, ".gitignore")
+	if err := createGitignore(gitignorePath); err != nil {
+		return err
+	}
+
+	// Initialize git if needed
+	gitDir := filepath.Join(harnessRoot, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		if err := initGitRepo(harnessRoot); err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("   ✓ Git repository already exists\n")
+	}
+
+	// Create GitHub repo if requested
+	if gitInitGitHub != "" {
+		if err := createGitHubRepo(harnessRoot, gitInitGitHub, gitInitPrivate); err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("\n%s Git initialization complete!\n", style.Bold.Render("✓"))
+
+	// Show next steps if no GitHub was created
+	if gitInitGitHub == "" {
+		fmt.Println()
+		fmt.Println("Next steps:")
+		fmt.Printf("  1. Create initial commit: %s\n",
+			style.Dim.Render("git add . && git commit -m 'Initial Gas Town harness'"))
+		fmt.Printf("  2. Create remote repo: %s\n",
+			style.Dim.Render("gt git-init --github=user/repo"))
+	}
+
+	return nil
+}
+
+func createGitignore(path string) error {
+	// Check if .gitignore already exists
+	if _, err := os.Stat(path); err == nil {
+		// Read existing content
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("reading existing .gitignore: %w", err)
+		}
+
+		// Check if it already has Gas Town section
+		if strings.Contains(string(content), "Gas Town Harness") {
+			fmt.Printf("   ✓ .gitignore already configured for Gas Town\n")
+			return nil
+		}
+
+		// Append to existing
+		combined := string(content) + "\n" + HarnessGitignore
+		if err := os.WriteFile(path, []byte(combined), 0644); err != nil {
+			return fmt.Errorf("updating .gitignore: %w", err)
+		}
+		fmt.Printf("   ✓ Updated .gitignore with Gas Town patterns\n")
+		return nil
+	}
+
+	// Create new .gitignore
+	if err := os.WriteFile(path, []byte(HarnessGitignore), 0644); err != nil {
+		return fmt.Errorf("creating .gitignore: %w", err)
+	}
+	fmt.Printf("   ✓ Created .gitignore\n")
+	return nil
+}
+
+func initGitRepo(path string) error {
+	cmd := exec.Command("git", "init")
+	cmd.Dir = path
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("git init failed: %w", err)
+	}
+	fmt.Printf("   ✓ Initialized git repository\n")
+	return nil
+}
+
+func createGitHubRepo(harnessRoot, repo string, private bool) error {
+	// Check if gh CLI is available
+	if _, err := exec.LookPath("gh"); err != nil {
+		return fmt.Errorf("GitHub CLI (gh) not found. Install it with: brew install gh")
+	}
+
+	// Parse owner/repo format
+	parts := strings.Split(repo, "/")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid GitHub repo format (expected owner/repo): %s", repo)
+	}
+
+	fmt.Printf("   → Creating GitHub repository %s...\n", repo)
+
+	// Build gh repo create command
+	args := []string{"repo", "create", repo, "--source", harnessRoot}
+	if private {
+		args = append(args, "--private")
+	} else {
+		args = append(args, "--public")
+	}
+	args = append(args, "--push")
+
+	cmd := exec.Command("gh", args...)
+	cmd.Dir = harnessRoot
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("gh repo create failed: %w", err)
+	}
+	fmt.Printf("   ✓ Created and pushed to GitHub: %s\n", repo)
+	return nil
+}
+
+// InitGitForHarness is the shared implementation for git initialization.
+// It can be called from both 'gt git-init' and 'gt install --git'.
+func InitGitForHarness(harnessRoot string, github string, private bool) error {
+	// Create .gitignore
+	gitignorePath := filepath.Join(harnessRoot, ".gitignore")
+	if err := createGitignore(gitignorePath); err != nil {
+		return err
+	}
+
+	// Initialize git if needed
+	gitDir := filepath.Join(harnessRoot, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		if err := initGitRepo(harnessRoot); err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("   ✓ Git repository already exists\n")
+	}
+
+	// Create GitHub repo if requested
+	if github != "" {
+		if err := createGitHubRepo(harnessRoot, github, private); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

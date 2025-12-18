@@ -18,6 +18,9 @@ var (
 	installForce    bool
 	installName     string
 	installNoBeads  bool
+	installGit      bool
+	installGitHub   string
+	installPrivate  bool
 )
 
 var installCmd = &cobra.Command{
@@ -34,9 +37,11 @@ A harness is the top-level directory where Gas Town is installed. It contains:
 If path is omitted, uses the current directory.
 
 Examples:
-  gt install ~/gt                    # Create harness at ~/gt
-  gt install . --name my-workspace   # Initialize current dir
-  gt install ~/gt --no-beads         # Skip .beads/redirect setup`,
+  gt install ~/gt                         # Create harness at ~/gt
+  gt install . --name my-workspace        # Initialize current dir
+  gt install ~/gt --no-beads              # Skip .beads/redirect setup
+  gt install ~/gt --git                   # Also init git with .gitignore
+  gt install ~/gt --github=user/repo      # Also create GitHub repo`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runInstall,
 }
@@ -45,6 +50,9 @@ func init() {
 	installCmd.Flags().BoolVarP(&installForce, "force", "f", false, "Overwrite existing harness")
 	installCmd.Flags().StringVarP(&installName, "name", "n", "", "Town name (defaults to directory name)")
 	installCmd.Flags().BoolVar(&installNoBeads, "no-beads", false, "Skip .beads/redirect setup")
+	installCmd.Flags().BoolVar(&installGit, "git", false, "Initialize git with .gitignore")
+	installCmd.Flags().StringVar(&installGitHub, "github", "", "Create GitHub repo (format: owner/repo)")
+	installCmd.Flags().BoolVar(&installPrivate, "private", false, "Make GitHub repo private (use with --github)")
 	rootCmd.AddCommand(installCmd)
 }
 
@@ -180,14 +188,46 @@ func runInstall(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Initialize git if requested (--git or --github implies --git)
+	if installGit || installGitHub != "" {
+		fmt.Println()
+		if err := InitGitForHarness(absPath, installGitHub, installPrivate); err != nil {
+			return fmt.Errorf("git initialization failed: %w", err)
+		}
+	}
+
 	fmt.Printf("\n%s Harness created successfully!\n", style.Bold.Render("✓"))
 	fmt.Println()
 	fmt.Println("Next steps:")
-	fmt.Printf("  1. Add a rig: %s\n", style.Dim.Render("gt rig add <name> <git-url>"))
-	fmt.Printf("  2. Configure beads redirect: %s\n", style.Dim.Render("edit .beads/redirect"))
-	fmt.Printf("  3. Start the Mayor: %s\n", style.Dim.Render("cd "+absPath+" && gt prime"))
+	if !installGit && installGitHub == "" {
+		fmt.Printf("  1. Initialize git: %s\n", style.Dim.Render("gt git-init"))
+	}
+	fmt.Printf("  %s. Add a rig: %s\n", nextStepNum(installGit || installGitHub != ""), style.Dim.Render("gt rig add <name> <git-url>"))
+	fmt.Printf("  %s. Configure beads redirect: %s\n", nextStepNum2(installGit || installGitHub != ""), style.Dim.Render("edit .beads/redirect"))
+	fmt.Printf("  %s. Start the Mayor: %s\n", nextStepNum3(installGit || installGitHub != ""), style.Dim.Render("cd "+absPath+" && gt prime"))
 
 	return nil
+}
+
+func nextStepNum(gitDone bool) string {
+	if gitDone {
+		return "1"
+	}
+	return "2"
+}
+
+func nextStepNum2(gitDone bool) string {
+	if gitDone {
+		return "2"
+	}
+	return "3"
+}
+
+func nextStepNum3(gitDone bool) string {
+	if gitDone {
+		return "3"
+	}
+	return "4"
 }
 
 func createMayorCLAUDEmd(harnessRoot, townRoot string) error {
