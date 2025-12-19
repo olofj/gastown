@@ -31,9 +31,10 @@ func (r *Router) Send(msg *Message) error {
 	toIdentity := addressToIdentity(msg.To)
 	fromIdentity := addressToIdentity(msg.From)
 
-	// Build command: bd message send <recipient> <body> -s <subject>
-	args := []string{"message", "send", toIdentity, msg.Body,
+	// Build command: bd mail send <recipient> -s <subject> -m <body>
+	args := []string{"mail", "send", toIdentity,
 		"-s", msg.Subject,
+		"-m", msg.Body,
 	}
 
 	// Add importance flag for high priority
