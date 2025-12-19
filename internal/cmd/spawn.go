@@ -32,7 +32,6 @@ var polecatNames = []string{
 var (
 	spawnIssue   string
 	spawnMessage string
-	spawnCreate  bool
 	spawnNoStart bool
 )
 
@@ -42,14 +41,17 @@ var spawnCmd = &cobra.Command{
 	Short:   "Spawn a polecat with work assignment",
 	Long: `Spawn a polecat with a work assignment.
 
-Assigns an issue or task to a polecat and starts a session. If no polecat
-is specified, auto-selects an idle polecat in the rig.
+Creates a fresh polecat worktree, assigns an issue or task, and starts
+a session. Polecats are ephemeral - they exist only while working.
+
+If no polecat name is specified, generates a random name. If the specified
+name already exists as a non-working polecat, it will be replaced with
+a fresh worktree.
 
 Examples:
-  gt spawn gastown/Toast --issue gt-abc
-  gt spawn gastown --issue gt-def          # auto-select polecat
-  gt spawn gastown/Nux -m "Fix the tests"  # free-form task
-  gt spawn gastown/Capable --issue gt-xyz --create  # create if missing`,
+  gt spawn gastown --issue gt-abc          # auto-generate polecat name
+  gt spawn gastown/Toast --issue gt-def    # use specific name
+  gt spawn gastown/Nux -m "Fix the tests"  # free-form task`,
 	Args: cobra.ExactArgs(1),
 	RunE: runSpawn,
 }
@@ -57,7 +59,6 @@ Examples:
 func init() {
 	spawnCmd.Flags().StringVar(&spawnIssue, "issue", "", "Beads issue ID to assign")
 	spawnCmd.Flags().StringVarP(&spawnMessage, "message", "m", "", "Free-form task description")
-	spawnCmd.Flags().BoolVar(&spawnCreate, "create", false, "Create polecat if it doesn't exist")
 	spawnCmd.Flags().BoolVar(&spawnNoStart, "no-start", false, "Assign work but don't start session")
 
 	rootCmd.AddCommand(spawnCmd)
@@ -107,42 +108,41 @@ func runSpawn(cmd *cobra.Command, args []string) error {
 	polecatGit := git.NewGit(r.Path)
 	polecatMgr := polecat.NewManager(r, polecatGit)
 
-	// Auto-select polecat if not specified
+	// Ephemeral model: always create fresh polecat
+	// If no name specified, generate one
 	if polecatName == "" {
-		polecatName, err = selectIdlePolecat(polecatMgr, r)
-		if err != nil {
-			// If --create is set, generate a new polecat name instead of failing
-			if spawnCreate {
-				polecatName = generatePolecatName(polecatMgr)
-				fmt.Printf("Generated polecat name: %s\n", polecatName)
-			} else {
-				return fmt.Errorf("auto-select polecat: %w", err)
-			}
-		} else {
-			fmt.Printf("Auto-selected polecat: %s\n", polecatName)
-		}
+		polecatName = generatePolecatName(polecatMgr)
+		fmt.Printf("Generated polecat name: %s\n", polecatName)
 	}
 
-	// Check/create polecat
+	// Check if polecat already exists
 	pc, err := polecatMgr.Get(polecatName)
-	if err != nil {
-		if err == polecat.ErrPolecatNotFound {
-			if !spawnCreate {
-				return fmt.Errorf("polecat '%s' not found (use --create to create)", polecatName)
-			}
-			fmt.Printf("Creating polecat %s...\n", polecatName)
-			pc, err = polecatMgr.Add(polecatName)
-			if err != nil {
-				return fmt.Errorf("creating polecat: %w", err)
-			}
-		} else {
-			return fmt.Errorf("getting polecat: %w", err)
+	if err == nil {
+		// Polecat exists - check if working
+		if pc.State == polecat.StateWorking {
+			return fmt.Errorf("polecat '%s' is already working on %s", polecatName, pc.Issue)
 		}
+		// Existing polecat not working - remove and recreate fresh
+		fmt.Printf("Removing stale polecat %s for fresh worktree...\n", polecatName)
+		if err := polecatMgr.Remove(polecatName, true); err != nil {
+			return fmt.Errorf("removing stale polecat: %w", err)
+		}
+	} else if err != polecat.ErrPolecatNotFound {
+		return fmt.Errorf("checking polecat: %w", err)
 	}
 
-	// Check polecat state
-	if pc.State == polecat.StateWorking {
-		return fmt.Errorf("polecat '%s' is already working on %s", polecatName, pc.Issue)
+	// Create fresh polecat with new worktree from main
+	fmt.Printf("Creating fresh polecat %s...\n", polecatName)
+	pc, err = polecatMgr.Add(polecatName)
+	if err != nil {
+		return fmt.Errorf("creating polecat: %w", err)
+	}
+
+	// Initialize beads in the new worktree
+	fmt.Printf("Initializing beads in worktree...\n")
+	if err := initBeadsInWorktree(pc.ClonePath); err != nil {
+		// Non-fatal - beads might already be initialized
+		fmt.Printf("  %s\n", style.Dim.Render(fmt.Sprintf("(beads init: %v)", err)))
 	}
 
 	// Get issue details if specified
@@ -251,42 +251,23 @@ func generatePolecatName(mgr *polecat.Manager) string {
 	}
 }
 
-// selectIdlePolecat finds an idle polecat in the rig.
-func selectIdlePolecat(mgr *polecat.Manager, r *rig.Rig) (string, error) {
-	polecats, err := mgr.List()
-	if err != nil {
-		return "", err
+// initBeadsInWorktree initializes beads in a new polecat worktree.
+func initBeadsInWorktree(worktreePath string) error {
+	cmd := exec.Command("bd", "init")
+	cmd.Dir = worktreePath
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := strings.TrimSpace(stderr.String())
+		if errMsg != "" {
+			return fmt.Errorf("%s", errMsg)
+		}
+		return err
 	}
 
-	// Prefer idle polecats
-	for _, pc := range polecats {
-		if pc.State == polecat.StateIdle {
-			return pc.Name, nil
-		}
-	}
-
-	// Accept active polecats without current work
-	for _, pc := range polecats {
-		if pc.State == polecat.StateActive && pc.Issue == "" {
-			return pc.Name, nil
-		}
-	}
-
-	// Check rig's polecat list for any we haven't loaded yet
-	for _, name := range r.Polecats {
-		found := false
-		for _, pc := range polecats {
-			if pc.Name == name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return name, nil
-		}
-	}
-
-	return "", fmt.Errorf("no available polecats in rig '%s'", r.Name)
+	return nil
 }
 
 // fetchBeadsIssue gets issue details from beads CLI.
