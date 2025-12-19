@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/gastown/internal/config"
@@ -504,19 +505,24 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 		_ = t.SetEnvironment(sessionID, "GT_RIG", r.Name)
 		_ = t.SetEnvironment(sessionID, "GT_CREW", name)
 
-		// Apply theme
-		theme := tmux.AssignTheme(r.Name)
-		_ = t.ConfigureGasTownSession(sessionID, theme, r.Name, name, "crew")
+		// Wait for shell to be ready after session creation
+		if err := t.WaitForShellReady(sessionID, 5*time.Second); err != nil {
+			return fmt.Errorf("waiting for shell: %w", err)
+		}
 
 		// Start claude with skip permissions (crew workers are trusted like Mayor)
-		// Use SendKeysDelayed to allow shell initialization after NewSession
-		if err := t.SendKeysDelayed(sessionID, "claude --dangerously-skip-permissions", 200); err != nil {
+		if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
 			return fmt.Errorf("starting claude: %w", err)
 		}
 
-		// Wait a moment for Claude to initialize, then prime it
-		// We send gt prime after a short delay to ensure Claude is ready
-		if err := t.SendKeysDelayed(sessionID, "gt prime", 2000); err != nil {
+		// Wait for Claude to start (pane command changes from shell to node)
+		shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+		if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
+			fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
+		}
+
+		// Send gt prime to initialize context
+		if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 			// Non-fatal: Claude started but priming failed
 			fmt.Printf("Warning: Could not send prime command: %v\n", err)
 		}
@@ -525,15 +531,20 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 			style.Bold.Render("✓"), r.Name, name)
 	} else {
 		// Session exists - check if Claude is still running
-		paneCmd, err := t.GetPaneCommand(sessionID)
-		if err == nil && isShellCommand(paneCmd) {
+		// Uses both pane command check and UI marker detection to avoid
+		// restarting when user is in a subshell spawned from Claude
+		if !t.IsClaudeRunning(sessionID) {
 			// Claude has exited, restart it
 			fmt.Printf("Claude exited, restarting...\n")
 			if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
 				return fmt.Errorf("restarting claude: %w", err)
 			}
-			// Prime after restart
-			if err := t.SendKeysDelayed(sessionID, "gt prime", 2000); err != nil {
+			// Wait for Claude to start, then prime
+			shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+			if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
+				fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
+			}
+			if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 				fmt.Printf("Warning: Could not send prime command: %v\n", err)
 			}
 		}
@@ -730,13 +741,13 @@ func runCrewRefresh(cmd *cobra.Command, args []string) error {
 	_ = t.SetEnvironment(sessionID, "GT_RIG", r.Name)
 	_ = t.SetEnvironment(sessionID, "GT_CREW", name)
 
-	// Apply theme
-	theme := tmux.AssignTheme(r.Name)
-	_ = t.ConfigureGasTownSession(sessionID, theme, r.Name, name, "crew")
+	// Wait for shell to be ready
+	if err := t.WaitForShellReady(sessionID, 5*time.Second); err != nil {
+		return fmt.Errorf("waiting for shell: %w", err)
+	}
 
-	// Start claude
-	// Use SendKeysDelayed to allow shell initialization after NewSession
-	if err := t.SendKeysDelayed(sessionID, "claude", 200); err != nil {
+	// Start claude (refresh uses regular permissions, reads handoff mail)
+	if err := t.SendKeys(sessionID, "claude"); err != nil {
 		return fmt.Errorf("starting claude: %w", err)
 	}
 
@@ -784,18 +795,22 @@ func runCrewRestart(cmd *cobra.Command, args []string) error {
 	t.SetEnvironment(sessionID, "GT_RIG", r.Name)
 	t.SetEnvironment(sessionID, "GT_CREW", name)
 
-	// Apply theme
-	theme := tmux.AssignTheme(r.Name)
-	_ = t.ConfigureGasTownSession(sessionID, theme, r.Name, name, "crew")
+	// Wait for shell to be ready
+	if err := t.WaitForShellReady(sessionID, 5*time.Second); err != nil {
+		return fmt.Errorf("waiting for shell: %w", err)
+	}
 
 	// Start claude with skip permissions (crew workers are trusted)
-	// Use SendKeysDelayed to allow shell initialization after NewSession
-	if err := t.SendKeysDelayed(sessionID, "claude --dangerously-skip-permissions", 200); err != nil {
+	if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
 		return fmt.Errorf("starting claude: %w", err)
 	}
 
-	// Wait for Claude to initialize, then prime it
-	if err := t.SendKeysDelayed(sessionID, "gt prime", 2000); err != nil {
+	// Wait for Claude to start, then prime it
+	shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+	if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
+		fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
+	}
+	if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 		// Non-fatal: Claude started but priming failed
 		fmt.Printf("Warning: Could not send prime command: %v\n", err)
 	}

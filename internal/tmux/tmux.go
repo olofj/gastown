@@ -243,6 +243,89 @@ Run: bd mail inbox
 	return t.SendKeys(session, banner)
 }
 
+// IsClaudeRunning checks if Claude appears to be running in the session.
+// It checks both the pane command (node) and pane content for Claude UI markers.
+func (t *Tmux) IsClaudeRunning(session string) bool {
+	// First check: pane command should be node (Claude is a node app)
+	cmd, err := t.GetPaneCommand(session)
+	if err != nil {
+		return false
+	}
+	if cmd == "node" {
+		return true
+	}
+
+	// If we see a shell, check pane content for Claude UI markers
+	// This helps detect if user is in a subshell spawned FROM Claude
+	content, err := t.CapturePane(session, 30)
+	if err != nil {
+		return false
+	}
+
+	// Look for Claude's distinctive UI markers
+	claudeMarkers := []string{
+		"⏺", // Claude's bullet point
+		"⎿", // Claude's tree continuation
+		"─", // Claude's box drawing
+		"╭", // Claude's rounded corners
+	}
+	for _, marker := range claudeMarkers {
+		if strings.Contains(content, marker) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// WaitForCommand polls until the pane is NOT running one of the excluded commands.
+// Useful for waiting until a shell has started a new process (e.g., claude).
+// Returns nil when a non-excluded command is detected, or error on timeout.
+func (t *Tmux) WaitForCommand(session string, excludeCommands []string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		cmd, err := t.GetPaneCommand(session)
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		// Check if current command is NOT in the exclude list
+		excluded := false
+		for _, exc := range excludeCommands {
+			if cmd == exc {
+				excluded = true
+				break
+			}
+		}
+		if !excluded {
+			return nil
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return fmt.Errorf("timeout waiting for command (still running excluded command)")
+}
+
+// WaitForShellReady polls until the pane is running a shell command.
+// Useful for waiting until a process has exited and returned to shell.
+func (t *Tmux) WaitForShellReady(session string, timeout time.Duration) error {
+	shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		cmd, err := t.GetPaneCommand(session)
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		for _, shell := range shells {
+			if cmd == shell {
+				return nil
+			}
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return fmt.Errorf("timeout waiting for shell")
+}
+
 // GetSessionInfo returns detailed information about a session.
 func (t *Tmux) GetSessionInfo(name string) (*SessionInfo, error) {
 	format := "#{session_name}|#{session_windows}|#{session_created_string}|#{session_attached}"
