@@ -34,10 +34,12 @@ var (
 	spawnMessage string
 	spawnCreate  bool
 	spawnNoStart bool
+	spawnPolecat string
+	spawnRig     string
 )
 
 var spawnCmd = &cobra.Command{
-	Use:     "spawn <rig/polecat> | <rig>",
+	Use:     "spawn [rig/polecat | rig]",
 	Aliases: []string{"sp"},
 	Short:   "Spawn a polecat with work assignment",
 	Long: `Spawn a polecat with a work assignment.
@@ -49,8 +51,12 @@ Examples:
   gt spawn gastown/Toast --issue gt-abc
   gt spawn gastown --issue gt-def          # auto-select polecat
   gt spawn gastown/Nux -m "Fix the tests"  # free-form task
-  gt spawn gastown/Capable --issue gt-xyz --create  # create if missing`,
-	Args: cobra.ExactArgs(1),
+  gt spawn gastown/Capable --issue gt-xyz --create  # create if missing
+
+  # Flag-based selection (rig inferred from current directory):
+  gt spawn --issue gt-xyz --polecat Angharad
+  gt spawn --issue gt-abc --rig gastown --polecat Toast`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runSpawn,
 }
 
@@ -59,6 +65,8 @@ func init() {
 	spawnCmd.Flags().StringVarP(&spawnMessage, "message", "m", "", "Free-form task description")
 	spawnCmd.Flags().BoolVar(&spawnCreate, "create", false, "Create polecat if it doesn't exist")
 	spawnCmd.Flags().BoolVar(&spawnNoStart, "no-start", false, "Assign work but don't start session")
+	spawnCmd.Flags().StringVar(&spawnPolecat, "polecat", "", "Polecat name (alternative to positional arg)")
+	spawnCmd.Flags().StringVar(&spawnRig, "rig", "", "Rig name (defaults to current directory's rig)")
 
 	rootCmd.AddCommand(spawnCmd)
 }
@@ -78,16 +86,33 @@ func runSpawn(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("must specify --issue or -m/--message")
 	}
 
-	// Parse address: rig/polecat or just rig
-	rigName, polecatName, err := parseSpawnAddress(args[0])
-	if err != nil {
-		return err
-	}
-
-	// Find workspace and rig
+	// Find workspace first (needed for rig inference)
 	townRoot, err := workspace.FindFromCwdOrError()
 	if err != nil {
 		return fmt.Errorf("not in a Gas Town workspace: %w", err)
+	}
+
+	var rigName, polecatName string
+
+	// Determine rig and polecat from positional arg or flags
+	if len(args) > 0 {
+		// Parse address: rig/polecat or just rig
+		rigName, polecatName, err = parseSpawnAddress(args[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		// No positional arg - use flags
+		polecatName = spawnPolecat
+		rigName = spawnRig
+
+		// If no --rig flag, infer from current directory
+		if rigName == "" {
+			rigName, err = inferRigFromCwd(townRoot)
+			if err != nil {
+				return fmt.Errorf("cannot determine rig: %w\nUse --rig to specify explicitly or provide rig/polecat as positional arg", err)
+			}
+		}
 	}
 
 	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
