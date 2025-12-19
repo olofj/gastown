@@ -215,19 +215,20 @@ func ParseMessageType(s string) MessageType {
 // addressToIdentity converts a GGT address to a beads identity.
 //
 // Examples:
-//   - "mayor/" → "mayor"
+//   - "mayor/" → "mayor/"
+//   - "mayor" → "mayor/"
 //   - "gastown/Toast" → "gastown-Toast"
 //   - "gastown/refinery" → "gastown-refinery"
 //   - "gastown/" → "gastown" (rig broadcast)
 func addressToIdentity(address string) string {
-	// Trim trailing slash
-	if len(address) > 0 && address[len(address)-1] == '/' {
-		address = address[:len(address)-1]
+	// Mayor special case - always use "mayor/" for consistency
+	if address == "mayor" || address == "mayor/" {
+		return "mayor/"
 	}
 
-	// Mayor special case
-	if address == "mayor" {
-		return "mayor"
+	// Trim trailing slash for non-mayor addresses
+	if len(address) > 0 && address[len(address)-1] == '/' {
+		address = address[:len(address)-1]
 	}
 
 	// Replace / with - for beads identity
