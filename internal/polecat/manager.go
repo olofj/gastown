@@ -74,10 +74,24 @@ func (m *Manager) Add(name string) (*Polecat, error) {
 		return nil, fmt.Errorf("mayor clone not found at %s (run 'gt rig add' to set up rig structure)", mayorPath)
 	}
 
-	// Create worktree with new branch
-	// git worktree add -b polecat/<name> <path>
-	if err := mayorGit.WorktreeAdd(polecatPath, branchName); err != nil {
-		return nil, fmt.Errorf("creating worktree: %w", err)
+	// Check if branch already exists (e.g., from previous polecat that wasn't cleaned up)
+	branchExists, err := mayorGit.BranchExists(branchName)
+	if err != nil {
+		return nil, fmt.Errorf("checking branch existence: %w", err)
+	}
+
+	// Create worktree - reuse existing branch if it exists
+	if branchExists {
+		// Branch exists, create worktree using existing branch
+		if err := mayorGit.WorktreeAddExisting(polecatPath, branchName); err != nil {
+			return nil, fmt.Errorf("creating worktree with existing branch: %w", err)
+		}
+	} else {
+		// Create new branch with worktree
+		// git worktree add -b polecat/<name> <path>
+		if err := mayorGit.WorktreeAdd(polecatPath, branchName); err != nil {
+			return nil, fmt.Errorf("creating worktree: %w", err)
+		}
 	}
 
 	// Create polecat state - ephemeral polecats start in working state
