@@ -150,6 +150,36 @@ Examples:
 	RunE: runCrewStatus,
 }
 
+var crewRenameCmd = &cobra.Command{
+	Use:   "rename <old-name> <new-name>",
+	Short: "Rename a crew workspace",
+	Long: `Rename a crew workspace.
+
+Kills any running session, renames the directory, and updates state.
+The new session will use the new name (gt-<rig>-crew-<new-name>).
+
+Examples:
+  gt crew rename dave david       # Rename dave to david
+  gt crew rename madmax max       # Rename madmax to max`,
+	Args: cobra.ExactArgs(2),
+	RunE: runCrewRename,
+}
+
+var crewPristineCmd = &cobra.Command{
+	Use:   "pristine [<name>]",
+	Short: "Sync crew workspaces with remote",
+	Long: `Ensure crew workspace(s) are up-to-date.
+
+Runs git pull and bd sync for the specified crew, or all crew workers.
+Reports any uncommitted changes that may need attention.
+
+Examples:
+  gt crew pristine                # Pristine all crew workers
+  gt crew pristine dave           # Pristine specific worker
+  gt crew pristine --json         # JSON output`,
+	RunE: runCrewPristine,
+}
+
 func init() {
 	// Add flags
 	crewAddCmd.Flags().StringVar(&crewRig, "rig", "", "Rig to create crew workspace in")
@@ -170,6 +200,11 @@ func init() {
 	crewStatusCmd.Flags().StringVar(&crewRig, "rig", "", "Filter by rig name")
 	crewStatusCmd.Flags().BoolVar(&crewJSON, "json", false, "Output as JSON")
 
+	crewRenameCmd.Flags().StringVar(&crewRig, "rig", "", "Rig to use")
+
+	crewPristineCmd.Flags().StringVar(&crewRig, "rig", "", "Filter by rig name")
+	crewPristineCmd.Flags().BoolVar(&crewJSON, "json", false, "Output as JSON")
+
 	// Add subcommands
 	crewCmd.AddCommand(crewAddCmd)
 	crewCmd.AddCommand(crewListCmd)
@@ -177,6 +212,8 @@ func init() {
 	crewCmd.AddCommand(crewRemoveCmd)
 	crewCmd.AddCommand(crewRefreshCmd)
 	crewCmd.AddCommand(crewStatusCmd)
+	crewCmd.AddCommand(crewRenameCmd)
+	crewCmd.AddCommand(crewPristineCmd)
 
 	rootCmd.AddCommand(crewCmd)
 }
@@ -814,6 +851,115 @@ func runCrewStatus(cmd *cobra.Command, args []string) error {
 			fmt.Printf("  Mail:   %d unread / %d total\n", item.MailUnread, item.MailTotal)
 		} else {
 			fmt.Printf("  Mail:   %s\n", style.Dim.Render(fmt.Sprintf("%d messages", item.MailTotal)))
+		}
+	}
+
+	return nil
+}
+
+func runCrewRename(cmd *cobra.Command, args []string) error {
+	oldName := args[0]
+	newName := args[1]
+
+	crewMgr, r, err := getCrewManager(crewRig)
+	if err != nil {
+		return err
+	}
+
+	// Kill any running session for the old name
+	t := tmux.NewTmux()
+	oldSessionID := crewSessionName(r.Name, oldName)
+	if hasSession, _ := t.HasSession(oldSessionID); hasSession {
+		if err := t.KillSession(oldSessionID); err != nil {
+			return fmt.Errorf("killing old session: %w", err)
+		}
+		fmt.Printf("Killed session %s\n", oldSessionID)
+	}
+
+	// Perform the rename
+	if err := crewMgr.Rename(oldName, newName); err != nil {
+		if err == crew.ErrCrewNotFound {
+			return fmt.Errorf("crew workspace '%s' not found", oldName)
+		}
+		if err == crew.ErrCrewExists {
+			return fmt.Errorf("crew workspace '%s' already exists", newName)
+		}
+		return fmt.Errorf("renaming crew workspace: %w", err)
+	}
+
+	fmt.Printf("%s Renamed crew workspace: %s/%s → %s/%s\n",
+		style.Bold.Render("✓"), r.Name, oldName, r.Name, newName)
+	fmt.Printf("New session will be: %s\n", style.Dim.Render(crewSessionName(r.Name, newName)))
+
+	return nil
+}
+
+func runCrewPristine(cmd *cobra.Command, args []string) error {
+	crewMgr, r, err := getCrewManager(crewRig)
+	if err != nil {
+		return err
+	}
+
+	var workers []*crew.CrewWorker
+
+	if len(args) > 0 {
+		// Specific worker
+		name := args[0]
+		worker, err := crewMgr.Get(name)
+		if err != nil {
+			if err == crew.ErrCrewNotFound {
+				return fmt.Errorf("crew workspace '%s' not found", name)
+			}
+			return fmt.Errorf("getting crew worker: %w", err)
+		}
+		workers = []*crew.CrewWorker{worker}
+	} else {
+		// All workers
+		workers, err = crewMgr.List()
+		if err != nil {
+			return fmt.Errorf("listing crew workers: %w", err)
+		}
+	}
+
+	if len(workers) == 0 {
+		fmt.Println("No crew workspaces found.")
+		return nil
+	}
+
+	var results []*crew.PristineResult
+
+	for _, w := range workers {
+		result, err := crewMgr.Pristine(w.Name)
+		if err != nil {
+			return fmt.Errorf("pristine %s: %w", w.Name, err)
+		}
+		results = append(results, result)
+	}
+
+	if crewJSON {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(results)
+	}
+
+	// Text output
+	for _, result := range results {
+		fmt.Printf("%s %s/%s\n", style.Bold.Render("→"), r.Name, result.Name)
+
+		if result.HadChanges {
+			fmt.Printf("  %s\n", style.Bold.Render("⚠ Has uncommitted changes"))
+		}
+
+		if result.Pulled {
+			fmt.Printf("  %s git pull\n", style.Dim.Render("✓"))
+		} else if result.PullError != "" {
+			fmt.Printf("  %s git pull: %s\n", style.Bold.Render("✗"), result.PullError)
+		}
+
+		if result.Synced {
+			fmt.Printf("  %s bd sync\n", style.Dim.Render("✓"))
+		} else if result.SyncError != "" {
+			fmt.Printf("  %s bd sync: %s\n", style.Bold.Render("✗"), result.SyncError)
 		}
 	}
 
