@@ -184,9 +184,12 @@ func runSpawn(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("polecat '%s' is already working on %s", polecatName, pc.Issue)
 	}
 
+	// Beads operations use mayor/rig directory (rig-level beads)
+	beadsPath := filepath.Join(r.Path, "mayor", "rig")
+
 	// Handle molecule instantiation if specified
 	if spawnMolecule != "" {
-		b := beads.New(r.Path)
+		b := beads.New(beadsPath)
 
 		// Get the molecule
 		mol, err := b.Show(spawnMolecule)
@@ -239,20 +242,28 @@ func runSpawn(cmd *cobra.Command, args []string) error {
 		spawnIssue = firstReadyStep.ID
 	}
 
-	// Get issue details if specified
+	// Get or create issue
 	var issue *BeadsIssue
+	var assignmentID string
 	if spawnIssue != "" {
-		issue, err = fetchBeadsIssue(r.Path, spawnIssue)
+		// Use existing issue
+		issue, err = fetchBeadsIssue(beadsPath, spawnIssue)
 		if err != nil {
 			return fmt.Errorf("fetching issue %s: %w", spawnIssue, err)
 		}
+		assignmentID = spawnIssue
+	} else {
+		// Create a beads issue for free-form task
+		fmt.Printf("Creating beads issue for task...\n")
+		issue, err = createBeadsTask(beadsPath, spawnMessage)
+		if err != nil {
+			return fmt.Errorf("creating task issue: %w", err)
+		}
+		assignmentID = issue.ID
+		fmt.Printf("Created issue %s\n", assignmentID)
 	}
 
-	// Assign issue/task to polecat
-	assignmentID := spawnIssue
-	if assignmentID == "" {
-		assignmentID = "task:" + time.Now().Format("20060102-150405")
-	}
+	// Assign issue to polecat (sets issue.assignee in beads)
 	if err := polecatMgr.AssignIssue(polecatName, assignmentID); err != nil {
 		return fmt.Errorf("assigning issue: %w", err)
 	}
@@ -410,6 +421,44 @@ func fetchBeadsIssue(rigPath, issueID string) (*BeadsIssue, error) {
 	}
 
 	return &issues[0], nil
+}
+
+// createBeadsTask creates a new beads task issue for a free-form task message.
+func createBeadsTask(rigPath, message string) (*BeadsIssue, error) {
+	// Truncate message for title if too long
+	title := message
+	if len(title) > 60 {
+		title = title[:57] + "..."
+	}
+
+	// Use bd create to make a new task issue
+	cmd := exec.Command("bd", "create",
+		"--title="+title,
+		"--type=task",
+		"--priority=2",
+		"--description="+message,
+		"--json")
+	cmd.Dir = rigPath
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := strings.TrimSpace(stderr.String())
+		if errMsg != "" {
+			return nil, fmt.Errorf("%s", errMsg)
+		}
+		return nil, err
+	}
+
+	// bd create --json returns the created issue
+	var issue BeadsIssue
+	if err := json.Unmarshal(stdout.Bytes(), &issue); err != nil {
+		return nil, fmt.Errorf("parsing created issue: %w", err)
+	}
+
+	return &issue, nil
 }
 
 // buildSpawnContext creates the initial context message for the polecat.

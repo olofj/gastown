@@ -58,10 +58,12 @@ type IssueDep struct {
 
 // ListOptions specifies filters for listing issues.
 type ListOptions struct {
-	Status   string // "open", "closed", "all"
-	Type     string // "task", "bug", "feature", "epic"
-	Priority int    // 0-4, -1 for no filter
-	Parent   string // filter by parent ID
+	Status     string // "open", "closed", "all"
+	Type       string // "task", "bug", "feature", "epic"
+	Priority   int    // 0-4, -1 for no filter
+	Parent     string // filter by parent ID
+	Assignee   string // filter by assignee (e.g., "gastown/Toast")
+	NoAssignee bool   // filter for issues with no assignee
 }
 
 // CreateOptions specifies options for creating an issue.
@@ -161,6 +163,12 @@ func (b *Beads) List(opts ListOptions) ([]*Issue, error) {
 	if opts.Parent != "" {
 		args = append(args, "--parent="+opts.Parent)
 	}
+	if opts.Assignee != "" {
+		args = append(args, "--assignee="+opts.Assignee)
+	}
+	if opts.NoAssignee {
+		args = append(args, "--no-assignee")
+	}
 
 	out, err := b.run(args...)
 	if err != nil {
@@ -173,6 +181,47 @@ func (b *Beads) List(opts ListOptions) ([]*Issue, error) {
 	}
 
 	return issues, nil
+}
+
+// ListByAssignee returns all issues assigned to a specific assignee.
+// The assignee is typically in the format "rig/polecatName" (e.g., "gastown/Toast").
+func (b *Beads) ListByAssignee(assignee string) ([]*Issue, error) {
+	return b.List(ListOptions{
+		Status:   "all", // Include both open and closed for state derivation
+		Assignee: assignee,
+		Priority: -1, // No priority filter
+	})
+}
+
+// GetAssignedIssue returns the first open issue assigned to the given assignee.
+// Returns nil if no open issue is assigned.
+func (b *Beads) GetAssignedIssue(assignee string) (*Issue, error) {
+	issues, err := b.List(ListOptions{
+		Status:   "open",
+		Assignee: assignee,
+		Priority: -1,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Also check in_progress status explicitly
+	if len(issues) == 0 {
+		issues, err = b.List(ListOptions{
+			Status:   "in_progress",
+			Assignee: assignee,
+			Priority: -1,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(issues) == 0 {
+		return nil, nil
+	}
+
+	return issues[0], nil
 }
 
 // Ready returns issues that are ready to work (not blocked).
