@@ -241,10 +241,11 @@ func (m *Manager) Inject(polecat, message string) error {
 	}
 
 	// Use longer debounce for large messages (spawn context can be 1KB+)
-	// Scale delay based on message size: 100ms base + 50ms per KB
-	debounceMs := 100 + (len(message)/1024)*50
-	if debounceMs > 500 {
-		debounceMs = 500 // Cap at 500ms
+	// Claude needs time to process paste before Enter is sent
+	// Scale delay based on message size: 200ms base + 100ms per KB
+	debounceMs := 200 + (len(message)/1024)*100
+	if debounceMs > 1500 {
+		debounceMs = 1500 // Cap at 1.5s for large pastes
 	}
 
 	return m.tmux.SendKeysDebounced(sessionID, message, debounceMs)
