@@ -480,7 +480,8 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 		t.SetEnvironment(sessionID, "GT_CREW", name)
 
 		// Start claude with skip permissions (crew workers are trusted like Mayor)
-		if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
+		// Use SendKeysDelayed to allow shell initialization after NewSession
+		if err := t.SendKeysDelayed(sessionID, "claude --dangerously-skip-permissions", 200); err != nil {
 			return fmt.Errorf("starting claude: %w", err)
 		}
 
@@ -701,7 +702,8 @@ func runCrewRefresh(cmd *cobra.Command, args []string) error {
 	t.SetEnvironment(sessionID, "GT_CREW", name)
 
 	// Start claude
-	if err := t.SendKeys(sessionID, "claude"); err != nil {
+	// Use SendKeysDelayed to allow shell initialization after NewSession
+	if err := t.SendKeysDelayed(sessionID, "claude", 200); err != nil {
 		return fmt.Errorf("starting claude: %w", err)
 	}
 

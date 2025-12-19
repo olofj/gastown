@@ -337,15 +337,9 @@ func runMqSubmit(cmd *cobra.Command, args []string) error {
 	description := beads.FormatMRFields(mrFields)
 
 	// Create the merge-request issue
-	// Note: beads CLI requires type to be one of: task, bug, feature, epic
-	// Since merge-request is not a built-in type, we'll use a convention:
-	// Create as task with special title prefix and description fields.
-	// The "type" field in the description marks it as a merge-request.
-	description = "type: merge-request\n" + description
-
 	createOpts := beads.CreateOptions{
 		Title:       title,
-		Type:        "task", // Use task type, mark as MR in description
+		Type:        "merge-request",
 		Priority:    priority,
 		Description: description,
 	}

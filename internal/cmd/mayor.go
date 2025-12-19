@@ -124,8 +124,9 @@ func startMayorSession(t *tmux.Tmux) error {
 
 	// Launch Claude in a respawn loop - session survives restarts
 	// The startup hook handles 'gt prime' automatically
+	// Use SendKeysDelayed to allow shell initialization after NewSession
 	loopCmd := `while true; do echo "🏛️  Starting Mayor session..."; claude --dangerously-skip-permissions; echo ""; echo "Mayor exited. Restarting in 2s... (Ctrl-C to stop)"; sleep 2; done`
-	if err := t.SendKeys(MayorSessionName, loopCmd); err != nil {
+	if err := t.SendKeysDelayed(MayorSessionName, loopCmd, 200); err != nil {
 		return fmt.Errorf("sending command: %w", err)
 	}
 
