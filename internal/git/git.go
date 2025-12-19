@@ -27,6 +27,11 @@ func NewGit(workDir string) *Git {
 	return &Git{workDir: workDir}
 }
 
+// WorkDir returns the working directory for this Git instance.
+func (g *Git) WorkDir() string {
+	return g.workDir
+}
+
 // run executes a git command and returns stdout.
 func (g *Git) run(args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
@@ -198,6 +203,18 @@ func (g *Git) RemoteURL(remote string) (string, error) {
 // Merge merges the given branch into the current branch.
 func (g *Git) Merge(branch string) error {
 	_, err := g.run("merge", branch)
+	return err
+}
+
+// MergeNoFF merges the given branch with --no-ff flag and a custom message.
+func (g *Git) MergeNoFF(branch, message string) error {
+	_, err := g.run("merge", "--no-ff", "-m", message, branch)
+	return err
+}
+
+// DeleteRemoteBranch deletes a branch on the remote.
+func (g *Git) DeleteRemoteBranch(remote, branch string) error {
+	_, err := g.run("push", remote, "--delete", branch)
 	return err
 }
 
