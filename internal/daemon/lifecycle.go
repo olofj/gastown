@@ -22,7 +22,7 @@ type BeadsMessage struct {
 // ProcessLifecycleRequests checks for and processes lifecycle requests from the daemon inbox.
 func (d *Daemon) ProcessLifecycleRequests() {
 	// Get mail for daemon identity
-	cmd := exec.Command("bd", "mail", "inbox", "--identity", "daemon", "--json")
+	cmd := exec.Command("bd", "mail", "inbox", "--identity", "daemon/", "--json")
 	cmd.Dir = d.config.TownRoot
 
 	output, err := cmd.Output()
@@ -68,9 +68,15 @@ func (d *Daemon) ProcessLifecycleRequests() {
 // parseLifecycleRequest extracts a lifecycle request from a message.
 func (d *Daemon) parseLifecycleRequest(msg *BeadsMessage) *LifecycleRequest {
 	// Look for lifecycle keywords in subject/title
+	// Expected format: "LIFECYCLE: <role> requesting <action>"
 	title := strings.ToLower(msg.Title)
 
+	if !strings.HasPrefix(title, "lifecycle:") {
+		return nil
+	}
+
 	var action LifecycleAction
+	var from string
 
 	if strings.Contains(title, "cycle") || strings.Contains(title, "cycling") {
 		action = ActionCycle
@@ -79,12 +85,23 @@ func (d *Daemon) parseLifecycleRequest(msg *BeadsMessage) *LifecycleRequest {
 	} else if strings.Contains(title, "shutdown") || strings.Contains(title, "stop") {
 		action = ActionShutdown
 	} else {
-		// Not a lifecycle request
 		return nil
 	}
 
+	// Extract role from title: "LIFECYCLE: <role> requesting ..."
+	// Parse between "lifecycle: " and " requesting"
+	parts := strings.Split(title, " requesting")
+	if len(parts) >= 1 {
+		rolePart := strings.TrimPrefix(parts[0], "lifecycle:")
+		from = strings.TrimSpace(rolePart)
+	}
+
+	if from == "" {
+		from = msg.Sender // fallback
+	}
+
 	return &LifecycleRequest{
-		From:      msg.Sender,
+		From:      from,
 		Action:    action,
 		Timestamp: time.Now(),
 	}

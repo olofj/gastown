@@ -157,6 +157,63 @@ sync-branch: beads-sync    # Separate branch for beads commits
 
 **Why sync-branch?** When multiple agents share a beads database, using a dedicated sync branch prevents beads commits from interleaving with code commits on feature branches.
 
+#### Beads as Universal Data Plane
+
+Beads is the data plane for ALL Gas Town operations. Everything flows through beads:
+
+| Category | Description | Status |
+|----------|-------------|--------|
+| **Work items** | Issues, tasks, epics | Core |
+| **Mail** | Messages between agents (`type: message`) | Core |
+| **Merge requests** | Queue entries (`type: merge-request`) | In progress |
+| **Molecules** | Composable workflow templates | Planned (v1) |
+| **Timed beads** | Scheduled recurring work | Planned (post-v1) |
+| **Pinned beads** | Ongoing concerns that don't close | Planned (post-v1) |
+| **Resource beads** | Leases, locks, quotas | Planned (post-v1) |
+
+**Molecules** are the key v1 addition - crystallized workflow patterns that can be attached to work items. When attached, a molecule instantiates as child beads forming a DAG:
+
+```yaml
+# Example: engineer-in-box molecule
+molecule: engineer-in-box
+steps:
+  - id: design
+    prompt: "Write design doc"
+  - id: implement
+    depends: [design]
+    prompt: "Implement the design"
+  - id: review
+    depends: [implement]
+    prompt: "Self-review for issues"
+  - id: test
+    depends: [review]
+    prompt: "Run tests"
+  - id: submit
+    depends: [test]
+    prompt: "Create MR"
+```
+
+Usage:
+```bash
+gt spawn --issue gt-xyz --molecule engineer-in-box
+# Creates: gt-xyz.design, gt-xyz.implement, gt-xyz.review, gt-xyz.test, gt-xyz.submit
+# Polecat grinds through via `bd ready`
+```
+
+This enables "Engineer in a Box" - polecats that execute structured workflows with quality gates, not just "do this task."
+
+**The OS Metaphor**: Gas Town is an operating system for work:
+
+| OS Concept | Gas Town |
+|------------|----------|
+| Kernel | Daemon |
+| Process scheduler | Ready work + dependencies |
+| Timer interrupts | Timed beads |
+| Semaphores | Resource beads |
+| Background services | Pinned beads |
+| Process templates | Molecules |
+| IPC | Mail beads |
+
 ## Directory Structure
 
 ### Town Level
