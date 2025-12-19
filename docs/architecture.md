@@ -187,36 +187,7 @@ Beads is the data plane for ALL Gas Town operations. Everything flows through be
 | **Pinned beads** | Ongoing concerns that don't close | Planned (post-v1) |
 | **Resource beads** | Leases, locks, quotas | Planned (post-v1) |
 
-**Molecules** are the key v1 addition - crystallized workflow patterns that can be attached to work items. When attached, a molecule instantiates as child beads forming a DAG:
-
-```yaml
-# Example: engineer-in-box molecule
-molecule: engineer-in-box
-steps:
-  - id: design
-    prompt: "Write design doc"
-  - id: implement
-    depends: [design]
-    prompt: "Implement the design"
-  - id: review
-    depends: [implement]
-    prompt: "Self-review for issues"
-  - id: test
-    depends: [review]
-    prompt: "Run tests"
-  - id: submit
-    depends: [test]
-    prompt: "Create MR"
-```
-
-Usage:
-```bash
-gt spawn --issue gt-xyz --molecule engineer-in-box
-# Creates: gt-xyz.design, gt-xyz.implement, gt-xyz.review, gt-xyz.test, gt-xyz.submit
-# Polecat grinds through via `bd ready`
-```
-
-This enables "Engineer in a Box" - polecats that execute structured workflows with quality gates, not just "do this task."
+**Molecules** are crystallized workflow patterns that can be attached to work items. See the dedicated **Molecules** section below for full details on composition, nondeterministic idempotence, and built-in workflows.
 
 **The OS Metaphor**: Gas Town is an operating system for work:
 
@@ -229,6 +200,208 @@ This enables "Engineer in a Box" - polecats that execute structured workflows wi
 | Background services | Pinned beads |
 | Process templates | Molecules |
 | IPC | Mail beads |
+
+## Molecules: Composable Workflow Templates
+
+Molecules are **crystallized, composable, nondeterministic-idempotent workflow templates**. They encode structured workflows that any worker can execute, with full auditability and the ability for any worker to pick up where another left off.
+
+### Core Concepts
+
+| Concept | Name | Description |
+|---------|------|-------------|
+| Template | **Molecule** | Read-only workflow pattern (beads issue with type=molecule) |
+| Individual step | **Atom/Step** | Smallest unit of work within a molecule |
+| Dependency | **Bond** | Connection between steps (Needs: directive) |
+| Composed molecule | **Polymer/Derived** | Molecule built from other molecules |
+| Concrete work | **Instance** | Beads created when molecule is instantiated |
+
+### Molecule Format
+
+Molecules use a prose-based format with structured step definitions:
+
+```markdown
+## Molecule: engineer-in-box
+Full workflow from design to merge.
+
+## Step: design
+Think carefully about architecture. Consider:
+- Existing patterns in the codebase
+- Trade-offs between approaches
+- Testability and maintainability
+
+Write a brief design summary before proceeding.
+
+## Step: implement
+Write the code. Follow codebase conventions.
+Needs: design
+
+## Step: review
+Self-review the changes. Look for bugs, style issues, missing error handling.
+Needs: implement
+
+## Step: test
+Write and run tests. Cover happy path and edge cases.
+Needs: implement
+
+## Step: submit
+Submit for merge via refinery.
+Needs: review, test
+```
+
+**Key format elements:**
+- `## Step: <name>` - Step header with reference name
+- Prose instructions - What the step should accomplish
+- `Needs: <step1>, <step2>` - Dependencies (optional)
+- `Tier: haiku|sonnet|opus` - Model hint (optional)
+
+### Molecule Composition
+
+Molecules can include other molecules to create derived workflows:
+
+```markdown
+## Molecule: gastown-polecat
+Full workflow for Gas Town polecats including binary installation.
+
+Includes: mol-engineer-in-box
+
+## Step: install-binary
+After merge is submitted, rebuild and install the local gt binary.
+Run from the rig directory:
+  go build -o gt ./cmd/gt
+  go install ./cmd/gt
+Needs: submit
+```
+
+**Semantics:**
+- `Includes:` brings in all steps from the referenced molecule
+- New steps can depend on included steps (e.g., `Needs: submit`)
+- Multiple includes are supported for complex polymers
+- Dependencies are resolved transitively at parse time
+
+### Nondeterministic Idempotence
+
+This is the key property enabling distributed molecule execution:
+
+1. **Deterministic Structure**: Molecule defines exactly what steps exist and their dependencies
+2. **Nondeterministic Execution**: Any worker can execute any ready step
+3. **Idempotent Progress**: Completed steps stay completed; re-entry is safe
+
+**How it works:**
+
+```
+Worker A picks up "design" (pending → in_progress)
+Worker A completes "design" (in_progress → completed)
+Worker A dies before "implement"
+Worker B queries bd ready, sees "implement" is now ready
+Worker B picks up "implement" (any worker can continue)
+```
+
+This is like a **distributed work queue** backed by beads:
+- Beads is the queue (steps are issues with status)
+- Git is the persistence layer
+- No separate message broker needed
+- Full auditability of who did what, when
+
+### Step States
+
+```
+pending → in_progress → completed
+                     ↘ failed
+```
+
+| State | Meaning |
+|-------|---------|
+| `pending` (open) | Step not yet started, waiting for dependencies |
+| `in_progress` | Worker has claimed this step |
+| `completed` (closed) | Step finished successfully |
+| `failed` | Step failed (needs intervention) |
+
+**Recovery mechanism:**
+- If worker dies mid-step, step stays `in_progress`
+- After timeout (default 30 min), step can be reclaimed
+- `bd release <step-id>` manually releases stuck steps
+- Another worker can then pick it up
+
+### Instantiation
+
+When a molecule is attached to an issue:
+
+```bash
+gt spawn --issue gt-xyz --molecule mol-engineer-in-box
+```
+
+1. Molecule is validated (steps, dependencies)
+2. Child beads are created for each step:
+   - `gt-xyz.design`, `gt-xyz.implement`, etc.
+3. Inter-step dependencies are wired
+4. First ready step(s) become available via `bd ready`
+5. Polecat starts on first ready step
+
+**Provenance tracking:**
+- Each instance has an `instantiated_from` edge to the source molecule
+- Enables querying: "show all instances of mol-engineer-in-box"
+
+### Built-in Molecules
+
+Gas Town ships with three built-in molecules:
+
+**mol-engineer-in-box** (5 steps):
+```
+design → implement → review → test → submit
+```
+Full quality workflow with design phase and self-review.
+
+**mol-quick-fix** (3 steps):
+```
+implement → test → submit
+```
+Fast path for small, well-understood changes.
+
+**mol-research** (2 steps):
+```
+investigate → document
+```
+Exploration workflow for understanding problems.
+
+Seed built-in molecules with:
+```bash
+gt molecule seed
+```
+
+### Usage
+
+```bash
+# List available molecules
+gt molecule list
+
+# Show molecule details
+gt molecule show mol-engineer-in-box
+
+# Instantiate on an issue
+gt molecule instantiate mol-engineer-in-box --parent=gt-xyz
+
+# Spawn polecat with molecule
+gt spawn --issue gt-xyz --molecule mol-engineer-in-box
+```
+
+### Why Molecules?
+
+1. **Quality gates**: Every polecat follows the same review/test workflow
+2. **Error isolation**: Each step is a checkpoint; failures don't lose prior work
+3. **Parallelism**: Independent steps can run in parallel across workers
+4. **Auditability**: Full history of who did what step, when
+5. **Composability**: Build complex workflows from simple building blocks
+6. **Resumability**: Any worker can continue where another left off
+
+### Molecule vs Template
+
+Beads has two related concepts:
+- **bd template**: User-facing workflow templates with variable substitution
+- **gt molecule**: Agent-focused execution templates with step dependencies
+
+Both use similar structures but different semantics:
+- Templates focus on parameterization (`{{variable}}` substitution)
+- Molecules focus on execution (step states, nondeterministic dispatch)
 
 ## Directory Structure
 
