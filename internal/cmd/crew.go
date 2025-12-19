@@ -547,6 +547,11 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 			if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 				fmt.Printf("Warning: Could not send prime command: %v\n", err)
 			}
+			// Send crew resume prompt after prime completes
+			crewPrompt := "Read your mail, act on anything urgent, else await instructions."
+			if err := t.SendKeysDelayed(sessionID, crewPrompt, 3000); err != nil {
+				fmt.Printf("Warning: Could not send resume prompt: %v\n", err)
+			}
 		}
 	}
 
@@ -813,6 +818,12 @@ func runCrewRestart(cmd *cobra.Command, args []string) error {
 	if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 		// Non-fatal: Claude started but priming failed
 		fmt.Printf("Warning: Could not send prime command: %v\n", err)
+	}
+
+	// Send crew resume prompt after prime completes
+	crewPrompt := "Read your mail, act on anything urgent, else await instructions."
+	if err := t.SendKeysDelayed(sessionID, crewPrompt, 3000); err != nil {
+		fmt.Printf("Warning: Could not send resume prompt: %v\n", err)
 	}
 
 	fmt.Printf("%s Restarted crew workspace: %s/%s\n",
