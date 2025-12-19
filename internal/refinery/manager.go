@@ -294,15 +294,17 @@ func (m *Manager) ProcessQueue() error {
 
 // MergeResult contains the result of a merge attempt.
 type MergeResult struct {
-	Success   bool
-	Error     string
-	Conflict  bool
+	Success     bool
+	MergeCommit string // SHA of merge commit on success
+	Error       string
+	Conflict    bool
 	TestsFailed bool
 }
 
 // ProcessMR processes a single merge request.
 func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 	ref, _ := m.loadState()
+	config := m.getMergeConfig()
 
 	// Claim the MR (open → in_progress)
 	if err := mr.Claim(); err != nil {
@@ -320,8 +322,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 		return result
 	}
 
-	// 2. Attempt merge to target branch
-	// First, checkout target
+	// 2. Checkout target branch
 	if err := m.gitRun("checkout", mr.TargetBranch); err != nil {
 		result.Error = fmt.Sprintf("checkout target failed: %v", err)
 		m.completeMR(mr, "", result.Error) // Reopen for retry
@@ -331,7 +332,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 	// Pull latest
 	m.gitRun("pull", "origin", mr.TargetBranch) // Ignore errors
 
-	// Merge
+	// 3. Merge
 	err := m.gitRun("merge", "--no-ff", "-m",
 		fmt.Sprintf("Merge %s from %s", mr.Branch, mr.Worker),
 		"origin/"+mr.Branch)
@@ -353,10 +354,9 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 		return result
 	}
 
-	// 3. Run tests if configured
-	testCmd := m.getTestCommand()
-	if testCmd != "" {
-		if err := m.runTests(testCmd); err != nil {
+	// 4. Run tests if configured
+	if config.RunTests && config.TestCommand != "" {
+		if err := m.runTests(config.TestCommand); err != nil {
 			result.TestsFailed = true
 			result.Error = fmt.Sprintf("tests failed: %v", err)
 			// Reset to before merge
@@ -366,8 +366,8 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 		}
 	}
 
-	// 4. Push
-	if err := m.gitRun("push", "origin", mr.TargetBranch); err != nil {
+	// 5. Push with retry logic
+	if err := m.pushWithRetry(mr.TargetBranch, config); err != nil {
 		result.Error = fmt.Sprintf("push failed: %v", err)
 		// Reset to before merge
 		m.gitRun("reset", "--hard", "HEAD~1")
@@ -375,15 +375,24 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 		return result
 	}
 
+	// 6. Get merge commit SHA
+	mergeCommit, err := m.gitOutput("rev-parse", "HEAD")
+	if err != nil {
+		mergeCommit = "" // Non-fatal, continue
+	}
+
 	// Success!
 	result.Success = true
+	result.MergeCommit = mergeCommit
 	m.completeMR(mr, CloseReasonMerged, "")
 
 	// Notify worker of success
 	m.notifyWorkerMerged(mr)
 
 	// Optionally delete the merged branch
-	m.gitRun("push", "origin", "--delete", mr.Branch)
+	if config.DeleteMergedBranches {
+		m.gitRun("push", "origin", "--delete", mr.Branch)
+	}
 
 	return result
 }
@@ -485,6 +494,89 @@ func (m *Manager) gitRun(args ...string) error {
 	}
 
 	return nil
+}
+
+// gitOutput executes a git command and returns stdout.
+func (m *Manager) gitOutput(args ...string) (string, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = m.workDir
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := strings.TrimSpace(stderr.String())
+		if errMsg != "" {
+			return "", fmt.Errorf("%s", errMsg)
+		}
+		return "", err
+	}
+
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+// getMergeConfig loads the merge configuration from disk.
+// Returns default config if not configured.
+func (m *Manager) getMergeConfig() MergeConfig {
+	config := DefaultMergeConfig()
+
+	// Check for .gastown/config.json with merge_queue settings
+	configPath := filepath.Join(m.rig.Path, ".gastown", "config.json")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return config
+	}
+
+	var rawConfig struct {
+		MergeQueue *MergeConfig `json:"merge_queue"`
+		// Legacy field for backwards compatibility
+		TestCommand string `json:"test_command"`
+	}
+	if err := json.Unmarshal(data, &rawConfig); err != nil {
+		return config
+	}
+
+	// Apply merge_queue config if present
+	if rawConfig.MergeQueue != nil {
+		config = *rawConfig.MergeQueue
+		// Ensure defaults for zero values
+		if config.PushRetryCount == 0 {
+			config.PushRetryCount = 3
+		}
+		if config.PushRetryDelayMs == 0 {
+			config.PushRetryDelayMs = 1000
+		}
+	}
+
+	// Legacy: use test_command if merge_queue not set
+	if rawConfig.TestCommand != "" && config.TestCommand == "" {
+		config.TestCommand = rawConfig.TestCommand
+	}
+
+	return config
+}
+
+// pushWithRetry pushes to the target branch with exponential backoff retry.
+func (m *Manager) pushWithRetry(targetBranch string, config MergeConfig) error {
+	var lastErr error
+	delay := time.Duration(config.PushRetryDelayMs) * time.Millisecond
+
+	for attempt := 0; attempt <= config.PushRetryCount; attempt++ {
+		if attempt > 0 {
+			fmt.Printf("Push retry %d/%d after %v\n", attempt, config.PushRetryCount, delay)
+			time.Sleep(delay)
+			delay *= 2 // Exponential backoff
+		}
+
+		err := m.gitRun("push", "origin", targetBranch)
+		if err == nil {
+			return nil // Success
+		}
+		lastErr = err
+	}
+
+	return fmt.Errorf("push failed after %d retries: %v", config.PushRetryCount, lastErr)
 }
 
 // processExists checks if a process with the given PID exists.
