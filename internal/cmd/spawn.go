@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/steveyegge/gastown/internal/beads"
 	"github.com/steveyegge/gastown/internal/config"
 	"github.com/steveyegge/gastown/internal/git"
 	"github.com/steveyegge/gastown/internal/polecat"
@@ -30,12 +31,13 @@ var polecatNames = []string{
 
 // Spawn command flags
 var (
-	spawnIssue   string
-	spawnMessage string
-	spawnCreate  bool
-	spawnNoStart bool
-	spawnPolecat string
-	spawnRig     string
+	spawnIssue    string
+	spawnMessage  string
+	spawnCreate   bool
+	spawnNoStart  bool
+	spawnPolecat  string
+	spawnRig      string
+	spawnMolecule string
 )
 
 var spawnCmd = &cobra.Command{
@@ -47,6 +49,9 @@ var spawnCmd = &cobra.Command{
 Assigns an issue or task to a polecat and starts a session. If no polecat
 is specified, auto-selects an idle polecat in the rig.
 
+When --molecule is specified, the molecule is first instantiated on the parent
+issue (creating child steps), then the polecat is spawned on the first ready step.
+
 Examples:
   gt spawn gastown/Toast --issue gt-abc
   gt spawn gastown --issue gt-def          # auto-select polecat
@@ -55,7 +60,10 @@ Examples:
 
   # Flag-based selection (rig inferred from current directory):
   gt spawn --issue gt-xyz --polecat Angharad
-  gt spawn --issue gt-abc --rig gastown --polecat Toast`,
+  gt spawn --issue gt-abc --rig gastown --polecat Toast
+
+  # With molecule workflow:
+  gt spawn --issue gt-abc --molecule mol-engineer-box`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runSpawn,
 }
@@ -67,6 +75,7 @@ func init() {
 	spawnCmd.Flags().BoolVar(&spawnNoStart, "no-start", false, "Assign work but don't start session")
 	spawnCmd.Flags().StringVar(&spawnPolecat, "polecat", "", "Polecat name (alternative to positional arg)")
 	spawnCmd.Flags().StringVar(&spawnRig, "rig", "", "Rig name (defaults to current directory's rig)")
+	spawnCmd.Flags().StringVar(&spawnMolecule, "molecule", "", "Molecule ID to instantiate on the issue")
 
 	rootCmd.AddCommand(spawnCmd)
 }
@@ -84,6 +93,11 @@ type BeadsIssue struct {
 func runSpawn(cmd *cobra.Command, args []string) error {
 	if spawnIssue == "" && spawnMessage == "" {
 		return fmt.Errorf("must specify --issue or -m/--message")
+	}
+
+	// --molecule requires --issue
+	if spawnMolecule != "" && spawnIssue == "" {
+		return fmt.Errorf("--molecule requires --issue to be specified")
 	}
 
 	// Find workspace first (needed for rig inference)
@@ -168,6 +182,61 @@ func runSpawn(cmd *cobra.Command, args []string) error {
 	// Check polecat state
 	if pc.State == polecat.StateWorking {
 		return fmt.Errorf("polecat '%s' is already working on %s", polecatName, pc.Issue)
+	}
+
+	// Handle molecule instantiation if specified
+	if spawnMolecule != "" {
+		b := beads.New(r.Path)
+
+		// Get the molecule
+		mol, err := b.Show(spawnMolecule)
+		if err != nil {
+			return fmt.Errorf("getting molecule %s: %w", spawnMolecule, err)
+		}
+
+		if mol.Type != "molecule" {
+			return fmt.Errorf("%s is not a molecule (type: %s)", spawnMolecule, mol.Type)
+		}
+
+		// Validate the molecule
+		if err := beads.ValidateMolecule(mol); err != nil {
+			return fmt.Errorf("invalid molecule: %w", err)
+		}
+
+		// Get the parent issue
+		parent, err := b.Show(spawnIssue)
+		if err != nil {
+			return fmt.Errorf("getting parent issue %s: %w", spawnIssue, err)
+		}
+
+		// Instantiate the molecule
+		fmt.Printf("Instantiating molecule %s on %s...\n", spawnMolecule, spawnIssue)
+		steps, err := b.InstantiateMolecule(mol, parent, beads.InstantiateOptions{})
+		if err != nil {
+			return fmt.Errorf("instantiating molecule: %w", err)
+		}
+
+		fmt.Printf("%s Created %d steps\n", style.Bold.Render("✓"), len(steps))
+		for _, step := range steps {
+			fmt.Printf("  %s: %s\n", style.Dim.Render(step.ID), step.Title)
+		}
+
+		// Find the first ready step (one with no dependencies)
+		var firstReadyStep *beads.Issue
+		for _, step := range steps {
+			if len(step.DependsOn) == 0 {
+				firstReadyStep = step
+				break
+			}
+		}
+
+		if firstReadyStep == nil {
+			return fmt.Errorf("no ready step found in molecule (all steps have dependencies)")
+		}
+
+		// Switch to spawning on the first ready step
+		fmt.Printf("\nSpawning on first ready step: %s\n", firstReadyStep.ID)
+		spawnIssue = firstReadyStep.ID
 	}
 
 	// Get issue details if specified
