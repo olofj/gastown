@@ -555,6 +555,12 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Check if we're already in the target session
+	if isInTmuxSession(sessionID) {
+		fmt.Printf("Already in session %s\n", sessionID)
+		return nil
+	}
+
 	// Attach to session using exec to properly forward TTY
 	return attachToTmuxSession(sessionID)
 }
@@ -568,6 +574,26 @@ func isShellCommand(cmd string) bool {
 		}
 	}
 	return false
+}
+
+// isInTmuxSession checks if we're currently inside the target tmux session.
+func isInTmuxSession(targetSession string) bool {
+	// TMUX env var format: /tmp/tmux-501/default,12345,0
+	// We need to get the current session name via tmux display-message
+	tmuxEnv := os.Getenv("TMUX")
+	if tmuxEnv == "" {
+		return false // Not in tmux at all
+	}
+
+	// Get current session name
+	cmd := exec.Command("tmux", "display-message", "-p", "#{session_name}")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	currentSession := strings.TrimSpace(string(out))
+	return currentSession == targetSession
 }
 
 // attachToTmuxSession attaches to a tmux session with proper TTY forwarding.
