@@ -1,0 +1,111 @@
+// Package keepalive provides agent activity signaling via file touch.
+package keepalive
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/steveyegge/gastown/internal/workspace"
+)
+
+// State represents the keepalive file contents.
+type State struct {
+	LastCommand string    `json:"last_command"`
+	Timestamp   time.Time `json:"timestamp"`
+}
+
+// Touch updates the keepalive file in the workspace's .gastown directory.
+// It silently ignores errors (best-effort signaling).
+func Touch(command string) {
+	TouchWithArgs(command, nil)
+}
+
+// TouchWithArgs updates the keepalive file with the full command including args.
+// It silently ignores errors (best-effort signaling).
+func TouchWithArgs(command string, args []string) {
+	root, err := workspace.FindFromCwd()
+	if err != nil || root == "" {
+		return // Not in a workspace, nothing to do
+	}
+
+	// Build full command string
+	fullCmd := command
+	if len(args) > 0 {
+		fullCmd = command + " " + strings.Join(args, " ")
+	}
+
+	TouchInWorkspace(root, fullCmd)
+}
+
+// TouchInWorkspace updates the keepalive file in a specific workspace.
+// It silently ignores errors (best-effort signaling).
+func TouchInWorkspace(workspaceRoot, command string) {
+	gastown := filepath.Join(workspaceRoot, ".gastown")
+
+	// Ensure .gastown directory exists
+	if err := os.MkdirAll(gastown, 0755); err != nil {
+		return
+	}
+
+	state := State{
+		LastCommand: command,
+		Timestamp:   time.Now().UTC(),
+	}
+
+	data, err := json.Marshal(state)
+	if err != nil {
+		return
+	}
+
+	keepalivePath := filepath.Join(gastown, "keepalive.json")
+	_ = os.WriteFile(keepalivePath, data, 0644)
+}
+
+// Read returns the current keepalive state for the workspace.
+// Returns nil if the file doesn't exist or can't be read.
+func Read(workspaceRoot string) *State {
+	keepalivePath := filepath.Join(workspaceRoot, ".gastown", "keepalive.json")
+
+	data, err := os.ReadFile(keepalivePath)
+	if err != nil {
+		return nil
+	}
+
+	var state State
+	if err := json.Unmarshal(data, &state); err != nil {
+		return nil
+	}
+
+	return &state
+}
+
+// Age returns how old the keepalive signal is.
+// Returns a very large duration if the state is nil.
+func (s *State) Age() time.Duration {
+	if s == nil {
+		return 24 * time.Hour * 365 // Very stale
+	}
+	return time.Since(s.Timestamp)
+}
+
+// IsFresh returns true if the keepalive is less than 2 minutes old.
+func (s *State) IsFresh() bool {
+	return s != nil && s.Age() < 2*time.Minute
+}
+
+// IsStale returns true if the keepalive is 2-5 minutes old.
+func (s *State) IsStale() bool {
+	if s == nil {
+		return false
+	}
+	age := s.Age()
+	return age >= 2*time.Minute && age < 5*time.Minute
+}
+
+// IsVeryStale returns true if the keepalive is more than 5 minutes old.
+func (s *State) IsVeryStale() bool {
+	return s == nil || s.Age() >= 5*time.Minute
+}
