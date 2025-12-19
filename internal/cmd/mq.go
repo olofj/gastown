@@ -4,17 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/gastown/internal/beads"
+	"github.com/steveyegge/gastown/internal/config"
+	"github.com/steveyegge/gastown/internal/git"
 	"github.com/steveyegge/gastown/internal/refinery"
+	"github.com/steveyegge/gastown/internal/rig"
 	"github.com/steveyegge/gastown/internal/style"
+	"github.com/steveyegge/gastown/internal/workspace"
 )
 
 // MQ command flags
 var (
+	// Submit flags
+	mqSubmitBranch   string
+	mqSubmitIssue    string
+	mqSubmitEpic     string
+	mqSubmitPriority int
+
 	// Retry flags
 	mqRetryNow bool
 
@@ -37,6 +49,29 @@ var mqCmd = &cobra.Command{
 
 The merge queue tracks work branches from polecats waiting to be merged.
 Use these commands to view, submit, retry, and manage merge requests.`,
+}
+
+var mqSubmitCmd = &cobra.Command{
+	Use:   "submit",
+	Short: "Submit current branch to the merge queue",
+	Long: `Submit the current branch to the merge queue.
+
+Creates a merge-request bead that will be processed by the Engineer.
+
+Auto-detection:
+  - Branch: current git branch
+  - Issue: parsed from branch name (e.g., polecat/Nux/gt-xyz → gt-xyz)
+  - Worker: parsed from branch name
+  - Rig: detected from current directory
+  - Target: main (or integration/<epic> if --epic specified)
+  - Priority: inherited from source issue
+
+Examples:
+  gt mq submit                           # Auto-detect everything
+  gt mq submit --issue gt-abc            # Explicit issue
+  gt mq submit --epic gt-xyz             # Target integration branch
+  gt mq submit --priority 0              # Override priority (P0)`,
+	RunE: runMqSubmit,
 }
 
 var mqRetryCmd = &cobra.Command{
@@ -93,6 +128,12 @@ Examples:
 }
 
 func init() {
+	// Submit flags
+	mqSubmitCmd.Flags().StringVar(&mqSubmitBranch, "branch", "", "Source branch (default: current branch)")
+	mqSubmitCmd.Flags().StringVar(&mqSubmitIssue, "issue", "", "Source issue ID (default: parse from branch name)")
+	mqSubmitCmd.Flags().StringVar(&mqSubmitEpic, "epic", "", "Target epic's integration branch instead of main")
+	mqSubmitCmd.Flags().IntVarP(&mqSubmitPriority, "priority", "p", -1, "Override priority (0-4, default: inherit from issue)")
+
 	// Retry flags
 	mqRetryCmd.Flags().BoolVar(&mqRetryNow, "now", false, "Immediately process instead of waiting for refinery loop")
 
@@ -109,11 +150,202 @@ func init() {
 	_ = mqRejectCmd.MarkFlagRequired("reason")
 
 	// Add subcommands
+	mqCmd.AddCommand(mqSubmitCmd)
 	mqCmd.AddCommand(mqRetryCmd)
 	mqCmd.AddCommand(mqListCmd)
 	mqCmd.AddCommand(mqRejectCmd)
 
 	rootCmd.AddCommand(mqCmd)
+}
+
+// branchInfo holds parsed branch information.
+type branchInfo struct {
+	Branch string // Full branch name
+	Issue  string // Issue ID extracted from branch
+	Worker string // Worker name (polecat name)
+}
+
+// parseBranchName extracts issue ID and worker from a branch name.
+// Supports formats:
+//   - polecat/<worker>/<issue>  → issue=<issue>, worker=<worker>
+//   - <issue>                   → issue=<issue>, worker=""
+func parseBranchName(branch string) branchInfo {
+	info := branchInfo{Branch: branch}
+
+	// Try polecat/<worker>/<issue> format
+	if strings.HasPrefix(branch, "polecat/") {
+		parts := strings.SplitN(branch, "/", 3)
+		if len(parts) == 3 {
+			info.Worker = parts[1]
+			info.Issue = parts[2]
+			return info
+		}
+	}
+
+	// Try to find an issue ID pattern in the branch name
+	// Common patterns: prefix-xxx, prefix-xxx.n (subtask)
+	issuePattern := regexp.MustCompile(`([a-z]+-[a-z0-9]+(?:\.[0-9]+)?)`)
+	if matches := issuePattern.FindStringSubmatch(branch); len(matches) > 1 {
+		info.Issue = matches[1]
+	}
+
+	return info
+}
+
+// findCurrentRig determines the current rig from the working directory.
+// Returns the rig name and rig object, or an error if not in a rig.
+func findCurrentRig(townRoot string) (string, *rig.Rig, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", nil, fmt.Errorf("getting current directory: %w", err)
+	}
+
+	// Get relative path from town root to cwd
+	relPath, err := filepath.Rel(townRoot, cwd)
+	if err != nil {
+		return "", nil, fmt.Errorf("computing relative path: %w", err)
+	}
+
+	// The first component of the relative path should be the rig name
+	parts := strings.Split(relPath, string(filepath.Separator))
+	if len(parts) == 0 || parts[0] == "" || parts[0] == "." {
+		return "", nil, fmt.Errorf("not inside a rig directory")
+	}
+
+	rigName := parts[0]
+
+	// Load rig manager and get the rig
+	rigsConfigPath := filepath.Join(townRoot, "mayor", "rigs.json")
+	rigsConfig, err := config.LoadRigsConfig(rigsConfigPath)
+	if err != nil {
+		rigsConfig = &config.RigsConfig{Rigs: make(map[string]config.RigEntry)}
+	}
+
+	g := git.NewGit(townRoot)
+	rigMgr := rig.NewManager(townRoot, rigsConfig, g)
+	r, err := rigMgr.GetRig(rigName)
+	if err != nil {
+		return "", nil, fmt.Errorf("rig '%s' not found: %w", rigName, err)
+	}
+
+	return rigName, r, nil
+}
+
+func runMqSubmit(cmd *cobra.Command, args []string) error {
+	// Find workspace
+	townRoot, err := workspace.FindFromCwdOrError()
+	if err != nil {
+		return fmt.Errorf("not in a Gas Town workspace: %w", err)
+	}
+
+	// Find current rig
+	rigName, _, err := findCurrentRig(townRoot)
+	if err != nil {
+		return err
+	}
+
+	// Initialize git for the current directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting current directory: %w", err)
+	}
+	g := git.NewGit(cwd)
+
+	// Get current branch
+	branch := mqSubmitBranch
+	if branch == "" {
+		branch, err = g.CurrentBranch()
+		if err != nil {
+			return fmt.Errorf("getting current branch: %w", err)
+		}
+	}
+
+	if branch == "main" || branch == "master" {
+		return fmt.Errorf("cannot submit main/master branch to merge queue")
+	}
+
+	// Parse branch info
+	info := parseBranchName(branch)
+
+	// Override with explicit flags
+	issueID := mqSubmitIssue
+	if issueID == "" {
+		issueID = info.Issue
+	}
+	worker := info.Worker
+
+	if issueID == "" {
+		return fmt.Errorf("cannot determine source issue from branch '%s'; use --issue to specify", branch)
+	}
+
+	// Determine target branch
+	target := "main"
+	if mqSubmitEpic != "" {
+		target = "integration/" + mqSubmitEpic
+	}
+
+	// Initialize beads
+	bd := beads.New(cwd)
+
+	// Get source issue for priority inheritance
+	var priority int
+	if mqSubmitPriority >= 0 {
+		priority = mqSubmitPriority
+	} else {
+		// Try to inherit from source issue
+		sourceIssue, err := bd.Show(issueID)
+		if err != nil {
+			// Issue not found, use default priority
+			priority = 2
+		} else {
+			priority = sourceIssue.Priority
+		}
+	}
+
+	// Build title
+	title := fmt.Sprintf("Merge: %s", issueID)
+
+	// Build description with MR fields
+	mrFields := &beads.MRFields{
+		Branch:      branch,
+		Target:      target,
+		SourceIssue: issueID,
+		Worker:      worker,
+		Rig:         rigName,
+	}
+	description := beads.FormatMRFields(mrFields)
+
+	// Create the merge-request issue
+	// Note: beads CLI requires type to be one of: task, bug, feature, epic
+	// Since merge-request is not a built-in type, we'll use a convention:
+	// Create as task with special title prefix and description fields.
+	// The "type" field in the description marks it as a merge-request.
+	description = "type: merge-request\n" + description
+
+	createOpts := beads.CreateOptions{
+		Title:       title,
+		Type:        "task", // Use task type, mark as MR in description
+		Priority:    priority,
+		Description: description,
+	}
+
+	issue, err := bd.Create(createOpts)
+	if err != nil {
+		return fmt.Errorf("creating merge request: %w", err)
+	}
+
+	// Success output
+	fmt.Printf("%s Created merge request\n", style.Bold.Render("✓"))
+	fmt.Printf("  MR ID: %s\n", style.Bold.Render(issue.ID))
+	fmt.Printf("  Source: %s\n", branch)
+	fmt.Printf("  Target: %s\n", target)
+	fmt.Printf("  Issue: %s\n", issueID)
+	if worker != "" {
+		fmt.Printf("  Worker: %s\n", worker)
+	}
+	fmt.Printf("  Priority: P%d\n", priority)
+
+	return nil
 }
 
 func runMQRetry(cmd *cobra.Command, args []string) error {
