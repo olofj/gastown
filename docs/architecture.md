@@ -11,7 +11,7 @@ graph TB
     subgraph "Gas Town"
         Overseer["👤 Overseer<br/>(Human Operator)"]
 
-        subgraph Town["Town (~/ai/)"]
+        subgraph Town["Town (~/gt/)"]
             Mayor["🎩 Mayor<br/>(Global Coordinator)"]
 
             subgraph Rig1["Rig: wyvern"]
@@ -44,6 +44,10 @@ graph TB
 ```
 
 ## Core Concepts
+
+### Harness
+
+A **Harness** is the installation directory for Gas Town - the top-level workspace containing all components. The canonical GGT harness is at `~/gt/`. See [harness.md](harness.md) for setup details and migration from legacy configurations.
 
 ### Town
 
@@ -1281,7 +1285,7 @@ type Worker interface {
 ### Configuration
 
 ```yaml
-# ~/ai/config/outposts.yaml
+# ~/gt/config/outposts.yaml
 outposts:
   - name: local
     type: local
