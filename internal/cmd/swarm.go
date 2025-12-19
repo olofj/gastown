@@ -119,7 +119,7 @@ func init() {
 	swarmCreateCmd.Flags().StringSliceVar(&swarmWorkers, "worker", nil, "Polecat names to assign (repeatable)")
 	swarmCreateCmd.Flags().BoolVar(&swarmStart, "start", false, "Start swarm immediately after creation")
 	swarmCreateCmd.Flags().StringVar(&swarmTarget, "target", "main", "Target branch for landing")
-	swarmCreateCmd.MarkFlagRequired("epic")
+	_ = swarmCreateCmd.MarkFlagRequired("epic")
 
 	// Status flags
 	swarmStatusCmd.Flags().BoolVar(&swarmStatusJSON, "json", false, "Output as JSON")
@@ -605,8 +605,8 @@ func runSwarmLand(cmd *cobra.Command, args []string) error {
 	// Create manager and land
 	mgr := swarm.NewManager(foundRig)
 	// Reload swarm into manager
-	mgr.Create(sw.EpicID, sw.Workers, sw.TargetBranch)
-	mgr.UpdateState(sw.ID, sw.State)
+	_, _ = mgr.Create(sw.EpicID, sw.Workers, sw.TargetBranch)
+	_ = mgr.UpdateState(sw.ID, sw.State)
 
 	fmt.Printf("Landing swarm %s to %s...\n", swarmID, sw.TargetBranch)
 

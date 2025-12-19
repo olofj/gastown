@@ -114,14 +114,14 @@ func NewReplyMessage(from, to, subject, body string, original *Message) *Message
 // generateID creates a random message ID.
 func generateID() string {
 	b := make([]byte, 8)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return "msg-" + hex.EncodeToString(b)
 }
 
 // generateThreadID creates a random thread ID.
 func generateThreadID() string {
 	b := make([]byte, 6)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return "thread-" + hex.EncodeToString(b)
 }
 

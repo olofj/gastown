@@ -92,7 +92,7 @@ func (m *Manager) Status() (*Witness, error) {
 		if !processExists(w.PID) {
 			w.State = StateStopped
 			w.PID = 0
-			m.saveState(w)
+			_ = m.saveState(w)
 		}
 	}
 
@@ -150,7 +150,7 @@ func (m *Manager) Stop() error {
 	if w.PID > 0 && w.PID != os.Getpid() {
 		// Send SIGTERM
 		if proc, err := os.FindProcess(w.PID); err == nil {
-			proc.Signal(os.Interrupt)
+			_ = proc.Signal(os.Interrupt)
 		}
 	}
 
@@ -171,12 +171,10 @@ func (m *Manager) run(w *Witness) error {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			m.checkAndProcess(w)
-		}
+	for range ticker.C {
+		m.checkAndProcess(w)
 	}
+	return nil
 }
 
 // checkAndProcess performs health check and processes shutdown requests.
@@ -289,7 +287,7 @@ func (m *Manager) getWitnessMessages() ([]WitnessMessage, error) {
 func (m *Manager) ackMessage(id string) {
 	cmd := exec.Command("bd", "mail", "ack", id)
 	cmd.Dir = m.workDir
-	cmd.Run() // Ignore errors
+	_ = cmd.Run() // Ignore errors
 }
 
 // extractPolecatName extracts the polecat name from a lifecycle request body.

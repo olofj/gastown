@@ -141,7 +141,7 @@ func (r *Report) Print(w io.Writer, verbose bool) {
 	}
 
 	// Print summary
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w)
 	r.printSummary(w)
 }
 
@@ -157,18 +157,18 @@ func (r *Report) printCheck(w io.Writer, check *CheckResult, verbose bool) {
 		prefix = style.ErrorPrefix
 	}
 
-	fmt.Fprintf(w, "%s %s: %s\n", prefix, check.Name, check.Message)
+	_, _ = fmt.Fprintf(w, "%s %s: %s\n", prefix, check.Name, check.Message)
 
 	// Print details in verbose mode or for non-OK results
 	if len(check.Details) > 0 && (verbose || check.Status != StatusOK) {
 		for _, detail := range check.Details {
-			fmt.Fprintf(w, "    %s\n", detail)
+			_, _ = fmt.Fprintf(w, "    %s\n", detail)
 		}
 	}
 
 	// Print fix hint for errors/warnings
 	if check.FixHint != "" && check.Status != StatusOK {
-		fmt.Fprintf(w, "    %s %s\n", style.ArrowPrefix, check.FixHint)
+		_, _ = fmt.Fprintf(w, "    %s %s\n", style.ArrowPrefix, check.FixHint)
 	}
 }
 
@@ -188,5 +188,5 @@ func (r *Report) printSummary(w io.Writer) {
 		parts = append(parts, style.Error.Render(fmt.Sprintf("%d errors", r.Summary.Errors)))
 	}
 
-	fmt.Fprintln(w, strings.Join(parts, ", "))
+	_, _ = fmt.Fprintln(w, strings.Join(parts, ", "))
 }

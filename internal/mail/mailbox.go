@@ -93,7 +93,7 @@ func (m *Mailbox) listBeads() ([]*Message, error) {
 	var beadsMsgs []BeadsMessage
 	if err := json.Unmarshal(stdout.Bytes(), &beadsMsgs); err != nil {
 		// Empty inbox returns empty array or nothing
-		if len(stdout.Bytes()) == 0 || string(stdout.Bytes()) == "null" {
+		if len(stdout.Bytes()) == 0 || stdout.String() == "null" {
 			return nil, nil
 		}
 		return nil, err
@@ -116,7 +116,7 @@ func (m *Mailbox) listLegacy() ([]*Message, error) {
 		}
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var messages []*Message
 	scanner := bufio.NewScanner(file)
@@ -336,7 +336,7 @@ func (m *Mailbox) appendLegacy(msg *Message) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	data, err := json.Marshal(msg)
 	if err != nil {
@@ -364,15 +364,15 @@ func (m *Mailbox) rewriteLegacy(messages []*Message) error {
 	for _, msg := range messages {
 		data, err := json.Marshal(msg)
 		if err != nil {
-			file.Close()
-			os.Remove(tmpPath)
+			_ = file.Close()
+			_ = os.Remove(tmpPath)
 			return err
 		}
-		file.WriteString(string(data) + "\n")
+		_, _ = file.WriteString(string(data) + "\n")
 	}
 
 	if err := file.Close(); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return err
 	}
 
@@ -408,7 +408,7 @@ func (m *Mailbox) listByThreadBeads(threadID string) ([]*Message, error) {
 
 	var beadsMsgs []BeadsMessage
 	if err := json.Unmarshal(stdout.Bytes(), &beadsMsgs); err != nil {
-		if len(stdout.Bytes()) == 0 || string(stdout.Bytes()) == "null" {
+		if len(stdout.Bytes()) == 0 || stdout.String() == "null" {
 			return nil, nil
 		}
 		return nil, err

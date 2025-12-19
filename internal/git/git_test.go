@@ -21,10 +21,10 @@ func initTestRepo(t *testing.T) string {
 	// Configure user for commits
 	cmd = exec.Command("git", "config", "user.email", "test@test.com")
 	cmd.Dir = dir
-	cmd.Run()
+	_ = cmd.Run()
 	cmd = exec.Command("git", "config", "user.name", "Test User")
 	cmd.Dir = dir
-	cmd.Run()
+	_ = cmd.Run()
 
 	// Create initial commit
 	testFile := filepath.Join(dir, "README.md")
@@ -33,10 +33,10 @@ func initTestRepo(t *testing.T) string {
 	}
 	cmd = exec.Command("git", "add", ".")
 	cmd.Dir = dir
-	cmd.Run()
+	_ = cmd.Run()
 	cmd = exec.Command("git", "commit", "-m", "initial")
 	cmd.Dir = dir
-	cmd.Run()
+	_ = cmd.Run()
 
 	return dir
 }

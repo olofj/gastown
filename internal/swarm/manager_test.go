@@ -94,7 +94,7 @@ func TestManagerCancel(t *testing.T) {
 	m := NewManager(r)
 
 	swarm, _ := m.Create("epic-1", []string{"Toast"}, "main")
-	m.Start(swarm.ID)
+	_ = m.Start(swarm.ID)
 
 	if err := m.Cancel(swarm.ID, "user requested"); err != nil {
 		t.Errorf("Cancel failed: %v", err)
@@ -179,7 +179,7 @@ func TestManagerIsComplete(t *testing.T) {
 	}
 
 	// Complete the pending task
-	m.UpdateTaskState(swarm.ID, "task-1", TaskMerged)
+	_ = m.UpdateTaskState(swarm.ID, "task-1", TaskMerged)
 	complete, _ = m.IsComplete(swarm.ID)
 	if !complete {
 		t.Error("IsComplete should be true when all tasks merged")

@@ -501,8 +501,8 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 		}
 
 		// Set environment
-		t.SetEnvironment(sessionID, "GT_RIG", r.Name)
-		t.SetEnvironment(sessionID, "GT_CREW", name)
+		_ = t.SetEnvironment(sessionID, "GT_RIG", r.Name)
+		_ = t.SetEnvironment(sessionID, "GT_CREW", name)
 
 		// Start claude with skip permissions (crew workers are trusted like Mayor)
 		// Use SendKeysDelayed to allow shell initialization after NewSession
@@ -723,8 +723,8 @@ func runCrewRefresh(cmd *cobra.Command, args []string) error {
 	}
 
 	// Set environment
-	t.SetEnvironment(sessionID, "GT_RIG", r.Name)
-	t.SetEnvironment(sessionID, "GT_CREW", name)
+	_ = t.SetEnvironment(sessionID, "GT_RIG", r.Name)
+	_ = t.SetEnvironment(sessionID, "GT_CREW", name)
 
 	// Start claude
 	// Use SendKeysDelayed to allow shell initialization after NewSession

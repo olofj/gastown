@@ -260,7 +260,7 @@ func (t *Tmux) GetSessionInfo(name string) (*SessionInfo, error) {
 	}
 
 	windows := 0
-	fmt.Sscanf(parts[1], "%d", &windows)
+	_, _ = fmt.Sscanf(parts[1], "%d", &windows)
 
 	return &SessionInfo{
 		Name:     parts[0],

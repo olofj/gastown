@@ -16,7 +16,7 @@ func TestManagerAddAndGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a mock rig
 	rigPath := filepath.Join(tmpDir, "test-rig")
@@ -107,7 +107,7 @@ func TestManagerAddWithBranch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a mock rig
 	rigPath := filepath.Join(tmpDir, "test-rig")
@@ -176,7 +176,7 @@ func TestManagerList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a mock rig
 	rigPath := filepath.Join(tmpDir, "test-rig")
@@ -234,7 +234,7 @@ func TestManagerRemove(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a mock rig
 	rigPath := filepath.Join(tmpDir, "test-rig")

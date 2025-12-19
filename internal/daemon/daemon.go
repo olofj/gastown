@@ -61,7 +61,7 @@ func (d *Daemon) Run() error {
 	if err := os.WriteFile(d.config.PidFile, []byte(strconv.Itoa(os.Getpid())), 0644); err != nil {
 		return fmt.Errorf("writing PID file: %w", err)
 	}
-	defer os.Remove(d.config.PidFile)
+	defer func() { _ = os.Remove(d.config.PidFile) }()
 
 	// Update state
 	state := &State{
@@ -312,7 +312,7 @@ func IsRunning(townRoot string) (bool, int, error) {
 	err = process.Signal(syscall.Signal(0))
 	if err != nil {
 		// Process not running, clean up stale PID file
-		os.Remove(pidFile)
+		_ = os.Remove(pidFile)
 		return false, 0, nil
 	}
 
@@ -345,12 +345,12 @@ func StopDaemon(townRoot string) error {
 	// Check if still running
 	if err := process.Signal(syscall.Signal(0)); err == nil {
 		// Still running, force kill
-		process.Signal(syscall.SIGKILL)
+		_ = process.Signal(syscall.SIGKILL)
 	}
 
 	// Clean up PID file
 	pidFile := filepath.Join(townRoot, "daemon", "daemon.pid")
-	os.Remove(pidFile)
+	_ = os.Remove(pidFile)
 
 	return nil
 }

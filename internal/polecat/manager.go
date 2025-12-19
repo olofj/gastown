@@ -109,7 +109,7 @@ func (m *Manager) Add(name string) (*Polecat, error) {
 	// Save state
 	if err := m.saveState(polecat); err != nil {
 		// Clean up worktree on failure
-		mayorGit.WorktreeRemove(polecatPath, true)
+		_ = mayorGit.WorktreeRemove(polecatPath, true)
 		return nil, fmt.Errorf("saving state: %w", err)
 	}
 
@@ -148,7 +148,7 @@ func (m *Manager) Remove(name string, force bool) error {
 	}
 
 	// Prune any stale worktree entries
-	mayorGit.WorktreePrune()
+	_ = mayorGit.WorktreePrune()
 
 	return nil
 }

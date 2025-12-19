@@ -164,7 +164,7 @@ func init() {
 	mailSendCmd.Flags().StringVar(&mailType, "type", "notification", "Message type (task, scavenge, notification, reply)")
 	mailSendCmd.Flags().StringVar(&mailReplyTo, "reply-to", "", "Message ID this is replying to")
 	mailSendCmd.Flags().BoolVarP(&mailNotify, "notify", "n", false, "Send tmux notification to recipient")
-	mailSendCmd.MarkFlagRequired("subject")
+	_ = mailSendCmd.MarkFlagRequired("subject")
 
 	// Inbox flags
 	mailInboxCmd.Flags().BoolVar(&mailInboxJSON, "json", false, "Output as JSON")
@@ -363,7 +363,7 @@ func runMailRead(cmd *cobra.Command, args []string) error {
 	}
 
 	// Mark as read
-	mailbox.MarkRead(msgID)
+	_ = mailbox.MarkRead(msgID)
 
 	// JSON output
 	if mailReadJSON {
@@ -722,6 +722,6 @@ func runMailReply(cmd *cobra.Command, args []string) error {
 // generateThreadID creates a random thread ID for new message threads.
 func generateThreadID() string {
 	b := make([]byte, 6)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return "thread-" + hex.EncodeToString(b)
 }

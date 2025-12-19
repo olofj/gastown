@@ -120,8 +120,8 @@ func (m *Manager) Start(polecat string, opts StartOptions) error {
 	}
 
 	// Set environment
-	m.tmux.SetEnvironment(sessionID, "GT_RIG", m.rig.Name)
-	m.tmux.SetEnvironment(sessionID, "GT_POLECAT", polecat)
+	_ = m.tmux.SetEnvironment(sessionID, "GT_RIG", m.rig.Name)
+	_ = m.tmux.SetEnvironment(sessionID, "GT_POLECAT", polecat)
 
 	// Send initial command
 	command := opts.Command
@@ -137,9 +137,7 @@ func (m *Manager) Start(polecat string, opts StartOptions) error {
 	if opts.Issue != "" {
 		time.Sleep(500 * time.Millisecond)
 		prompt := fmt.Sprintf("Work on issue: %s", opts.Issue)
-		if err := m.Inject(polecat, prompt); err != nil {
-			// Non-fatal, just log
-		}
+		_ = m.Inject(polecat, prompt) // Non-fatal error
 	}
 
 	return nil
@@ -161,7 +159,7 @@ func (m *Manager) Stop(polecat string, force bool) error {
 
 	// Try graceful shutdown first (unless forced)
 	if !force {
-		m.tmux.SendKeysRaw(sessionID, "C-c") // Ctrl+C
+		_ = m.tmux.SendKeysRaw(sessionID, "C-c") // Ctrl+C
 		time.Sleep(100 * time.Millisecond)
 	}
 

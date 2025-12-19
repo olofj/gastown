@@ -120,7 +120,7 @@ func startMayorSession(t *tmux.Tmux) error {
 	}
 
 	// Set environment
-	t.SetEnvironment(MayorSessionName, "GT_ROLE", "mayor")
+	_ = t.SetEnvironment(MayorSessionName, "GT_ROLE", "mayor")
 
 	// Launch Claude in a respawn loop - session survives restarts
 	// The startup hook handles 'gt prime' automatically
@@ -148,7 +148,7 @@ func runMayorStop(cmd *cobra.Command, args []string) error {
 	fmt.Println("Stopping Mayor session...")
 
 	// Try graceful shutdown first
-	t.SendKeysRaw(MayorSessionName, "C-c")
+	_ = t.SendKeysRaw(MayorSessionName, "C-c")
 	time.Sleep(100 * time.Millisecond)
 
 	// Kill the session
@@ -246,7 +246,7 @@ func runMayorRestart(cmd *cobra.Command, args []string) error {
 	if running {
 		// Graceful restart: send Ctrl-C to exit Claude, loop will restart it
 		fmt.Println("Restarting Mayor (sending Ctrl-C to trigger respawn loop)...")
-		t.SendKeysRaw(MayorSessionName, "C-c")
+		_ = t.SendKeysRaw(MayorSessionName, "C-c")
 		fmt.Printf("%s Mayor will restart automatically. Session stays attached.\n", style.Bold.Render("✓"))
 		return nil
 	}

@@ -72,7 +72,7 @@ func (r *Router) Send(msg *Message) error {
 	}
 
 	// Notify recipient if they have an active session
-	r.notifyRecipient(msg)
+	_ = r.notifyRecipient(msg)
 
 	return nil
 }

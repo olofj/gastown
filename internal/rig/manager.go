@@ -194,7 +194,7 @@ func (m *Manager) AddRig(opts AddRigOptions) (*Rig, error) {
 	}
 
 	// Track cleanup on failure
-	cleanup := func() { os.RemoveAll(rigPath) }
+	cleanup := func() { _ = os.RemoveAll(rigPath) }
 	success := false
 	defer func() {
 		if !success {

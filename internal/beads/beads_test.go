@@ -70,7 +70,7 @@ func TestIsBeadsRepo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	b := New(tmpDir)
 	// This should return false since there's no .beads directory

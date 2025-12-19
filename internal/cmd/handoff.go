@@ -320,7 +320,7 @@ func setRequestingState(role Role, action HandoffAction, townRoot string) error 
 	// Read existing state or create new
 	state := make(map[string]interface{})
 	if data, err := os.ReadFile(stateFile); err == nil {
-		json.Unmarshal(data, &state)
+		_ = json.Unmarshal(data, &state)
 	}
 
 	// Set requesting state

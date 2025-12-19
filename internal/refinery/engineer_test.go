@@ -36,7 +36,7 @@ func TestEngineer_LoadConfig_NoFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	r := &rig.Rig{
 		Name: "test-rig",
@@ -62,7 +62,7 @@ func TestEngineer_LoadConfig_WithMergeQueue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Write config file
 	config := map[string]interface{}{
@@ -124,7 +124,7 @@ func TestEngineer_LoadConfig_NoMergeQueueSection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Write config file without merge_queue
 	config := map[string]interface{}{
@@ -160,7 +160,7 @@ func TestEngineer_LoadConfig_InvalidPollInterval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	config := map[string]interface{}{
 		"merge_queue": map[string]interface{}{

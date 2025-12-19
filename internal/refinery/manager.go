@@ -105,7 +105,7 @@ func (m *Manager) Status() (*Refinery, error) {
 			if ref.StartedAt == nil {
 				ref.StartedAt = &now
 			}
-			m.saveState(ref)
+			_ = m.saveState(ref)
 		}
 		return ref, nil
 	}
@@ -119,7 +119,7 @@ func (m *Manager) Status() (*Refinery, error) {
 		// Neither session nor process exists - mark as stopped
 		ref.State = StateStopped
 		ref.PID = 0
-		m.saveState(ref)
+		_ = m.saveState(ref)
 	}
 
 	return ref, nil
@@ -168,15 +168,15 @@ func (m *Manager) Start(foreground bool) error {
 	}
 
 	// Set environment variables
-	t.SetEnvironment(sessionID, "GT_RIG", m.rig.Name)
-	t.SetEnvironment(sessionID, "GT_REFINERY", "1")
+	_ = t.SetEnvironment(sessionID, "GT_RIG", m.rig.Name)
+	_ = t.SetEnvironment(sessionID, "GT_REFINERY", "1")
 
 	// Send the command to start refinery in foreground mode
 	// The foreground mode handles state updates and the processing loop
 	command := fmt.Sprintf("gt refinery start %s --foreground", m.rig.Name)
 	if err := t.SendKeys(sessionID, command); err != nil {
 		// Clean up the session on failure
-		t.KillSession(sessionID)
+		_ = t.KillSession(sessionID)
 		return fmt.Errorf("starting refinery: %w", err)
 	}
 
@@ -202,14 +202,14 @@ func (m *Manager) Stop() error {
 
 	// Kill tmux session if it exists
 	if sessionRunning {
-		t.KillSession(sessionID)
+		_ = t.KillSession(sessionID)
 	}
 
 	// If we have a PID and it's a different process, try to stop it gracefully
 	if ref.PID > 0 && ref.PID != os.Getpid() && processExists(ref.PID) {
 		// Send SIGTERM
 		if proc, err := os.FindProcess(ref.PID); err == nil {
-			proc.Signal(os.Interrupt)
+			_ = proc.Signal(os.Interrupt)
 		}
 	}
 
@@ -321,15 +321,13 @@ func (m *Manager) run(ref *Refinery) error {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			// Process queue
-			if err := m.ProcessQueue(); err != nil {
-				fmt.Printf("Queue processing error: %v\n", err)
-			}
+	for range ticker.C {
+		// Process queue
+		if err := m.ProcessQueue(); err != nil {
+			fmt.Printf("Queue processing error: %v\n", err)
 		}
 	}
+	return nil
 }
 
 // ProcessQueue processes all pending merge requests.
@@ -376,7 +374,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 		return MergeResult{Error: fmt.Sprintf("cannot claim MR: %v", err)}
 	}
 	ref.CurrentMR = mr
-	m.saveState(ref)
+	_ = m.saveState(ref)
 
 	result := MergeResult{}
 
@@ -395,7 +393,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 	}
 
 	// Pull latest
-	m.gitRun("pull", "origin", mr.TargetBranch) // Ignore errors
+	_ = m.gitRun("pull", "origin", mr.TargetBranch) // Ignore errors
 
 	// 3. Merge
 	err := m.gitRun("merge", "--no-ff", "-m",
@@ -408,7 +406,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 			result.Conflict = true
 			result.Error = "merge conflict"
 			// Abort the merge
-			m.gitRun("merge", "--abort")
+			_ = m.gitRun("merge", "--abort")
 			m.completeMR(mr, "", "merge conflict - polecat must rebase") // Reopen for rebase
 			// Notify worker about conflict
 			m.notifyWorkerConflict(mr)
@@ -425,7 +423,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 			result.TestsFailed = true
 			result.Error = fmt.Sprintf("tests failed: %v", err)
 			// Reset to before merge
-			m.gitRun("reset", "--hard", "HEAD~1")
+			_ = m.gitRun("reset", "--hard", "HEAD~1")
 			m.completeMR(mr, "", result.Error) // Reopen for fixes
 			return result
 		}
@@ -435,7 +433,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 	if err := m.pushWithRetry(mr.TargetBranch, config); err != nil {
 		result.Error = fmt.Sprintf("push failed: %v", err)
 		// Reset to before merge
-		m.gitRun("reset", "--hard", "HEAD~1")
+		_ = m.gitRun("reset", "--hard", "HEAD~1")
 		m.completeMR(mr, "", result.Error) // Reopen for retry
 		return result
 	}
@@ -456,7 +454,7 @@ func (m *Manager) ProcessMR(mr *MergeRequest) MergeResult {
 
 	// Optionally delete the merged branch
 	if config.DeleteMergedBranches {
-		m.gitRun("push", "origin", "--delete", mr.Branch)
+		_ = m.gitRun("push", "origin", "--delete", mr.Branch)
 	}
 
 	return result
@@ -500,7 +498,7 @@ func (m *Manager) completeMR(mr *MergeRequest, closeReason CloseReason, errMsg s
 		ref.Stats.TodayFailed++
 	}
 
-	m.saveState(ref)
+	_ = m.saveState(ref)
 }
 
 // getTestCommand returns the test command if configured.
@@ -689,7 +687,7 @@ Then the Refinery will retry the merge.`,
 			mr.Branch, mr.TargetBranch, mr.TargetBranch),
 		Priority: mail.PriorityHigh,
 	}
-	router.Send(msg)
+	_ = router.Send(msg)
 }
 
 // notifyWorkerMerged sends a success notification to a polecat.
@@ -705,7 +703,7 @@ Issue: %s
 Thank you for your contribution!`,
 			mr.Branch, mr.TargetBranch, mr.IssueID),
 	}
-	router.Send(msg)
+	_ = router.Send(msg)
 }
 
 // Common errors for MR operations
@@ -865,7 +863,7 @@ Please review the feedback and address the issues before resubmitting.`,
 			mr.Branch, mr.IssueID, reason),
 		Priority: mail.PriorityNormal,
 	}
-	router.Send(msg)
+	_ = router.Send(msg)
 }
 
 // findTownRoot walks up directories to find the town root.

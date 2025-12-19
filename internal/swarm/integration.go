@@ -37,9 +37,7 @@ func (m *Manager) CreateIntegrationBranch(swarmID string) error {
 	}
 
 	// Push to origin
-	if err := m.gitRun("push", "-u", "origin", branchName); err != nil {
-		// Non-fatal - may not have remote
-	}
+	_ = m.gitRun("push", "-u", "origin", branchName) // Non-fatal - may not have remote
 
 	return nil
 }
@@ -64,9 +62,7 @@ func (m *Manager) MergeToIntegration(swarmID, workerBranch string) error {
 	}
 
 	// Fetch the worker branch
-	if err := m.gitRun("fetch", "origin", workerBranch); err != nil {
-		// May not exist on remote, try local
-	}
+	_ = m.gitRun("fetch", "origin", workerBranch) // May not exist on remote, try local
 
 	// Attempt merge
 	err = m.gitRun("merge", "--no-ff", "-m",
@@ -102,7 +98,7 @@ func (m *Manager) LandToMain(swarmID string) error {
 	}
 
 	// Pull latest
-	m.gitRun("pull", "origin", swarm.TargetBranch) // Ignore errors
+	_ = m.gitRun("pull", "origin", swarm.TargetBranch) // Ignore errors
 
 	// Merge integration branch
 	err := m.gitRun("merge", "--no-ff", "-m",
@@ -138,15 +134,15 @@ func (m *Manager) CleanupBranches(swarmID string) error {
 	}
 
 	// Delete integration branch remotely
-	m.gitRun("push", "origin", "--delete", swarm.Integration) // Ignore errors
+	_ = m.gitRun("push", "origin", "--delete", swarm.Integration) // Ignore errors
 
 	// Delete worker branches
 	for _, task := range swarm.Tasks {
 		if task.Branch != "" {
 			// Local delete
-			m.gitRun("branch", "-D", task.Branch)
+			_ = m.gitRun("branch", "-D", task.Branch)
 			// Remote delete
-			m.gitRun("push", "origin", "--delete", task.Branch)
+			_ = m.gitRun("push", "origin", "--delete", task.Branch)
 		}
 	}
 

@@ -196,7 +196,7 @@ func (d *Daemon) restartSession(sessionName, identity string) error {
 	}
 
 	// Set environment
-	d.tmux.SetEnvironment(sessionName, "GT_ROLE", identity)
+	_ = d.tmux.SetEnvironment(sessionName, "GT_ROLE", identity)
 
 	// Send startup command
 	if err := d.tmux.SendKeys(sessionName, startCmd); err != nil {
