@@ -244,38 +244,14 @@ Run: bd mail inbox
 }
 
 // IsClaudeRunning checks if Claude appears to be running in the session.
-// It checks both the pane command (node) and pane content for Claude UI markers.
+// Only trusts the pane command - UI markers in scrollback cause false positives.
 func (t *Tmux) IsClaudeRunning(session string) bool {
-	// First check: pane command should be node (Claude is a node app)
+	// Check pane command - Claude runs as node
 	cmd, err := t.GetPaneCommand(session)
 	if err != nil {
 		return false
 	}
-	if cmd == "node" {
-		return true
-	}
-
-	// If we see a shell, check pane content for Claude UI markers
-	// This helps detect if user is in a subshell spawned FROM Claude
-	content, err := t.CapturePane(session, 30)
-	if err != nil {
-		return false
-	}
-
-	// Look for Claude's distinctive UI markers
-	claudeMarkers := []string{
-		"⏺", // Claude's bullet point
-		"⎿", // Claude's tree continuation
-		"─", // Claude's box drawing
-		"╭", // Claude's rounded corners
-	}
-	for _, marker := range claudeMarkers {
-		if strings.Contains(content, marker) {
-			return true
-		}
-	}
-
-	return false
+	return cmd == "node"
 }
 
 // WaitForCommand polls until the pane is NOT running one of the excluded commands.
