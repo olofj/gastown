@@ -278,3 +278,39 @@ BEADS_DIR=~/gt/gastown/mayor/.beads bd list
 - **GGT path**: `<rig>/mayor/.beads` for Go Gas Town structure
 
 The harness gives you a unified workspace for managing multiple projects while keeping your AI coordination infrastructure private.
+
+## Historical Context: PGT/GGT Separation
+
+During initial GGT (Go Gas Town) development, both implementations briefly shared `~/ai/`:
+
+```
+~/ai/ (legacy mixed harness - DO NOT USE for GGT)
+├── gastown/
+│   ├── .gastown/          # PGT marker
+│   └── mayor/             # OLD GGT clone (deprecated)
+├── mayor/                 # PGT Mayor home
+└── .beads/redirect        # OLD redirect (deprecated)
+```
+
+This caused confusion because:
+- `~/ai/gastown/` contained both PGT markers AND GGT code
+- `~/ai/mayor/` was PGT's Mayor home, conflicting with GGT concepts
+- The beads redirect pointed at GGT beads from a PGT harness
+
+The separation was completed by creating `~/gt/` as the dedicated GGT harness.
+
+### Cleanup Steps for ~/ai/
+
+If you have the legacy mixed harness, clean it up:
+
+```bash
+# Remove old GGT clone (beads are no longer here)
+rm -rf ~/ai/gastown/mayor/
+
+# Remove old beads redirect
+rm ~/ai/.beads/redirect
+
+# Keep PGT-specific files:
+# - ~/ai/mayor/ (PGT Mayor home)
+# - ~/ai/gastown/.gastown/ (PGT marker)
+```

@@ -12,13 +12,13 @@ Gas Town needs to scale beyond a single machine:
 
 ### Model A: "Town Clone" (VMs)
 
-Clone the entire `~/ai` workspace to a remote VM. It runs like a regular Gas Town:
+Clone the entire `~/gt` workspace to a remote VM. It runs like a regular Gas Town:
 
 ```
 ┌─────────────────────────────────────────┐
 │  GCE VM (or any Linux box)              │
 │                                         │
-│  ~/ai/                # Full town clone │
+│  ~/gt/                # Full town clone │
 │  ├── config/          # Town config     │
 │  ├── mayor/           # Mayor (or none) │
 │  ├── gastown/         # Rig with agents │
@@ -356,7 +356,7 @@ Workers need Claude API access:
 ## Configuration
 
 ```yaml
-# ~/ai/config/outposts.yaml
+# ~/gt/config/outposts.yaml
 outposts:
   # Always present - the local machine
   - name: local
