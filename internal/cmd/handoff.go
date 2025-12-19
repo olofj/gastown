@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/steveyegge/gastown/internal/beads"
 	"github.com/steveyegge/gastown/internal/style"
 	"github.com/steveyegge/gastown/internal/workspace"
 )
@@ -95,12 +96,12 @@ func runHandoff(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// For cycle, send handoff mail to self
+	// For cycle, update handoff bead for successor
 	if action == HandoffCycle {
 		if err := sendHandoffMail(role, townRoot); err != nil {
-			return fmt.Errorf("sending handoff mail: %w", err)
+			return fmt.Errorf("updating handoff bead: %w", err)
 		}
-		fmt.Printf("%s Sent handoff mail to self\n", style.Bold.Render("✓"))
+		fmt.Printf("%s Updated handoff bead for successor\n", style.Bold.Render("✓"))
 	}
 
 	// Send lifecycle request to manager
@@ -236,24 +237,12 @@ func getManager(role Role) string {
 	}
 }
 
-// sendHandoffMail sends a handoff message to ourselves for the successor to read.
+// sendHandoffMail updates the pinned handoff bead for the successor to read.
 func sendHandoffMail(role Role, townRoot string) error {
-	// Determine our address
-	var selfAddr string
-	switch role {
-	case RoleMayor:
-		selfAddr = "mayor/"
-	case RoleWitness:
-		selfAddr = "witness/" // Would need rig prefix
-	default:
-		selfAddr = string(role) + "/"
-	}
-
-	// Build handoff message
-	subject := "🤝 HANDOFF: Session cycling"
-	body := handoffMessage
-	if body == "" {
-		body = fmt.Sprintf(`Handoff from previous session.
+	// Build handoff content
+	content := handoffMessage
+	if content == "" {
+		content = fmt.Sprintf(`🤝 HANDOFF: Session cycling
 
 Time: %s
 Role: %s
@@ -264,15 +253,14 @@ Check gt mail inbox for messages received during transition.
 `, time.Now().Format(time.RFC3339), role)
 	}
 
-	// Send via bd mail (syntax: bd mail send <recipient> -s <subject> -m <body>)
-	cmd := exec.Command("bd", "mail", "send", selfAddr,
-		"-s", subject,
-		"-m", body,
-	)
-	cmd.Dir = townRoot
+	// Determine the handoff role key
+	// For role-specific handoffs, use the role name
+	roleKey := string(role)
 
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("%w: %s", err, string(out))
+	// Update the pinned handoff bead
+	bd := beads.New(townRoot)
+	if err := bd.UpdateHandoffContent(roleKey, content); err != nil {
+		return fmt.Errorf("updating handoff bead: %w", err)
 	}
 
 	return nil
