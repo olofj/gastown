@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/steveyegge/gastown/internal/beads"
+	"github.com/steveyegge/gastown/internal/git"
 	"github.com/steveyegge/gastown/internal/rig"
 )
 
@@ -67,6 +68,7 @@ func DefaultMergeQueueConfig() *MergeQueueConfig {
 type Engineer struct {
 	rig     *rig.Rig
 	beads   *beads.Beads
+	git     *git.Git
 	config  *MergeQueueConfig
 	workDir string
 
@@ -79,6 +81,7 @@ func NewEngineer(r *rig.Rig) *Engineer {
 	return &Engineer{
 		rig:     r,
 		beads:   beads.New(r.Path),
+		git:     git.NewGit(r.Path),
 		config:  DefaultMergeQueueConfig(),
 		workDir: r.Path,
 		stopCh:  make(chan struct{}),
@@ -256,12 +259,7 @@ func (e *Engineer) processOnce(ctx context.Context) error {
 
 	// 6. Handle result
 	if result.Success {
-		// Close with merged reason
-		reason := fmt.Sprintf("merged: %s", result.MergeCommit)
-		if err := e.beads.CloseWithReason(reason, mr.ID); err != nil {
-			fmt.Printf("[Engineer] Warning: failed to close MR %s: %v\n", mr.ID, err)
-		}
-		fmt.Printf("[Engineer] ✓ Merged: %s\n", mr.ID)
+		e.handleSuccess(mr, result)
 	} else {
 		// Failure handling (detailed implementation in gt-3x1.4)
 		e.handleFailure(mr, result)
@@ -303,6 +301,56 @@ func (e *Engineer) ProcessMR(ctx context.Context, mr *beads.Issue) ProcessResult
 		Success: false,
 		Error:   "ProcessMR not fully implemented (see gt-3x1.2)",
 	}
+}
+
+// handleSuccess handles a successful merge completion.
+// Steps:
+// 1. Update MR with merge_commit SHA
+// 2. Close MR with reason 'merged'
+// 3. Close source issue with reference to MR
+// 4. Delete source branch if configured
+// 5. Log success
+func (e *Engineer) handleSuccess(mr *beads.Issue, result ProcessResult) {
+	// Parse MR fields from description
+	mrFields := beads.ParseMRFields(mr)
+	if mrFields == nil {
+		mrFields = &beads.MRFields{}
+	}
+
+	// 1. Update MR with merge_commit SHA
+	mrFields.MergeCommit = result.MergeCommit
+	mrFields.CloseReason = "merged"
+	newDesc := beads.SetMRFields(mr, mrFields)
+	if err := e.beads.Update(mr.ID, beads.UpdateOptions{Description: &newDesc}); err != nil {
+		fmt.Printf("[Engineer] Warning: failed to update MR %s with merge commit: %v\n", mr.ID, err)
+	}
+
+	// 2. Close MR with reason 'merged'
+	if err := e.beads.CloseWithReason("merged", mr.ID); err != nil {
+		fmt.Printf("[Engineer] Warning: failed to close MR %s: %v\n", mr.ID, err)
+	}
+
+	// 3. Close source issue with reference to MR
+	if mrFields.SourceIssue != "" {
+		closeReason := fmt.Sprintf("Merged in %s", mr.ID)
+		if err := e.beads.CloseWithReason(closeReason, mrFields.SourceIssue); err != nil {
+			fmt.Printf("[Engineer] Warning: failed to close source issue %s: %v\n", mrFields.SourceIssue, err)
+		} else {
+			fmt.Printf("[Engineer] Closed source issue: %s\n", mrFields.SourceIssue)
+		}
+	}
+
+	// 4. Delete source branch if configured
+	if e.config.DeleteMergedBranches && mrFields.Branch != "" {
+		if err := e.git.DeleteRemoteBranch("origin", mrFields.Branch); err != nil {
+			fmt.Printf("[Engineer] Warning: failed to delete branch %s: %v\n", mrFields.Branch, err)
+		} else {
+			fmt.Printf("[Engineer] Deleted branch: %s\n", mrFields.Branch)
+		}
+	}
+
+	// 5. Log success
+	fmt.Printf("[Engineer] ✓ Merged: %s (commit: %s)\n", mr.ID, result.MergeCommit)
 }
 
 // handleFailure handles a failed merge request.

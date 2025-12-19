@@ -200,10 +200,21 @@ func TestNewEngineer(t *testing.T) {
 	if e.beads == nil {
 		t.Error("expected beads client to be initialized")
 	}
+	if e.git == nil {
+		t.Error("expected git client to be initialized")
+	}
 	if e.config == nil {
 		t.Error("expected config to be initialized with defaults")
 	}
 	if e.stopCh == nil {
 		t.Error("expected stopCh to be initialized")
+	}
+}
+
+func TestEngineer_DeleteMergedBranchesConfig(t *testing.T) {
+	// Test that DeleteMergedBranches is true by default
+	cfg := DefaultMergeQueueConfig()
+	if !cfg.DeleteMergedBranches {
+		t.Error("expected DeleteMergedBranches to be true by default")
 	}
 }
