@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -85,12 +86,17 @@ Shows session status, rig, and polecat name. Use --rig to filter by rig.`,
 }
 
 var sessionCaptureCmd = &cobra.Command{
-	Use:   "capture <rig>/<polecat>",
+	Use:   "capture <rig>/<polecat> [count]",
 	Short: "Capture recent session output",
 	Long: `Capture recent output from a polecat session.
 
-Returns the last N lines of terminal output. Useful for checking progress.`,
-	Args: cobra.ExactArgs(1),
+Returns the last N lines of terminal output. Useful for checking progress.
+
+Examples:
+  gt session capture wyvern/Toast        # Last 100 lines (default)
+  gt session capture wyvern/Toast 50     # Last 50 lines
+  gt session capture wyvern/Toast -n 50  # Same as above`,
+	Args: cobra.RangeArgs(1, 2),
 	RunE: runSessionCapture,
 }
 
@@ -352,7 +358,20 @@ func runSessionCapture(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	output, err := mgr.Capture(polecatName, sessionLines)
+	// Use positional count if provided, otherwise use flag value
+	lines := sessionLines
+	if len(args) > 1 {
+		n, err := strconv.Atoi(args[1])
+		if err != nil {
+			return fmt.Errorf("invalid line count '%s': must be a number", args[1])
+		}
+		if n <= 0 {
+			return fmt.Errorf("line count must be positive, got %d", n)
+		}
+		lines = n
+	}
+
+	output, err := mgr.Capture(polecatName, lines)
 	if err != nil {
 		return fmt.Errorf("capturing output: %w", err)
 	}
