@@ -21,19 +21,26 @@ var (
 
 // Manager handles polecat lifecycle.
 type Manager struct {
-	rig   *rig.Rig
-	git   *git.Git
-	beads *beads.Beads
+	rig      *rig.Rig
+	git      *git.Git
+	beads    *beads.Beads
+	namePool *NamePool
 }
 
 // NewManager creates a new polecat manager.
 func NewManager(r *rig.Rig, g *git.Git) *Manager {
 	// Use the mayor's rig directory for beads operations (rig-level beads)
 	mayorRigPath := filepath.Join(r.Path, "mayor", "rig")
+
+	// Initialize name pool
+	pool := NewNamePool(r.Path, r.Name)
+	_ = pool.Load() // Load existing state, ignore errors for new rigs
+
 	return &Manager{
-		rig:   r,
-		git:   g,
-		beads: beads.New(mayorRigPath),
+		rig:      r,
+		git:      g,
+		beads:    beads.New(mayorRigPath),
+		namePool: pool,
 	}
 }
 
@@ -150,7 +157,59 @@ func (m *Manager) Remove(name string, force bool) error {
 	// Prune any stale worktree entries
 	_ = mayorGit.WorktreePrune()
 
+	// Release name back to pool if it's a pooled name
+	m.namePool.Release(name)
+	_ = m.namePool.Save()
+
 	return nil
+}
+
+// AllocateName allocates a name from the name pool.
+// Returns a pooled name (polecat-01 through polecat-50) if available,
+// otherwise returns an overflow name (rigname-N).
+func (m *Manager) AllocateName() (string, error) {
+	// First reconcile pool with existing polecats to handle stale state
+	m.ReconcilePool()
+
+	name, err := m.namePool.Allocate()
+	if err != nil {
+		return "", err
+	}
+
+	if err := m.namePool.Save(); err != nil {
+		return "", fmt.Errorf("saving pool state: %w", err)
+	}
+
+	return name, nil
+}
+
+// ReleaseName releases a name back to the pool.
+// This is called when a polecat is removed.
+func (m *Manager) ReleaseName(name string) {
+	m.namePool.Release(name)
+	_ = m.namePool.Save()
+}
+
+// ReconcilePool syncs pool state with existing polecat directories.
+// This should be called to recover from crashes or stale state.
+func (m *Manager) ReconcilePool() {
+	polecats, err := m.List()
+	if err != nil {
+		return
+	}
+
+	var names []string
+	for _, p := range polecats {
+		names = append(names, p.Name)
+	}
+
+	m.namePool.Reconcile(names)
+	_ = m.namePool.Save()
+}
+
+// PoolStatus returns information about the name pool.
+func (m *Manager) PoolStatus() (active int, names []string) {
+	return m.namePool.ActiveCount(), m.namePool.ActiveNames()
 }
 
 // List returns all polecats in the rig.

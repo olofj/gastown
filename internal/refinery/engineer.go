@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/steveyegge/gastown/internal/beads"
+	"github.com/steveyegge/gastown/internal/mail"
 	"github.com/steveyegge/gastown/internal/rig"
 )
 
@@ -259,14 +260,8 @@ func (e *Engineer) processOnce(ctx context.Context) error {
 
 	// 6. Handle result
 	if result.Success {
-		// Close with merged reason
-		reason := fmt.Sprintf("merged: %s", result.MergeCommit)
-		if err := e.beads.CloseWithReason(reason, mr.ID); err != nil {
-			fmt.Printf("[Engineer] Warning: failed to close MR %s: %v\n", mr.ID, err)
-		}
-		fmt.Printf("[Engineer] ✓ Merged: %s\n", mr.ID)
+		e.handleSuccess(mr, result)
 	} else {
-		// Failure handling (detailed implementation in gt-3x1.4)
 		e.handleFailure(mr, result)
 	}
 
@@ -283,7 +278,7 @@ type ProcessResult struct {
 }
 
 // ProcessMR processes a single merge request.
-// It fetches the branch, checks for conflicts, and executes the merge.
+// It performs: fetch, conflict check, merge, test, push.
 func (e *Engineer) ProcessMR(ctx context.Context, mr *beads.Issue) ProcessResult {
 	// Parse MR fields from description
 	mrFields := beads.ParseMRFields(mr)
@@ -294,20 +289,20 @@ func (e *Engineer) ProcessMR(ctx context.Context, mr *beads.Issue) ProcessResult
 		}
 	}
 
-	if mrFields.Branch == "" {
-		return ProcessResult{
-			Success: false,
-			Error:   "branch field is required in merge request",
-		}
+	// Use config target if MR target is empty
+	targetBranch := mrFields.Target
+	if targetBranch == "" {
+		targetBranch = e.config.TargetBranch
 	}
 
 	fmt.Printf("[Engineer] Processing MR:\n")
 	fmt.Printf("  Branch: %s\n", mrFields.Branch)
-	fmt.Printf("  Target: %s\n", mrFields.Target)
+	fmt.Printf("  Target: %s\n", targetBranch)
 	fmt.Printf("  Worker: %s\n", mrFields.Worker)
+	fmt.Printf("  Source Issue: %s\n", mrFields.SourceIssue)
 
-	// Step 1: Fetch the source branch
-	fmt.Printf("[Engineer] Fetching branch origin/%s\n", mrFields.Branch)
+	// 1. Fetch the source branch
+	fmt.Printf("[Engineer] Fetching origin/%s...\n", mrFields.Branch)
 	if err := e.gitRun("fetch", "origin", mrFields.Branch); err != nil {
 		return ProcessResult{
 			Success: false,
@@ -315,69 +310,39 @@ func (e *Engineer) ProcessMR(ctx context.Context, mr *beads.Issue) ProcessResult
 		}
 	}
 
-	// Step 2: Check for conflicts before attempting merge (optional pre-check)
-	// This is done implicitly during the merge step in ExecuteMerge
-
-	// Step 3: Execute the merge, test, and push
-	return e.ExecuteMerge(ctx, mr, mrFields)
-}
-
-// handleFailure handles a failed merge request.
-// This is a placeholder that will be fully implemented in gt-3x1.4.
-func (e *Engineer) handleFailure(mr *beads.Issue, result ProcessResult) {
-	// Reopen the MR (back to open status for rework)
-	open := "open"
-	if err := e.beads.Update(mr.ID, beads.UpdateOptions{Status: &open}); err != nil {
-		fmt.Printf("[Engineer] Warning: failed to reopen MR %s: %v\n", mr.ID, err)
-	}
-
-	// Log the failure
-	fmt.Printf("[Engineer] ✗ Failed: %s - %s\n", mr.ID, result.Error)
-
-	// Full failure handling (assign back to worker, labels) in gt-3x1.4
-}
-
-// ExecuteMerge performs the actual git merge, test, and push operations.
-// Steps:
-// 1. git checkout <target>
-// 2. git merge <branch> --no-ff -m 'Merge <branch>: <title>'
-// 3. If config.run_tests: run test_command, if failed: reset and return failure
-// 4. git push origin <target> (with retry logic)
-// 5. Return Success with merge_commit SHA
-func (e *Engineer) ExecuteMerge(ctx context.Context, mr *beads.Issue, mrFields *beads.MRFields) ProcessResult {
-	target := mrFields.Target
-	if target == "" {
-		target = e.config.TargetBranch
-	}
-	branch := mrFields.Branch
-
-	fmt.Printf("[Engineer] Merging %s → %s\n", branch, target)
-
-	// 1. Checkout target branch
-	if err := e.gitRun("checkout", target); err != nil {
+	// 2. Checkout target branch and pull latest
+	fmt.Printf("[Engineer] Checking out %s...\n", targetBranch)
+	if err := e.gitRun("checkout", targetBranch); err != nil {
 		return ProcessResult{
 			Success: false,
 			Error:   fmt.Sprintf("checkout target failed: %v", err),
 		}
 	}
 
-	// Pull latest from target to ensure we're up to date
-	if err := e.gitRun("pull", "origin", target); err != nil {
-		// Non-fatal warning - target might not exist on remote yet
-		fmt.Printf("[Engineer] Warning: pull failed (may be expected): %v\n", err)
+	// Pull latest (ignore errors - might be up to date)
+	_ = e.gitRun("pull", "origin", targetBranch)
+
+	// 3. Check for conflicts before merging (dry-run merge)
+	fmt.Printf("[Engineer] Checking for conflicts...\n")
+	if conflicts := e.checkConflicts(mrFields.Branch, targetBranch); conflicts != "" {
+		return ProcessResult{
+			Success:  false,
+			Error:    fmt.Sprintf("merge conflict: %s", conflicts),
+			Conflict: true,
+		}
 	}
 
-	// 2. Merge the branch
-	mergeMsg := fmt.Sprintf("Merge %s: %s", branch, mr.Title)
-	err := e.gitRun("merge", "origin/"+branch, "--no-ff", "-m", mergeMsg)
-	if err != nil {
+	// 4. Merge the branch
+	fmt.Printf("[Engineer] Merging origin/%s...\n", mrFields.Branch)
+	mergeMsg := fmt.Sprintf("Merge %s: %s", mrFields.Branch, mr.Title)
+	if err := e.gitRun("merge", "--no-ff", "-m", mergeMsg, "origin/"+mrFields.Branch); err != nil {
 		errStr := err.Error()
 		if strings.Contains(errStr, "CONFLICT") || strings.Contains(errStr, "conflict") {
-			// Abort the merge to clean up
+			// Abort the merge
 			_ = e.gitRun("merge", "--abort")
 			return ProcessResult{
 				Success:  false,
-				Error:    "merge conflict",
+				Error:    "merge conflict during merge",
 				Conflict: true,
 			}
 		}
@@ -387,16 +352,11 @@ func (e *Engineer) ExecuteMerge(ctx context.Context, mr *beads.Issue, mrFields *
 		}
 	}
 
-	// 3. Run tests if configured
-	if e.config.RunTests {
-		testCmd := e.config.TestCommand
-		if testCmd == "" {
-			testCmd = "go test ./..."
-		}
-		fmt.Printf("[Engineer] Running tests: %s\n", testCmd)
-		if err := e.runTests(testCmd); err != nil {
+	// 5. Run tests if configured
+	if e.config.RunTests && e.config.TestCommand != "" {
+		fmt.Printf("[Engineer] Running tests: %s\n", e.config.TestCommand)
+		if err := e.runTests(e.config.TestCommand); err != nil {
 			// Reset to before merge
-			fmt.Printf("[Engineer] Tests failed, resetting merge\n")
 			_ = e.gitRun("reset", "--hard", "HEAD~1")
 			return ProcessResult{
 				Success:     false,
@@ -404,13 +364,13 @@ func (e *Engineer) ExecuteMerge(ctx context.Context, mr *beads.Issue, mrFields *
 				TestsFailed: true,
 			}
 		}
-		fmt.Printf("[Engineer] Tests passed\n")
+		fmt.Println("[Engineer] Tests passed")
 	}
 
-	// 4. Push with retry logic
-	if err := e.pushWithRetry(target); err != nil {
-		// Reset to before merge on push failure
-		fmt.Printf("[Engineer] Push failed, resetting merge\n")
+	// 6. Push to origin with retry
+	fmt.Printf("[Engineer] Pushing to origin/%s...\n", targetBranch)
+	if err := e.pushWithRetry(targetBranch); err != nil {
+		// Reset to before merge
 		_ = e.gitRun("reset", "--hard", "HEAD~1")
 		return ProcessResult{
 			Success: false,
@@ -418,74 +378,50 @@ func (e *Engineer) ExecuteMerge(ctx context.Context, mr *beads.Issue, mrFields *
 		}
 	}
 
-	// 5. Get merge commit SHA
+	// 7. Get merge commit SHA
 	mergeCommit, err := e.gitOutput("rev-parse", "HEAD")
 	if err != nil {
-		mergeCommit = "unknown"
+		mergeCommit = "unknown" // Non-fatal, continue
 	}
 
-	fmt.Printf("[Engineer] Merged successfully: %s\n", mergeCommit)
+	// 8. Delete source branch if configured
+	if e.config.DeleteMergedBranches {
+		fmt.Printf("[Engineer] Deleting merged branch origin/%s...\n", mrFields.Branch)
+		_ = e.gitRun("push", "origin", "--delete", mrFields.Branch)
+	}
+
+	fmt.Printf("[Engineer] ✓ Merged successfully at %s\n", mergeCommit)
 	return ProcessResult{
 		Success:     true,
 		MergeCommit: mergeCommit,
 	}
 }
 
-// pushWithRetry pushes to the target branch with exponential backoff retry.
-// Uses 3 retries with 1s base delay by default.
-func (e *Engineer) pushWithRetry(targetBranch string) error {
-	const maxRetries = 3
-	baseDelay := time.Second
-
-	var lastErr error
-	delay := baseDelay
-
-	for attempt := 0; attempt <= maxRetries; attempt++ {
-		if attempt > 0 {
-			fmt.Printf("[Engineer] Push retry %d/%d after %v\n", attempt, maxRetries, delay)
-			time.Sleep(delay)
-			delay *= 2 // Exponential backoff
-		}
-
-		err := e.gitRun("push", "origin", targetBranch)
-		if err == nil {
-			return nil
-		}
-		lastErr = err
+// checkConflicts checks if merging branch into target would cause conflicts.
+// Returns empty string if no conflicts, or a description of conflicts.
+func (e *Engineer) checkConflicts(branch, target string) string {
+	// Use git merge-tree to check for conflicts without actually merging
+	// First get the merge base
+	mergeBase, err := e.gitOutput("merge-base", target, "origin/"+branch)
+	if err != nil {
+		return fmt.Sprintf("failed to find merge base: %v", err)
 	}
 
-	return fmt.Errorf("push failed after %d retries: %v", maxRetries, lastErr)
-}
-
-// runTests executes the test command.
-func (e *Engineer) runTests(testCmd string) error {
-	parts := strings.Fields(testCmd)
-	if len(parts) == 0 {
-		return nil
-	}
-
-	cmd := exec.Command(parts[0], parts[1:]...)
+	// Check for conflicts using merge-tree
+	cmd := exec.Command("git", "merge-tree", mergeBase, target, "origin/"+branch)
 	cmd.Dir = e.workDir
+	output, _ := cmd.Output()
 
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		output := strings.TrimSpace(stderr.String())
-		if output == "" {
-			output = strings.TrimSpace(stdout.String())
-		}
-		if output != "" {
-			return fmt.Errorf("%v: %s", err, output)
-		}
-		return err
+	// merge-tree outputs conflict markers if there are conflicts
+	if strings.Contains(string(output), "<<<<<<") ||
+		strings.Contains(string(output), "changed in both") {
+		return "files modified in both branches"
 	}
 
-	return nil
+	return ""
 }
 
-// gitRun executes a git command in the work directory.
+// gitRun executes a git command.
 func (e *Engineer) gitRun(args ...string) error {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = e.workDir
@@ -522,4 +458,235 @@ func (e *Engineer) gitOutput(args ...string) (string, error) {
 	}
 
 	return strings.TrimSpace(stdout.String()), nil
+}
+
+// runTests executes the test command.
+func (e *Engineer) runTests(testCmd string) error {
+	parts := strings.Fields(testCmd)
+	if len(parts) == 0 {
+		return nil
+	}
+
+	cmd := exec.Command(parts[0], parts[1:]...)
+	cmd.Dir = e.workDir
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err, strings.TrimSpace(stderr.String()))
+	}
+
+	return nil
+}
+
+// pushWithRetry pushes to the target branch with exponential backoff retry.
+func (e *Engineer) pushWithRetry(targetBranch string) error {
+	const maxRetries = 3
+	const baseDelay = 1 * time.Second
+
+	var lastErr error
+	delay := baseDelay
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			fmt.Printf("[Engineer] Push retry %d/%d after %v\n", attempt, maxRetries, delay)
+			time.Sleep(delay)
+			delay *= 2 // Exponential backoff
+		}
+
+		err := e.gitRun("push", "origin", targetBranch)
+		if err == nil {
+			return nil // Success
+		}
+		lastErr = err
+	}
+
+	return fmt.Errorf("push failed after %d retries: %v", maxRetries, lastErr)
+}
+
+// handleFailure handles a failed merge request.
+// It reopens the MR, assigns back to worker, and sends notification.
+func (e *Engineer) handleFailure(mr *beads.Issue, result ProcessResult) {
+	mrFields := beads.ParseMRFields(mr)
+
+	// Determine failure type and appropriate label
+	var failureLabel string
+	var failureSubject string
+	var failureBody string
+
+	if result.Conflict {
+		failureLabel = "needs-rebase"
+		failureSubject = fmt.Sprintf("Rebase needed: %s", mr.ID)
+		target := e.config.TargetBranch
+		if mrFields != nil && mrFields.Target != "" {
+			target = mrFields.Target
+		}
+		failureBody = fmt.Sprintf(`Your merge request has conflicts with %s.
+
+Please rebase your changes:
+  git fetch origin
+  git rebase origin/%s
+  git push -f
+
+Then resubmit with: gt mq submit
+
+MR: %s
+Error: %s`, target, target, mr.ID, result.Error)
+	} else if result.TestsFailed {
+		failureLabel = "needs-fix"
+		failureSubject = fmt.Sprintf("Tests failed: %s", mr.ID)
+		failureBody = fmt.Sprintf(`Your merge request failed tests.
+
+Please fix the failing tests and resubmit.
+
+MR: %s
+Error: %s`, mr.ID, result.Error)
+	} else {
+		failureLabel = "needs-fix"
+		failureSubject = fmt.Sprintf("Merge failed: %s", mr.ID)
+		failureBody = fmt.Sprintf(`Your merge request failed to merge.
+
+MR: %s
+Error: %s
+
+Please investigate and resubmit.`, mr.ID, result.Error)
+	}
+
+	// 1. Reopen the MR (back to open status for rework)
+	open := "open"
+	if err := e.beads.Update(mr.ID, beads.UpdateOptions{Status: &open}); err != nil {
+		fmt.Printf("[Engineer] Warning: failed to reopen MR %s: %v\n", mr.ID, err)
+	}
+
+	// 2. Assign back to worker if we know who they are
+	if mrFields != nil && mrFields.Worker != "" {
+		// Format worker as full address (e.g., "gastown/Nux")
+		workerAddr := mrFields.Worker
+		if mrFields.Rig != "" && !strings.Contains(workerAddr, "/") {
+			workerAddr = mrFields.Rig + "/" + mrFields.Worker
+		}
+		if err := e.beads.Update(mr.ID, beads.UpdateOptions{Assignee: &workerAddr}); err != nil {
+			fmt.Printf("[Engineer] Warning: failed to assign MR %s to %s: %v\n", mr.ID, workerAddr, err)
+		}
+	}
+
+	// 3. Add failure label (note: beads doesn't support labels yet, log for now)
+	fmt.Printf("[Engineer] Would add label: %s\n", failureLabel)
+	// TODO: When beads supports labels: e.beads.AddLabel(mr.ID, failureLabel)
+
+	// 4. Send notification to worker
+	if mrFields != nil && mrFields.Worker != "" {
+		e.notifyWorkerFailure(mrFields, failureSubject, failureBody)
+	}
+
+	// Log the failure
+	fmt.Printf("[Engineer] ✗ Failed: %s - %s\n", mr.ID, result.Error)
+}
+
+// notifyWorkerFailure sends a failure notification to the worker.
+func (e *Engineer) notifyWorkerFailure(mrFields *beads.MRFields, subject, body string) {
+	if mrFields == nil || mrFields.Worker == "" {
+		return
+	}
+
+	// Determine worker address
+	workerAddr := mrFields.Worker
+	if mrFields.Rig != "" && !strings.Contains(workerAddr, "/") {
+		workerAddr = mrFields.Rig + "/" + mrFields.Worker
+	}
+
+	router := mail.NewRouter(e.workDir)
+	msg := &mail.Message{
+		From:     e.rig.Name + "/refinery",
+		To:       workerAddr,
+		Subject:  subject,
+		Body:     body,
+		Priority: mail.PriorityHigh,
+	}
+
+	if err := router.Send(msg); err != nil {
+		fmt.Printf("[Engineer] Warning: failed to notify worker %s: %v\n", workerAddr, err)
+	}
+}
+
+// handleSuccess handles a successful merge.
+// It closes the MR, closes the source issue, and notifies the worker.
+func (e *Engineer) handleSuccess(mr *beads.Issue, result ProcessResult) {
+	mrFields := beads.ParseMRFields(mr)
+
+	// 1. Update MR description with merge commit SHA
+	if mrFields != nil {
+		mrFields.MergeCommit = result.MergeCommit
+		mrFields.CloseReason = "merged"
+		newDesc := beads.SetMRFields(mr, mrFields)
+		if err := e.beads.Update(mr.ID, beads.UpdateOptions{Description: &newDesc}); err != nil {
+			fmt.Printf("[Engineer] Warning: failed to update MR %s with merge commit: %v\n", mr.ID, err)
+		}
+	}
+
+	// 2. Close the MR with merged reason
+	reason := fmt.Sprintf("merged: %s", result.MergeCommit)
+	if err := e.beads.CloseWithReason(reason, mr.ID); err != nil {
+		fmt.Printf("[Engineer] Warning: failed to close MR %s: %v\n", mr.ID, err)
+	}
+
+	// 3. Close the source issue (the work item that was merged)
+	if mrFields != nil && mrFields.SourceIssue != "" {
+		sourceReason := fmt.Sprintf("Merged in %s at %s", mr.ID, result.MergeCommit)
+		if err := e.beads.CloseWithReason(sourceReason, mrFields.SourceIssue); err != nil {
+			fmt.Printf("[Engineer] Warning: failed to close source issue %s: %v\n", mrFields.SourceIssue, err)
+		} else {
+			fmt.Printf("[Engineer] Closed source issue: %s\n", mrFields.SourceIssue)
+		}
+	}
+
+	// 4. Notify worker of success
+	if mrFields != nil && mrFields.Worker != "" {
+		e.notifyWorkerSuccess(mrFields, mr, result)
+	}
+
+	fmt.Printf("[Engineer] ✓ Merged: %s\n", mr.ID)
+}
+
+// notifyWorkerSuccess sends a success notification to the worker.
+func (e *Engineer) notifyWorkerSuccess(mrFields *beads.MRFields, mr *beads.Issue, result ProcessResult) {
+	if mrFields == nil || mrFields.Worker == "" {
+		return
+	}
+
+	// Determine worker address
+	workerAddr := mrFields.Worker
+	if mrFields.Rig != "" && !strings.Contains(workerAddr, "/") {
+		workerAddr = mrFields.Rig + "/" + mrFields.Worker
+	}
+
+	// Determine target branch
+	target := e.config.TargetBranch
+	if mrFields.Target != "" {
+		target = mrFields.Target
+	}
+
+	subject := fmt.Sprintf("Work merged: %s", mr.ID)
+	body := fmt.Sprintf(`Your work has been merged successfully!
+
+Branch: %s
+Target: %s
+Merge commit: %s
+
+Issue: %s
+Thank you for your contribution!`, mrFields.Branch, target, result.MergeCommit, mrFields.SourceIssue)
+
+	router := mail.NewRouter(e.workDir)
+	msg := &mail.Message{
+		From:     e.rig.Name + "/refinery",
+		To:       workerAddr,
+		Subject:  subject,
+		Body:     body,
+		Priority: mail.PriorityNormal,
+	}
+
+	if err := router.Send(msg); err != nil {
+		fmt.Printf("[Engineer] Warning: failed to notify worker %s: %v\n", workerAddr, err)
+	}
 }
