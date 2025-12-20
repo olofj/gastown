@@ -1,13 +1,13 @@
 package polecat
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/steveyegge/gastown/internal/beads"
 	"github.com/steveyegge/gastown/internal/git"
 	"github.com/steveyegge/gastown/internal/rig"
 )
@@ -21,26 +21,31 @@ var (
 
 // Manager handles polecat lifecycle.
 type Manager struct {
-	rig *rig.Rig
-	git *git.Git
+	rig   *rig.Rig
+	git   *git.Git
+	beads *beads.Beads
 }
 
 // NewManager creates a new polecat manager.
 func NewManager(r *rig.Rig, g *git.Git) *Manager {
+	// Use the mayor's rig directory for beads operations (rig-level beads)
+	mayorRigPath := filepath.Join(r.Path, "mayor", "rig")
 	return &Manager{
-		rig: r,
-		git: g,
+		rig:   r,
+		git:   g,
+		beads: beads.New(mayorRigPath),
 	}
+}
+
+// assigneeID returns the beads assignee identifier for a polecat.
+// Format: "rig/polecatName" (e.g., "gastown/Toast")
+func (m *Manager) assigneeID(name string) string {
+	return fmt.Sprintf("%s/%s", m.rig.Name, name)
 }
 
 // polecatDir returns the directory for a polecat.
 func (m *Manager) polecatDir(name string) string {
 	return filepath.Join(m.rig.Path, "polecats", name)
-}
-
-// stateFile returns the state file path for a polecat.
-func (m *Manager) stateFile(name string) string {
-	return filepath.Join(m.polecatDir(name), "state.json")
 }
 
 // exists checks if a polecat exists.
@@ -49,8 +54,9 @@ func (m *Manager) exists(name string) bool {
 	return err == nil
 }
 
-// Add creates a new polecat as a git worktree from the refinery clone.
-// This is much faster than a full clone and shares objects with the refinery.
+// Add creates a new polecat as a git worktree from the mayor's clone.
+// This is much faster than a full clone and shares objects with the mayor.
+// Polecat state is derived from beads assignee field, not state.json.
 func (m *Manager) Add(name string) (*Polecat, error) {
 	if m.exists(name) {
 		return nil, ErrPolecatExists
@@ -74,29 +80,37 @@ func (m *Manager) Add(name string) (*Polecat, error) {
 		return nil, fmt.Errorf("mayor clone not found at %s (run 'gt rig add' to set up rig structure)", mayorPath)
 	}
 
-	// Create worktree with new branch
-	// git worktree add -b polecat/<name> <path>
-	if err := mayorGit.WorktreeAdd(polecatPath, branchName); err != nil {
-		return nil, fmt.Errorf("creating worktree: %w", err)
+	// Check if branch already exists (e.g., from previous polecat that wasn't cleaned up)
+	branchExists, err := mayorGit.BranchExists(branchName)
+	if err != nil {
+		return nil, fmt.Errorf("checking branch existence: %w", err)
 	}
 
-	// Create polecat state
+	// Create worktree - reuse existing branch if it exists
+	if branchExists {
+		// Branch exists, create worktree using existing branch
+		if err := mayorGit.WorktreeAddExisting(polecatPath, branchName); err != nil {
+			return nil, fmt.Errorf("creating worktree with existing branch: %w", err)
+		}
+	} else {
+		// Create new branch with worktree
+		// git worktree add -b polecat/<name> <path>
+		if err := mayorGit.WorktreeAdd(polecatPath, branchName); err != nil {
+			return nil, fmt.Errorf("creating worktree: %w", err)
+		}
+	}
+
+	// Return polecat with derived state (no issue assigned yet = idle)
+	// State is derived from beads, not stored in state.json
 	now := time.Now()
 	polecat := &Polecat{
 		Name:      name,
 		Rig:       m.rig.Name,
-		State:     StateIdle,
+		State:     StateIdle, // No issue assigned yet
 		ClonePath: polecatPath,
 		Branch:    branchName,
 		CreatedAt: now,
 		UpdatedAt: now,
-	}
-
-	// Save state
-	if err := m.saveState(polecat); err != nil {
-		// Clean up worktree on failure
-		mayorGit.WorktreeRemove(polecatPath, true)
-		return nil, fmt.Errorf("saving state: %w", err)
 	}
 
 	return polecat, nil
@@ -134,7 +148,7 @@ func (m *Manager) Remove(name string, force bool) error {
 	}
 
 	// Prune any stale worktree entries
-	mayorGit.WorktreePrune()
+	_ = mayorGit.WorktreePrune()
 
 	return nil
 }
@@ -168,120 +182,227 @@ func (m *Manager) List() ([]*Polecat, error) {
 }
 
 // Get returns a specific polecat by name.
+// State is derived from beads assignee field:
+// - If an issue is assigned to this polecat and is open/in_progress: StateWorking
+// - If an issue is assigned but closed: StateDone
+// - If no issue assigned: StateIdle
 func (m *Manager) Get(name string) (*Polecat, error) {
 	if !m.exists(name) {
 		return nil, ErrPolecatNotFound
 	}
 
-	return m.loadState(name)
+	return m.loadFromBeads(name)
 }
 
 // SetState updates a polecat's state.
+// In the beads model, state is derived from issue status:
+// - StateWorking/StateActive: issue status set to in_progress
+// - StateDone/StateIdle: assignee cleared from issue
+// - StateStuck: issue status set to blocked (if supported)
+// If beads is not available, this is a no-op.
 func (m *Manager) SetState(name string, state State) error {
-	polecat, err := m.Get(name)
-	if err != nil {
-		return err
+	if !m.exists(name) {
+		return ErrPolecatNotFound
 	}
 
-	polecat.State = state
-	polecat.UpdatedAt = time.Now()
+	// Find the issue assigned to this polecat
+	assignee := m.assigneeID(name)
+	issue, err := m.beads.GetAssignedIssue(assignee)
+	if err != nil {
+		// If beads is not available, treat as no-op (state can't be changed)
+		return nil
+	}
 
-	return m.saveState(polecat)
+	switch state {
+	case StateWorking, StateActive:
+		// Set issue to in_progress if there is one
+		if issue != nil {
+			status := "in_progress"
+			if err := m.beads.Update(issue.ID, beads.UpdateOptions{Status: &status}); err != nil {
+				return fmt.Errorf("setting issue status: %w", err)
+			}
+		}
+	case StateDone, StateIdle:
+		// Clear assignment when done/idle
+		if issue != nil {
+			empty := ""
+			if err := m.beads.Update(issue.ID, beads.UpdateOptions{Assignee: &empty}); err != nil {
+				return fmt.Errorf("clearing assignee: %w", err)
+			}
+		}
+	case StateStuck:
+		// Mark issue as blocked if supported, otherwise just note in issue
+		if issue != nil {
+			// For now, just keep the assignment - the issue's blocked_by would indicate stuck
+			// We could add a status="blocked" here if beads supports it
+		}
+	}
+
+	return nil
 }
 
-// AssignIssue assigns an issue to a polecat.
+// AssignIssue assigns an issue to a polecat by setting the issue's assignee in beads.
 func (m *Manager) AssignIssue(name, issue string) error {
-	polecat, err := m.Get(name)
-	if err != nil {
-		return err
+	if !m.exists(name) {
+		return ErrPolecatNotFound
 	}
 
-	polecat.Issue = issue
-	polecat.State = StateWorking
-	polecat.UpdatedAt = time.Now()
+	// Set the issue's assignee to this polecat
+	assignee := m.assigneeID(name)
+	status := "in_progress"
+	if err := m.beads.Update(issue, beads.UpdateOptions{
+		Assignee: &assignee,
+		Status:   &status,
+	}); err != nil {
+		return fmt.Errorf("setting issue assignee: %w", err)
+	}
 
-	return m.saveState(polecat)
+	return nil
 }
 
 // ClearIssue removes the issue assignment from a polecat.
+// In the ephemeral model, this transitions to Done state for cleanup.
+// This clears the assignee from the currently assigned issue in beads.
+// If beads is not available, this is a no-op.
 func (m *Manager) ClearIssue(name string) error {
-	polecat, err := m.Get(name)
-	if err != nil {
-		return err
+	if !m.exists(name) {
+		return ErrPolecatNotFound
 	}
 
-	polecat.Issue = ""
-	polecat.State = StateIdle
-	polecat.UpdatedAt = time.Now()
+	// Find the issue assigned to this polecat
+	assignee := m.assigneeID(name)
+	issue, err := m.beads.GetAssignedIssue(assignee)
+	if err != nil {
+		// If beads is not available, treat as no-op
+		return nil
+	}
 
-	return m.saveState(polecat)
+	if issue == nil {
+		// No issue assigned, nothing to clear
+		return nil
+	}
+
+	// Clear the assignee from the issue
+	empty := ""
+	if err := m.beads.Update(issue.ID, beads.UpdateOptions{
+		Assignee: &empty,
+	}); err != nil {
+		return fmt.Errorf("clearing issue assignee: %w", err)
+	}
+
+	return nil
 }
 
 // Wake transitions a polecat from idle to active.
+// Deprecated: In the ephemeral model, polecats start in working state.
+// This method is kept for backward compatibility with existing polecats.
 func (m *Manager) Wake(name string) error {
 	polecat, err := m.Get(name)
 	if err != nil {
 		return err
 	}
 
-	if polecat.State != StateIdle {
+	// Accept both idle and done states for legacy compatibility
+	if polecat.State != StateIdle && polecat.State != StateDone {
 		return fmt.Errorf("polecat is not idle (state: %s)", polecat.State)
 	}
 
-	return m.SetState(name, StateActive)
+	return m.SetState(name, StateWorking)
 }
 
 // Sleep transitions a polecat from active to idle.
+// Deprecated: In the ephemeral model, polecats are deleted when done.
+// This method is kept for backward compatibility.
 func (m *Manager) Sleep(name string) error {
 	polecat, err := m.Get(name)
 	if err != nil {
 		return err
 	}
 
-	if polecat.State != StateActive {
+	// Accept working state as well for legacy compatibility
+	if polecat.State != StateActive && polecat.State != StateWorking {
 		return fmt.Errorf("polecat is not active (state: %s)", polecat.State)
 	}
 
-	return m.SetState(name, StateIdle)
+	return m.SetState(name, StateDone)
 }
 
-// saveState persists polecat state to disk.
-func (m *Manager) saveState(polecat *Polecat) error {
-	data, err := json.MarshalIndent(polecat, "", "  ")
+// Finish transitions a polecat from working/done/stuck to idle and clears the issue.
+// This clears the assignee from any assigned issue.
+func (m *Manager) Finish(name string) error {
+	polecat, err := m.Get(name)
 	if err != nil {
-		return fmt.Errorf("marshaling state: %w", err)
+		return err
 	}
 
-	stateFile := m.stateFile(polecat.Name)
-	if err := os.WriteFile(stateFile, data, 0644); err != nil {
-		return fmt.Errorf("writing state: %w", err)
+	// Only allow finishing from working-related states
+	switch polecat.State {
+	case StateWorking, StateDone, StateStuck:
+		// OK to finish
+	default:
+		return fmt.Errorf("polecat is not in a finishing state (state: %s)", polecat.State)
 	}
 
-	return nil
+	// Clear the issue assignment
+	return m.ClearIssue(name)
 }
 
-// loadState reads polecat state from disk.
-func (m *Manager) loadState(name string) (*Polecat, error) {
-	stateFile := m.stateFile(name)
+// Reset forces a polecat to idle state regardless of current state.
+// This clears the assignee from any assigned issue.
+func (m *Manager) Reset(name string) error {
+	if !m.exists(name) {
+		return ErrPolecatNotFound
+	}
 
-	data, err := os.ReadFile(stateFile)
+	// Clear the issue assignment
+	return m.ClearIssue(name)
+}
+
+// loadFromBeads derives polecat state from beads assignee field.
+// State is derived as follows:
+// - If an issue is assigned to this polecat and is open/in_progress: StateWorking
+// - If no issue assigned: StateIdle
+func (m *Manager) loadFromBeads(name string) (*Polecat, error) {
+	polecatPath := m.polecatDir(name)
+	branchName := fmt.Sprintf("polecat/%s", name)
+
+	// Query beads for assigned issue
+	assignee := m.assigneeID(name)
+	issue, err := m.beads.GetAssignedIssue(assignee)
 	if err != nil {
-		if os.IsNotExist(err) {
-			// Return minimal polecat if state file missing
-			return &Polecat{
-				Name:      name,
-				Rig:       m.rig.Name,
-				State:     StateIdle,
-				ClonePath: m.polecatDir(name),
-			}, nil
+		// If beads query fails, return basic polecat info
+		// This allows the system to work even if beads is not available
+		return &Polecat{
+			Name:      name,
+			Rig:       m.rig.Name,
+			State:     StateIdle,
+			ClonePath: polecatPath,
+			Branch:    branchName,
+		}, nil
+	}
+
+	// Derive state from issue
+	state := StateIdle
+	issueID := ""
+	if issue != nil {
+		issueID = issue.ID
+		switch issue.Status {
+		case "open", "in_progress":
+			state = StateWorking
+		case "closed":
+			state = StateDone
+		default:
+			// Unknown status, assume working if assigned
+			state = StateWorking
 		}
-		return nil, fmt.Errorf("reading state: %w", err)
 	}
 
-	var polecat Polecat
-	if err := json.Unmarshal(data, &polecat); err != nil {
-		return nil, fmt.Errorf("parsing state: %w", err)
-	}
-
-	return &polecat, nil
+	return &Polecat{
+		Name:      name,
+		Rig:       m.rig.Name,
+		State:     state,
+		ClonePath: polecatPath,
+		Branch:    branchName,
+		Issue:     issueID,
+	}, nil
 }

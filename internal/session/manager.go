@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -59,6 +60,15 @@ type Info struct {
 
 	// RigName is the rig this session belongs to.
 	RigName string `json:"rig_name"`
+
+	// Attached indicates if someone is attached to the session.
+	Attached bool `json:"attached,omitempty"`
+
+	// Created is when the session was created.
+	Created time.Time `json:"created,omitempty"`
+
+	// Windows is the number of tmux windows.
+	Windows int `json:"windows,omitempty"`
 }
 
 // sessionName generates the tmux session name for a polecat.
@@ -111,8 +121,20 @@ func (m *Manager) Start(polecat string, opts StartOptions) error {
 	}
 
 	// Set environment
-	m.tmux.SetEnvironment(sessionID, "GT_RIG", m.rig.Name)
-	m.tmux.SetEnvironment(sessionID, "GT_POLECAT", polecat)
+	_ = m.tmux.SetEnvironment(sessionID, "GT_RIG", m.rig.Name)
+	_ = m.tmux.SetEnvironment(sessionID, "GT_POLECAT", polecat)
+
+	// CRITICAL: Set beads environment for worktree polecats
+	// Polecats share the rig's beads directory (in mayor/rig/.beads)
+	// BEADS_NO_DAEMON=1 prevents daemon from committing to wrong branch
+	beadsDir := filepath.Join(m.rig.Path, "mayor", "rig", ".beads")
+	_ = m.tmux.SetEnvironment(sessionID, "BEADS_DIR", beadsDir)
+	_ = m.tmux.SetEnvironment(sessionID, "BEADS_NO_DAEMON", "1")
+	_ = m.tmux.SetEnvironment(sessionID, "BEADS_AGENT_NAME", fmt.Sprintf("%s/%s", m.rig.Name, polecat))
+
+	// Apply theme
+	theme := tmux.AssignTheme(m.rig.Name)
+	_ = m.tmux.ConfigureGasTownSession(sessionID, theme, m.rig.Name, polecat, "polecat")
 
 	// Send initial command
 	command := opts.Command
@@ -128,9 +150,7 @@ func (m *Manager) Start(polecat string, opts StartOptions) error {
 	if opts.Issue != "" {
 		time.Sleep(500 * time.Millisecond)
 		prompt := fmt.Sprintf("Work on issue: %s", opts.Issue)
-		if err := m.Inject(polecat, prompt); err != nil {
-			// Non-fatal, just log
-		}
+		_ = m.Inject(polecat, prompt) // Non-fatal error
 	}
 
 	return nil
@@ -150,9 +170,19 @@ func (m *Manager) Stop(polecat string, force bool) error {
 		return ErrSessionNotFound
 	}
 
+	// Sync beads before shutdown to preserve any changes
+	// Run in the polecat's worktree directory
+	if !force {
+		polecatDir := m.polecatDir(polecat)
+		if err := m.syncBeads(polecatDir); err != nil {
+			// Non-fatal - log and continue with shutdown
+			fmt.Printf("Warning: beads sync failed: %v\n", err)
+		}
+	}
+
 	// Try graceful shutdown first (unless forced)
 	if !force {
-		m.tmux.SendKeysRaw(sessionID, "C-c") // Ctrl+C
+		_ = m.tmux.SendKeysRaw(sessionID, "C-c") // Ctrl+C
 		time.Sleep(100 * time.Millisecond)
 	}
 
@@ -164,10 +194,67 @@ func (m *Manager) Stop(polecat string, force bool) error {
 	return nil
 }
 
+// syncBeads runs bd sync in the given directory.
+func (m *Manager) syncBeads(workDir string) error {
+	cmd := exec.Command("bd", "sync")
+	cmd.Dir = workDir
+	return cmd.Run()
+}
+
 // IsRunning checks if a polecat session is active.
 func (m *Manager) IsRunning(polecat string) (bool, error) {
 	sessionID := m.sessionName(polecat)
 	return m.tmux.HasSession(sessionID)
+}
+
+// Status returns detailed status for a polecat session.
+func (m *Manager) Status(polecat string) (*Info, error) {
+	sessionID := m.sessionName(polecat)
+
+	running, err := m.tmux.HasSession(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("checking session: %w", err)
+	}
+
+	info := &Info{
+		Polecat:   polecat,
+		SessionID: sessionID,
+		Running:   running,
+		RigName:   m.rig.Name,
+	}
+
+	if !running {
+		return info, nil
+	}
+
+	// Get detailed session info
+	tmuxInfo, err := m.tmux.GetSessionInfo(sessionID)
+	if err != nil {
+		// Non-fatal - return basic info
+		return info, nil
+	}
+
+	info.Attached = tmuxInfo.Attached
+	info.Windows = tmuxInfo.Windows
+
+	// Parse created time from tmux format (e.g., "Thu Dec 19 10:30:00 2025")
+	if tmuxInfo.Created != "" {
+		// Try common tmux date formats
+		formats := []string{
+			"Mon Jan 2 15:04:05 2006",
+			"Mon Jan _2 15:04:05 2006",
+			time.ANSIC,
+			time.UnixDate,
+		}
+		for _, format := range formats {
+			if t, err := time.Parse(format, tmuxInfo.Created); err == nil {
+				info.Created = t
+				break
+			}
+		}
+	}
+
+	return info, nil
 }
 
 // List returns information about all sessions for this rig.
@@ -228,6 +315,7 @@ func (m *Manager) Capture(polecat string, lines int) (string, error) {
 }
 
 // Inject sends a message to a polecat session.
+// Uses a longer debounce delay for large messages to ensure paste completes.
 func (m *Manager) Inject(polecat, message string) error {
 	sessionID := m.sessionName(polecat)
 
@@ -239,7 +327,15 @@ func (m *Manager) Inject(polecat, message string) error {
 		return ErrSessionNotFound
 	}
 
-	return m.tmux.SendKeys(sessionID, message)
+	// Use longer debounce for large messages (spawn context can be 1KB+)
+	// Claude needs time to process paste before Enter is sent
+	// Scale delay based on message size: 200ms base + 100ms per KB
+	debounceMs := 200 + (len(message)/1024)*100
+	if debounceMs > 1500 {
+		debounceMs = 1500 // Cap at 1.5s for large pastes
+	}
+
+	return m.tmux.SendKeysDebounced(sessionID, message, debounceMs)
 }
 
 // StopAll terminates all sessions for this rig.

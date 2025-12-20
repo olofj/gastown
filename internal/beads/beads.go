@@ -58,10 +58,12 @@ type IssueDep struct {
 
 // ListOptions specifies filters for listing issues.
 type ListOptions struct {
-	Status   string // "open", "closed", "all"
-	Type     string // "task", "bug", "feature", "epic"
-	Priority int    // 0-4, -1 for no filter
-	Parent   string // filter by parent ID
+	Status     string // "open", "closed", "all"
+	Type       string // "task", "bug", "feature", "epic"
+	Priority   int    // 0-4, -1 for no filter
+	Parent     string // filter by parent ID
+	Assignee   string // filter by assignee (e.g., "gastown/Toast")
+	NoAssignee bool   // filter for issues with no assignee
 }
 
 // CreateOptions specifies options for creating an issue.
@@ -164,6 +166,12 @@ func (b *Beads) List(opts ListOptions) ([]*Issue, error) {
 	if opts.Parent != "" {
 		args = append(args, "--parent="+opts.Parent)
 	}
+	if opts.Assignee != "" {
+		args = append(args, "--assignee="+opts.Assignee)
+	}
+	if opts.NoAssignee {
+		args = append(args, "--no-assignee")
+	}
 
 	out, err := b.run(args...)
 	if err != nil {
@@ -178,9 +186,66 @@ func (b *Beads) List(opts ListOptions) ([]*Issue, error) {
 	return issues, nil
 }
 
+// ListByAssignee returns all issues assigned to a specific assignee.
+// The assignee is typically in the format "rig/polecatName" (e.g., "gastown/Toast").
+func (b *Beads) ListByAssignee(assignee string) ([]*Issue, error) {
+	return b.List(ListOptions{
+		Status:   "all", // Include both open and closed for state derivation
+		Assignee: assignee,
+		Priority: -1, // No priority filter
+	})
+}
+
+// GetAssignedIssue returns the first open issue assigned to the given assignee.
+// Returns nil if no open issue is assigned.
+func (b *Beads) GetAssignedIssue(assignee string) (*Issue, error) {
+	issues, err := b.List(ListOptions{
+		Status:   "open",
+		Assignee: assignee,
+		Priority: -1,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Also check in_progress status explicitly
+	if len(issues) == 0 {
+		issues, err = b.List(ListOptions{
+			Status:   "in_progress",
+			Assignee: assignee,
+			Priority: -1,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(issues) == 0 {
+		return nil, nil
+	}
+
+	return issues[0], nil
+}
+
 // Ready returns issues that are ready to work (not blocked).
 func (b *Beads) Ready() ([]*Issue, error) {
 	out, err := b.run("ready", "--json")
+	if err != nil {
+		return nil, err
+	}
+
+	var issues []*Issue
+	if err := json.Unmarshal(out, &issues); err != nil {
+		return nil, fmt.Errorf("parsing bd ready output: %w", err)
+	}
+
+	return issues, nil
+}
+
+// ReadyWithType returns ready issues filtered by type.
+// Uses bd ready --type flag for server-side filtering (gt-ktf3).
+func (b *Beads) ReadyWithType(issueType string) ([]*Issue, error) {
+	out, err := b.run("ready", "--json", "--type", issueType, "-n", "100")
 	if err != nil {
 		return nil, err
 	}
@@ -398,6 +463,88 @@ func (b *Beads) Stats() (string, error) {
 func (b *Beads) IsBeadsRepo() bool {
 	_, err := b.run("list", "--limit=1")
 	return err == nil || !errors.Is(err, ErrNotARepo)
+}
+
+// StatusPinned is the status for pinned beads that never get closed.
+const StatusPinned = "pinned"
+
+// HandoffBeadTitle returns the well-known title for a role's handoff bead.
+func HandoffBeadTitle(role string) string {
+	return role + " Handoff"
+}
+
+// FindHandoffBead finds the pinned handoff bead for a role by title.
+// Returns nil if not found (not an error).
+func (b *Beads) FindHandoffBead(role string) (*Issue, error) {
+	issues, err := b.List(ListOptions{Status: StatusPinned, Priority: -1})
+	if err != nil {
+		return nil, fmt.Errorf("listing pinned issues: %w", err)
+	}
+
+	targetTitle := HandoffBeadTitle(role)
+	for _, issue := range issues {
+		if issue.Title == targetTitle {
+			return issue, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// GetOrCreateHandoffBead returns the handoff bead for a role, creating it if needed.
+func (b *Beads) GetOrCreateHandoffBead(role string) (*Issue, error) {
+	// Check if it exists
+	existing, err := b.FindHandoffBead(role)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return existing, nil
+	}
+
+	// Create new handoff bead
+	issue, err := b.Create(CreateOptions{
+		Title:       HandoffBeadTitle(role),
+		Type:        "task",
+		Priority:    2,
+		Description: "", // Empty until first handoff
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating handoff bead: %w", err)
+	}
+
+	// Update to pinned status
+	status := StatusPinned
+	if err := b.Update(issue.ID, UpdateOptions{Status: &status}); err != nil {
+		return nil, fmt.Errorf("setting handoff bead to pinned: %w", err)
+	}
+
+	// Re-fetch to get updated status
+	return b.Show(issue.ID)
+}
+
+// UpdateHandoffContent updates the handoff bead's description with new content.
+func (b *Beads) UpdateHandoffContent(role, content string) error {
+	issue, err := b.GetOrCreateHandoffBead(role)
+	if err != nil {
+		return err
+	}
+
+	return b.Update(issue.ID, UpdateOptions{Description: &content})
+}
+
+// ClearHandoffContent clears the handoff bead's description.
+func (b *Beads) ClearHandoffContent(role string) error {
+	issue, err := b.FindHandoffBead(role)
+	if err != nil {
+		return err
+	}
+	if issue == nil {
+		return nil // Nothing to clear
+	}
+
+	empty := ""
+	return b.Update(issue.ID, UpdateOptions{Description: &empty})
 }
 
 // MRFields holds the structured fields for a merge-request issue.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -26,8 +27,9 @@ var (
 )
 
 var polecatCmd = &cobra.Command{
-	Use:   "polecat",
-	Short: "Manage polecats in rigs",
+	Use:     "polecat",
+	Aliases: []string{"cat", "polecats"},
+	Short:   "Manage polecats in rigs",
 	Long: `Manage polecat lifecycle in rigs.
 
 Polecats are worker agents that operate in their own git clones.
@@ -39,11 +41,11 @@ var polecatListCmd = &cobra.Command{
 	Short: "List polecats in a rig",
 	Long: `List polecats in a rig or all rigs.
 
-Output:
-  - Name
-  - State (idle/active/working/done/stuck)
-  - Current issue (if any)
-  - Session status (running/stopped)
+In the ephemeral model, polecats exist only while working. The list shows
+all currently active polecats with their states:
+  - working: Actively working on an issue
+  - done: Completed work, waiting for cleanup
+  - stuck: Needs assistance
 
 Examples:
   gt polecat list gastown
@@ -84,10 +86,13 @@ Example:
 
 var polecatWakeCmd = &cobra.Command{
 	Use:   "wake <rig>/<polecat>",
-	Short: "Mark polecat as active (ready for work)",
-	Long: `Mark polecat as active (ready for work).
+	Short: "(Deprecated) Resume a polecat to working state",
+	Long: `Resume a polecat to working state.
 
-Transitions: idle → active
+DEPRECATED: In the ephemeral model, polecats are created fresh for each task
+via 'gt spawn'. This command is kept for backward compatibility.
+
+Transitions: done → working
 
 Example:
   gt polecat wake gastown/Toast`,
@@ -97,17 +102,77 @@ Example:
 
 var polecatSleepCmd = &cobra.Command{
 	Use:   "sleep <rig>/<polecat>",
-	Short: "Mark polecat as idle (not available)",
-	Long: `Mark polecat as idle (not available).
+	Short: "(Deprecated) Mark polecat as done",
+	Long: `Mark polecat as done.
 
-Transitions: active → idle
-Fails if session is running (stop first).
+DEPRECATED: In the ephemeral model, polecats use 'gt handoff' when complete,
+which triggers automatic cleanup by the Witness. This command is kept for
+backward compatibility.
+
+Transitions: working → done
 
 Example:
   gt polecat sleep gastown/Toast`,
 	Args: cobra.ExactArgs(1),
 	RunE: runPolecatSleep,
 }
+
+var polecatDoneCmd = &cobra.Command{
+	Use:     "done <rig>/<polecat>",
+	Aliases: []string{"finish"},
+	Short:   "Mark polecat as done with work and return to idle",
+	Long: `Mark polecat as done with work and return to idle.
+
+Transitions: working/done/stuck → idle
+Clears the assigned issue.
+Fails if session is running (stop first).
+
+Example:
+  gt polecat done gastown/Toast
+  gt polecat finish gastown/Toast`,
+	Args: cobra.ExactArgs(1),
+	RunE: runPolecatDone,
+}
+
+var polecatResetCmd = &cobra.Command{
+	Use:   "reset <rig>/<polecat>",
+	Short: "Force reset polecat to idle state",
+	Long: `Force reset polecat to idle state.
+
+Transitions: any state → idle
+Clears the assigned issue.
+Use when polecat is stuck in an unexpected state.
+Fails if session is running (stop first).
+
+Example:
+  gt polecat reset gastown/Toast`,
+	Args: cobra.ExactArgs(1),
+	RunE: runPolecatReset,
+}
+
+var polecatSyncCmd = &cobra.Command{
+	Use:   "sync <rig>/<polecat>",
+	Short: "Sync beads for a polecat",
+	Long: `Sync beads for a polecat's worktree.
+
+Runs 'bd sync' in the polecat's worktree to push local beads changes
+to the shared sync branch and pull remote changes.
+
+Use --all to sync all polecats in a rig.
+Use --from-main to only pull (no push).
+
+Examples:
+  gt polecat sync gastown/Toast
+  gt polecat sync gastown --all
+  gt polecat sync gastown/Toast --from-main`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: runPolecatSync,
+}
+
+var (
+	polecatSyncAll      bool
+	polecatSyncFromMain bool
+)
 
 func init() {
 	// List flags
@@ -117,12 +182,19 @@ func init() {
 	// Remove flags
 	polecatRemoveCmd.Flags().BoolVarP(&polecatForce, "force", "f", false, "Force removal, bypassing checks")
 
+	// Sync flags
+	polecatSyncCmd.Flags().BoolVar(&polecatSyncAll, "all", false, "Sync all polecats in the rig")
+	polecatSyncCmd.Flags().BoolVar(&polecatSyncFromMain, "from-main", false, "Pull only, no push")
+
 	// Add subcommands
 	polecatCmd.AddCommand(polecatListCmd)
 	polecatCmd.AddCommand(polecatAddCmd)
 	polecatCmd.AddCommand(polecatRemoveCmd)
 	polecatCmd.AddCommand(polecatWakeCmd)
 	polecatCmd.AddCommand(polecatSleepCmd)
+	polecatCmd.AddCommand(polecatDoneCmd)
+	polecatCmd.AddCommand(polecatResetCmd)
+	polecatCmd.AddCommand(polecatSyncCmd)
 
 	rootCmd.AddCommand(polecatCmd)
 }
@@ -223,11 +295,11 @@ func runPolecatList(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(allPolecats) == 0 {
-		fmt.Println("No polecats found.")
+		fmt.Println("No active polecats found.")
 		return nil
 	}
 
-	fmt.Printf("%s\n\n", style.Bold.Render("Polecats"))
+	fmt.Printf("%s\n\n", style.Bold.Render("Active Polecats"))
 	for _, p := range allPolecats {
 		// Session indicator
 		sessionStatus := style.Dim.Render("○")
@@ -235,9 +307,15 @@ func runPolecatList(cmd *cobra.Command, args []string) error {
 			sessionStatus = style.Success.Render("●")
 		}
 
+		// Normalize state for display (legacy idle/active → working)
+		displayState := p.State
+		if p.State == polecat.StateIdle || p.State == polecat.StateActive {
+			displayState = polecat.StateWorking
+		}
+
 		// State color
-		stateStr := string(p.State)
-		switch p.State {
+		stateStr := string(displayState)
+		switch displayState {
 		case polecat.StateWorking:
 			stateStr = style.Info.Render(stateStr)
 		case polecat.StateStuck:
@@ -315,6 +393,9 @@ func runPolecatRemove(cmd *cobra.Command, args []string) error {
 }
 
 func runPolecatWake(cmd *cobra.Command, args []string) error {
+	fmt.Println(style.Warning.Render("DEPRECATED: Use 'gt spawn' to create fresh polecats instead"))
+	fmt.Println()
+
 	rigName, polecatName, err := parseAddress(args[0])
 	if err != nil {
 		return err
@@ -329,11 +410,41 @@ func runPolecatWake(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("waking polecat: %w", err)
 	}
 
-	fmt.Printf("%s Polecat %s is now active.\n", style.SuccessPrefix, polecatName)
+	fmt.Printf("%s Polecat %s is now working.\n", style.SuccessPrefix, polecatName)
 	return nil
 }
 
 func runPolecatSleep(cmd *cobra.Command, args []string) error {
+	fmt.Println(style.Warning.Render("DEPRECATED: Use 'gt handoff' from within a polecat session instead"))
+	fmt.Println()
+
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+
+	mgr, r, err := getPolecatManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	// Check if session is running
+	t := tmux.NewTmux()
+	sessMgr := session.NewManager(t, r)
+	running, _ := sessMgr.IsRunning(polecatName)
+	if running {
+		return fmt.Errorf("session is running. Use 'gt handoff' from the polecat session, or stop it with: gt session stop %s/%s", rigName, polecatName)
+	}
+
+	if err := mgr.Sleep(polecatName); err != nil {
+		return fmt.Errorf("marking polecat as done: %w", err)
+	}
+
+	fmt.Printf("%s Polecat %s is now done.\n", style.SuccessPrefix, polecatName)
+	return nil
+}
+
+func runPolecatDone(cmd *cobra.Command, args []string) error {
 	rigName, polecatName, err := parseAddress(args[0])
 	if err != nil {
 		return err
@@ -352,10 +463,117 @@ func runPolecatSleep(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("session is running. Stop it first with: gt session stop %s/%s", rigName, polecatName)
 	}
 
-	if err := mgr.Sleep(polecatName); err != nil {
-		return fmt.Errorf("sleeping polecat: %w", err)
+	if err := mgr.Finish(polecatName); err != nil {
+		return fmt.Errorf("finishing polecat: %w", err)
 	}
 
 	fmt.Printf("%s Polecat %s is now idle.\n", style.SuccessPrefix, polecatName)
+	return nil
+}
+
+func runPolecatReset(cmd *cobra.Command, args []string) error {
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		return err
+	}
+
+	mgr, r, err := getPolecatManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	// Check if session is running
+	t := tmux.NewTmux()
+	sessMgr := session.NewManager(t, r)
+	running, _ := sessMgr.IsRunning(polecatName)
+	if running {
+		return fmt.Errorf("session is running. Stop it first with: gt session stop %s/%s", rigName, polecatName)
+	}
+
+	if err := mgr.Reset(polecatName); err != nil {
+		return fmt.Errorf("resetting polecat: %w", err)
+	}
+
+	fmt.Printf("%s Polecat %s has been reset to idle.\n", style.SuccessPrefix, polecatName)
+	return nil
+}
+
+func runPolecatSync(cmd *cobra.Command, args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("rig or rig/polecat address required")
+	}
+
+	// Parse address - could be "rig" or "rig/polecat"
+	rigName, polecatName, err := parseAddress(args[0])
+	if err != nil {
+		// Might just be a rig name
+		rigName = args[0]
+		polecatName = ""
+	}
+
+	mgr, r, err := getPolecatManager(rigName)
+	if err != nil {
+		return err
+	}
+
+	// Get list of polecats to sync
+	var polecatsToSync []string
+	if polecatSyncAll || polecatName == "" {
+		polecats, err := mgr.List()
+		if err != nil {
+			return fmt.Errorf("listing polecats: %w", err)
+		}
+		for _, p := range polecats {
+			polecatsToSync = append(polecatsToSync, p.Name)
+		}
+	} else {
+		polecatsToSync = []string{polecatName}
+	}
+
+	if len(polecatsToSync) == 0 {
+		fmt.Println("No polecats to sync.")
+		return nil
+	}
+
+	// Sync each polecat
+	var syncErrors []string
+	for _, name := range polecatsToSync {
+		polecatDir := filepath.Join(r.Path, "polecats", name)
+
+		// Check directory exists
+		if _, err := os.Stat(polecatDir); os.IsNotExist(err) {
+			syncErrors = append(syncErrors, fmt.Sprintf("%s: directory not found", name))
+			continue
+		}
+
+		// Build sync command
+		syncArgs := []string{"sync"}
+		if polecatSyncFromMain {
+			syncArgs = append(syncArgs, "--from-main")
+		}
+
+		fmt.Printf("Syncing %s/%s...\n", rigName, name)
+
+		syncCmd := exec.Command("bd", syncArgs...)
+		syncCmd.Dir = polecatDir
+		output, err := syncCmd.CombinedOutput()
+		if err != nil {
+			syncErrors = append(syncErrors, fmt.Sprintf("%s: %v", name, err))
+			if len(output) > 0 {
+				fmt.Printf("  %s\n", style.Dim.Render(string(output)))
+			}
+		} else {
+			fmt.Printf("  %s\n", style.Success.Render("✓ synced"))
+		}
+	}
+
+	if len(syncErrors) > 0 {
+		fmt.Printf("\n%s Some syncs failed:\n", style.Warning.Render("Warning:"))
+		for _, e := range syncErrors {
+			fmt.Printf("  - %s\n", e)
+		}
+		return fmt.Errorf("%d sync(s) failed", len(syncErrors))
+	}
+
 	return nil
 }

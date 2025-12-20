@@ -9,21 +9,22 @@ import (
 	"github.com/steveyegge/gastown/internal/rig"
 )
 
-func TestStateIsAvailable(t *testing.T) {
+func TestStateIsActive(t *testing.T) {
 	tests := []struct {
-		state     State
-		available bool
+		state  State
+		active bool
 	}{
-		{StateIdle, true},
-		{StateActive, true},
-		{StateWorking, false},
+		{StateWorking, true},
 		{StateDone, false},
 		{StateStuck, false},
+		// Legacy states are treated as active
+		{StateIdle, true},
+		{StateActive, true},
 	}
 
 	for _, tt := range tests {
-		if got := tt.state.IsAvailable(); got != tt.available {
-			t.Errorf("%s.IsAvailable() = %v, want %v", tt.state, got, tt.available)
+		if got := tt.state.IsActive(); got != tt.active {
+			t.Errorf("%s.IsActive() = %v, want %v", tt.state, got, tt.active)
 		}
 	}
 }
@@ -105,7 +106,7 @@ func TestRemoveNotFound(t *testing.T) {
 	}
 	m := NewManager(r, git.NewGit(root))
 
-	err := m.Remove("nonexistent")
+	err := m.Remove("nonexistent", false)
 	if err != ErrPolecatNotFound {
 		t.Errorf("Remove = %v, want ErrPolecatNotFound", err)
 	}
@@ -125,25 +126,35 @@ func TestPolecatDir(t *testing.T) {
 	}
 }
 
-func TestStateFile(t *testing.T) {
+func TestAssigneeID(t *testing.T) {
 	r := &rig.Rig{
 		Name: "test-rig",
 		Path: "/home/user/ai/test-rig",
 	}
 	m := NewManager(r, git.NewGit(r.Path))
 
-	file := m.stateFile("Toast")
-	expected := "/home/user/ai/test-rig/polecats/Toast/state.json"
-	if file != expected {
-		t.Errorf("stateFile = %q, want %q", file, expected)
+	id := m.assigneeID("Toast")
+	expected := "test-rig/Toast"
+	if id != expected {
+		t.Errorf("assigneeID = %q, want %q", id, expected)
 	}
 }
 
-func TestStatePersistence(t *testing.T) {
+// Note: State persistence tests removed - state is now derived from beads assignee field.
+// Integration tests should verify beads-based state management.
+
+func TestGetReturnsIdleWithoutBeads(t *testing.T) {
+	// When beads is not available, Get should return StateIdle
 	root := t.TempDir()
 	polecatDir := filepath.Join(root, "polecats", "Test")
 	if err := os.MkdirAll(polecatDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
+	}
+
+	// Create mayor/rig directory for beads (but no actual beads)
+	mayorRigDir := filepath.Join(root, "mayor", "rig")
+	if err := os.MkdirAll(mayorRigDir, 0755); err != nil {
+		t.Fatalf("mkdir mayor/rig: %v", err)
 	}
 
 	r := &rig.Rig{
@@ -152,44 +163,34 @@ func TestStatePersistence(t *testing.T) {
 	}
 	m := NewManager(r, git.NewGit(root))
 
-	// Save state
-	polecat := &Polecat{
-		Name:      "Test",
-		Rig:       "test-rig",
-		State:     StateWorking,
-		ClonePath: polecatDir,
-		Issue:     "gt-xyz",
-	}
-	if err := m.saveState(polecat); err != nil {
-		t.Fatalf("saveState: %v", err)
-	}
-
-	// Load state
-	loaded, err := m.loadState("Test")
+	// Get should return polecat with StateIdle (no beads = no assignment)
+	polecat, err := m.Get("Test")
 	if err != nil {
-		t.Fatalf("loadState: %v", err)
+		t.Fatalf("Get: %v", err)
 	}
 
-	if loaded.Name != "Test" {
-		t.Errorf("Name = %q, want Test", loaded.Name)
+	if polecat.Name != "Test" {
+		t.Errorf("Name = %q, want Test", polecat.Name)
 	}
-	if loaded.State != StateWorking {
-		t.Errorf("State = %v, want StateWorking", loaded.State)
-	}
-	if loaded.Issue != "gt-xyz" {
-		t.Errorf("Issue = %q, want gt-xyz", loaded.Issue)
+	if polecat.State != StateIdle {
+		t.Errorf("State = %v, want StateIdle (beads not available)", polecat.State)
 	}
 }
 
 func TestListWithPolecats(t *testing.T) {
 	root := t.TempDir()
 
-	// Create some polecat directories with state files
+	// Create some polecat directories (state is now derived from beads, not state files)
 	for _, name := range []string{"Toast", "Cheedo"} {
 		polecatDir := filepath.Join(root, "polecats", name)
 		if err := os.MkdirAll(polecatDir, 0755); err != nil {
 			t.Fatalf("mkdir: %v", err)
 		}
+	}
+	// Create mayor/rig for beads path
+	mayorRig := filepath.Join(root, "mayor", "rig")
+	if err := os.MkdirAll(mayorRig, 0755); err != nil {
+		t.Fatalf("mkdir mayor/rig: %v", err)
 	}
 
 	r := &rig.Rig{
@@ -207,11 +208,22 @@ func TestListWithPolecats(t *testing.T) {
 	}
 }
 
-func TestSetState(t *testing.T) {
+// Note: TestSetState, TestAssignIssue, and TestClearIssue were removed.
+// These operations now require a running beads instance and are tested
+// via integration tests. The unit tests here focus on testing the basic
+// polecat lifecycle operations that don't require beads.
+
+func TestSetStateWithoutBeads(t *testing.T) {
+	// SetState should not error when beads is not available
 	root := t.TempDir()
 	polecatDir := filepath.Join(root, "polecats", "Test")
 	if err := os.MkdirAll(polecatDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
+	}
+	// Create mayor/rig for beads path
+	mayorRig := filepath.Join(root, "mayor", "rig")
+	if err := os.MkdirAll(mayorRig, 0755); err != nil {
+		t.Fatalf("mkdir mayor/rig: %v", err)
 	}
 
 	r := &rig.Rig{
@@ -220,31 +232,24 @@ func TestSetState(t *testing.T) {
 	}
 	m := NewManager(r, git.NewGit(root))
 
-	// Initial state
-	if err := m.saveState(&Polecat{Name: "Test", State: StateIdle}); err != nil {
-		t.Fatalf("saveState: %v", err)
-	}
-
-	// Update state
-	if err := m.SetState("Test", StateActive); err != nil {
-		t.Fatalf("SetState: %v", err)
-	}
-
-	// Verify
-	polecat, err := m.Get("Test")
+	// SetState should succeed (no-op when no issue assigned)
+	err := m.SetState("Test", StateActive)
 	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
-	if polecat.State != StateActive {
-		t.Errorf("State = %v, want StateActive", polecat.State)
+		t.Errorf("SetState: %v (expected no error when no beads/issue)", err)
 	}
 }
 
-func TestAssignIssue(t *testing.T) {
+func TestClearIssueWithoutAssignment(t *testing.T) {
+	// ClearIssue should not error when no issue is assigned
 	root := t.TempDir()
 	polecatDir := filepath.Join(root, "polecats", "Test")
 	if err := os.MkdirAll(polecatDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
+	}
+	// Create mayor/rig for beads path
+	mayorRig := filepath.Join(root, "mayor", "rig")
+	if err := os.MkdirAll(mayorRig, 0755); err != nil {
+		t.Fatalf("mkdir mayor/rig: %v", err)
 	}
 
 	r := &rig.Rig{
@@ -253,61 +258,9 @@ func TestAssignIssue(t *testing.T) {
 	}
 	m := NewManager(r, git.NewGit(root))
 
-	// Initial state
-	if err := m.saveState(&Polecat{Name: "Test", State: StateIdle}); err != nil {
-		t.Fatalf("saveState: %v", err)
-	}
-
-	// Assign issue
-	if err := m.AssignIssue("Test", "gt-abc"); err != nil {
-		t.Fatalf("AssignIssue: %v", err)
-	}
-
-	// Verify
-	polecat, err := m.Get("Test")
+	// ClearIssue should succeed even when no issue assigned
+	err := m.ClearIssue("Test")
 	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
-	if polecat.Issue != "gt-abc" {
-		t.Errorf("Issue = %q, want gt-abc", polecat.Issue)
-	}
-	if polecat.State != StateWorking {
-		t.Errorf("State = %v, want StateWorking", polecat.State)
-	}
-}
-
-func TestClearIssue(t *testing.T) {
-	root := t.TempDir()
-	polecatDir := filepath.Join(root, "polecats", "Test")
-	if err := os.MkdirAll(polecatDir, 0755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-
-	r := &rig.Rig{
-		Name: "test-rig",
-		Path: root,
-	}
-	m := NewManager(r, git.NewGit(root))
-
-	// Initial state with issue
-	if err := m.saveState(&Polecat{Name: "Test", State: StateWorking, Issue: "gt-abc"}); err != nil {
-		t.Fatalf("saveState: %v", err)
-	}
-
-	// Clear issue
-	if err := m.ClearIssue("Test"); err != nil {
-		t.Fatalf("ClearIssue: %v", err)
-	}
-
-	// Verify
-	polecat, err := m.Get("Test")
-	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
-	if polecat.Issue != "" {
-		t.Errorf("Issue = %q, want empty", polecat.Issue)
-	}
-	if polecat.State != StateIdle {
-		t.Errorf("State = %v, want StateIdle", polecat.State)
+		t.Errorf("ClearIssue: %v (expected no error when no assignment)", err)
 	}
 }

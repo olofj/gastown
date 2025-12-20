@@ -64,7 +64,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 		// Create .gitkeep to ensure directory is tracked if needed
 		gitkeep := filepath.Join(dirPath, ".gitkeep")
 		if _, err := os.Stat(gitkeep); os.IsNotExist(err) {
-			os.WriteFile(gitkeep, []byte(""), 0644)
+			_ = os.WriteFile(gitkeep, []byte(""), 0644)
 		}
 
 		fmt.Printf("   ✓ Created %s/\n", dir)

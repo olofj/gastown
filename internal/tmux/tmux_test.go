@@ -50,13 +50,13 @@ func TestSessionLifecycle(t *testing.T) {
 	sessionName := "gt-test-session-" + t.Name()
 
 	// Clean up any existing session
-	tm.KillSession(sessionName)
+	_ = tm.KillSession(sessionName)
 
 	// Create session
 	if err := tm.NewSession(sessionName, ""); err != nil {
 		t.Fatalf("NewSession: %v", err)
 	}
-	defer tm.KillSession(sessionName)
+	defer func() { _ = tm.KillSession(sessionName) }()
 
 	// Verify exists
 	has, err := tm.HasSession(sessionName)
@@ -107,13 +107,13 @@ func TestDuplicateSession(t *testing.T) {
 	sessionName := "gt-test-dup-" + t.Name()
 
 	// Clean up any existing session
-	tm.KillSession(sessionName)
+	_ = tm.KillSession(sessionName)
 
 	// Create session
 	if err := tm.NewSession(sessionName, ""); err != nil {
 		t.Fatalf("NewSession: %v", err)
 	}
-	defer tm.KillSession(sessionName)
+	defer func() { _ = tm.KillSession(sessionName) }()
 
 	// Try to create duplicate
 	err := tm.NewSession(sessionName, "")
@@ -131,13 +131,13 @@ func TestSendKeysAndCapture(t *testing.T) {
 	sessionName := "gt-test-keys-" + t.Name()
 
 	// Clean up any existing session
-	tm.KillSession(sessionName)
+	_ = tm.KillSession(sessionName)
 
 	// Create session
 	if err := tm.NewSession(sessionName, ""); err != nil {
 		t.Fatalf("NewSession: %v", err)
 	}
-	defer tm.KillSession(sessionName)
+	defer func() { _ = tm.KillSession(sessionName) }()
 
 	// Send echo command
 	if err := tm.SendKeys(sessionName, "echo HELLO_TEST_MARKER"); err != nil {
@@ -167,13 +167,13 @@ func TestGetSessionInfo(t *testing.T) {
 	sessionName := "gt-test-info-" + t.Name()
 
 	// Clean up any existing session
-	tm.KillSession(sessionName)
+	_ = tm.KillSession(sessionName)
 
 	// Create session
 	if err := tm.NewSession(sessionName, ""); err != nil {
 		t.Fatalf("NewSession: %v", err)
 	}
-	defer tm.KillSession(sessionName)
+	defer func() { _ = tm.KillSession(sessionName) }()
 
 	info, err := tm.GetSessionInfo(sessionName)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/gastown/internal/config"
+	"github.com/steveyegge/gastown/internal/crew"
 	"github.com/steveyegge/gastown/internal/git"
 	"github.com/steveyegge/gastown/internal/rig"
 	"github.com/steveyegge/gastown/internal/style"
@@ -17,8 +18,9 @@ import (
 var statusJSON bool
 
 var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "Show overall town status",
+	Use:     "status",
+	Aliases: []string{"stat"},
+	Short:   "Show overall town status",
 	Long: `Display the current status of the Gas Town workspace.
 
 Shows town name, registered rigs, active polecats, and witness status.`,
@@ -43,6 +45,8 @@ type RigStatus struct {
 	Name         string   `json:"name"`
 	Polecats     []string `json:"polecats"`
 	PolecatCount int      `json:"polecat_count"`
+	Crews        []string `json:"crews"`
+	CrewCount    int      `json:"crew_count"`
 	HasWitness   bool     `json:"has_witness"`
 	HasRefinery  bool     `json:"has_refinery"`
 }
@@ -51,6 +55,7 @@ type RigStatus struct {
 type StatusSum struct {
 	RigCount      int `json:"rig_count"`
 	PolecatCount  int `json:"polecat_count"`
+	CrewCount     int `json:"crew_count"`
 	WitnessCount  int `json:"witness_count"`
 	RefineryCount int `json:"refinery_count"`
 }
@@ -103,10 +108,22 @@ func runStatus(cmd *cobra.Command, args []string) error {
 			HasWitness:   r.HasWitness,
 			HasRefinery:  r.HasRefinery,
 		}
+
+		// Count crew workers
+		crewGit := git.NewGit(r.Path)
+		crewMgr := crew.NewManager(r, crewGit)
+		if workers, err := crewMgr.List(); err == nil {
+			for _, w := range workers {
+				rs.Crews = append(rs.Crews, w.Name)
+			}
+			rs.CrewCount = len(workers)
+		}
+
 		status.Rigs = append(status.Rigs, rs)
 
 		// Update summary
 		status.Summary.PolecatCount += len(r.Polecats)
+		status.Summary.CrewCount += rs.CrewCount
 		if r.HasWitness {
 			status.Summary.WitnessCount++
 		}
@@ -138,6 +155,7 @@ func outputStatusText(status TownStatus) error {
 	fmt.Printf("%s\n", style.Bold.Render("Summary"))
 	fmt.Printf("   Rigs:      %d\n", status.Summary.RigCount)
 	fmt.Printf("   Polecats:  %d\n", status.Summary.PolecatCount)
+	fmt.Printf("   Crews:     %d\n", status.Summary.CrewCount)
 	fmt.Printf("   Witnesses: %d\n", status.Summary.WitnessCount)
 	fmt.Printf("   Refineries: %d\n", status.Summary.RefineryCount)
 
@@ -157,6 +175,9 @@ func outputStatusText(status TownStatus) error {
 		if r.HasRefinery {
 			indicators += " 🏭"
 		}
+		if r.CrewCount > 0 {
+			indicators += " 👤"
+		}
 
 		fmt.Printf("   %s%s\n", style.Bold.Render(r.Name), indicators)
 
@@ -164,6 +185,10 @@ func outputStatusText(status TownStatus) error {
 			fmt.Printf("      Polecats: %v\n", r.Polecats)
 		} else {
 			fmt.Printf("      %s\n", style.Dim.Render("No polecats"))
+		}
+
+		if len(r.Crews) > 0 {
+			fmt.Printf("      Crews: %v\n", r.Crews)
 		}
 	}
 

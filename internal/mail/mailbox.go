@@ -93,7 +93,7 @@ func (m *Mailbox) listBeads() ([]*Message, error) {
 	var beadsMsgs []BeadsMessage
 	if err := json.Unmarshal(stdout.Bytes(), &beadsMsgs); err != nil {
 		// Empty inbox returns empty array or nothing
-		if len(stdout.Bytes()) == 0 || string(stdout.Bytes()) == "null" {
+		if len(stdout.Bytes()) == 0 || stdout.String() == "null" {
 			return nil, nil
 		}
 		return nil, err
@@ -116,7 +116,7 @@ func (m *Mailbox) listLegacy() ([]*Message, error) {
 		}
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var messages []*Message
 	scanner := bufio.NewScanner(file)
@@ -336,7 +336,7 @@ func (m *Mailbox) appendLegacy(msg *Message) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	data, err := json.Marshal(msg)
 	if err != nil {
@@ -364,18 +364,86 @@ func (m *Mailbox) rewriteLegacy(messages []*Message) error {
 	for _, msg := range messages {
 		data, err := json.Marshal(msg)
 		if err != nil {
-			file.Close()
-			os.Remove(tmpPath)
+			_ = file.Close()
+			_ = os.Remove(tmpPath)
 			return err
 		}
-		file.WriteString(string(data) + "\n")
+		_, _ = file.WriteString(string(data) + "\n")
 	}
 
 	if err := file.Close(); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return err
 	}
 
 	// Atomic rename
 	return os.Rename(tmpPath, m.path)
+}
+
+// ListByThread returns all messages in a given thread.
+func (m *Mailbox) ListByThread(threadID string) ([]*Message, error) {
+	if m.legacy {
+		return m.listByThreadLegacy(threadID)
+	}
+	return m.listByThreadBeads(threadID)
+}
+
+func (m *Mailbox) listByThreadBeads(threadID string) ([]*Message, error) {
+	// bd message thread <thread-id> --json
+	cmd := exec.Command("bd", "message", "thread", threadID, "--json")
+	cmd.Dir = m.workDir
+	cmd.Env = append(cmd.Environ(), "BD_IDENTITY="+m.identity)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := strings.TrimSpace(stderr.String())
+		if errMsg != "" {
+			return nil, errors.New(errMsg)
+		}
+		return nil, err
+	}
+
+	var beadsMsgs []BeadsMessage
+	if err := json.Unmarshal(stdout.Bytes(), &beadsMsgs); err != nil {
+		if len(stdout.Bytes()) == 0 || stdout.String() == "null" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var messages []*Message
+	for _, bm := range beadsMsgs {
+		messages = append(messages, bm.ToMessage())
+	}
+
+	// Sort by timestamp (oldest first for thread view)
+	sort.Slice(messages, func(i, j int) bool {
+		return messages[i].Timestamp.Before(messages[j].Timestamp)
+	})
+
+	return messages, nil
+}
+
+func (m *Mailbox) listByThreadLegacy(threadID string) ([]*Message, error) {
+	messages, err := m.List()
+	if err != nil {
+		return nil, err
+	}
+
+	var thread []*Message
+	for _, msg := range messages {
+		if msg.ThreadID == threadID {
+			thread = append(thread, msg)
+		}
+	}
+
+	// Sort by timestamp (oldest first for thread view)
+	sort.Slice(thread, func(i, j int) bool {
+		return thread[i].Timestamp.Before(thread[j].Timestamp)
+	})
+
+	return thread, nil
 }

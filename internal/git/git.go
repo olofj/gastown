@@ -27,6 +27,11 @@ func NewGit(workDir string) *Git {
 	return &Git{workDir: workDir}
 }
 
+// WorkDir returns the working directory for this Git instance.
+func (g *Git) WorkDir() string {
+	return g.workDir
+}
+
 // run executes a git command and returns stdout.
 func (g *Git) run(args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
@@ -88,6 +93,12 @@ func (g *Git) Checkout(ref string) error {
 // Fetch fetches from the remote.
 func (g *Git) Fetch(remote string) error {
 	_, err := g.run("fetch", remote)
+	return err
+}
+
+// FetchBranch fetches a specific branch from the remote.
+func (g *Git) FetchBranch(remote, branch string) error {
+	_, err := g.run("fetch", remote, branch)
 	return err
 }
 
@@ -195,6 +206,18 @@ func (g *Git) Merge(branch string) error {
 	return err
 }
 
+// MergeNoFF merges the given branch with --no-ff flag and a custom message.
+func (g *Git) MergeNoFF(branch, message string) error {
+	_, err := g.run("merge", "--no-ff", "-m", message, branch)
+	return err
+}
+
+// DeleteRemoteBranch deletes a branch on the remote.
+func (g *Git) DeleteRemoteBranch(remote, branch string) error {
+	_, err := g.run("push", remote, "--delete", branch)
+	return err
+}
+
 // Rebase rebases the current branch onto the given ref.
 func (g *Git) Rebase(onto string) error {
 	_, err := g.run("rebase", onto)
@@ -207,6 +230,95 @@ func (g *Git) AbortMerge() error {
 	return err
 }
 
+// CheckConflicts performs a test merge to check if source can be merged into target
+// without conflicts. Returns a list of conflicting files, or empty slice if clean.
+// The merge is always aborted after checking - no actual changes are made.
+//
+// The caller must ensure the working directory is clean before calling this.
+// After return, the working directory is restored to the target branch.
+func (g *Git) CheckConflicts(source, target string) ([]string, error) {
+	// Checkout the target branch
+	if err := g.Checkout(target); err != nil {
+		return nil, fmt.Errorf("checkout target %s: %w", target, err)
+	}
+
+	// Attempt test merge with --no-commit --no-ff
+	// We need to capture both stdout and stderr to detect conflicts
+	_, mergeErr := g.runMergeCheck("merge", "--no-commit", "--no-ff", source)
+
+	if mergeErr != nil {
+		// Check if there are unmerged files (indicates conflict)
+		conflicts, err := g.getConflictingFiles()
+		if err == nil && len(conflicts) > 0 {
+			// Abort the test merge
+			_ = g.AbortMerge()
+			return conflicts, nil
+		}
+
+		// Check if it's a conflict error from wrapper
+		if errors.Is(mergeErr, ErrMergeConflict) {
+			_ = g.AbortMerge()
+			return conflicts, nil
+		}
+
+		// Some other merge error
+		_ = g.AbortMerge()
+		return nil, mergeErr
+	}
+
+	// Merge succeeded (no conflicts) - abort the test merge
+	// Use reset since --abort won't work on successful merge
+	_, _ = g.run("reset", "--hard", "HEAD")
+	return nil, nil
+}
+
+// runMergeCheck runs a git merge command and returns error info from both stdout and stderr.
+// This is needed because git merge outputs CONFLICT info to stdout.
+func (g *Git) runMergeCheck(args ...string) (string, error) {
+	cmd := exec.Command("git", args...)
+	cmd.Dir = g.workDir
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		// Check stdout for CONFLICT message (git sends it there)
+		stdoutStr := stdout.String()
+		if strings.Contains(stdoutStr, "CONFLICT") {
+			return "", ErrMergeConflict
+		}
+		// Fall back to stderr check
+		return "", g.wrapError(err, stderr.String(), args)
+	}
+
+	return strings.TrimSpace(stdout.String()), nil
+}
+
+// getConflictingFiles returns the list of files with merge conflicts.
+func (g *Git) getConflictingFiles() ([]string, error) {
+	// git diff --name-only --diff-filter=U shows unmerged files
+	out, err := g.run("diff", "--name-only", "--diff-filter=U")
+	if err != nil {
+		return nil, err
+	}
+
+	if out == "" {
+		return nil, nil
+	}
+
+	files := strings.Split(out, "\n")
+	// Filter out empty strings
+	var result []string
+	for _, f := range files {
+		if f != "" {
+			result = append(result, f)
+		}
+	}
+	return result, nil
+}
+
 // AbortRebase aborts a rebase in progress.
 func (g *Git) AbortRebase() error {
 	_, err := g.run("rebase", "--abort")
@@ -217,6 +329,39 @@ func (g *Git) AbortRebase() error {
 func (g *Git) CreateBranch(name string) error {
 	_, err := g.run("branch", name)
 	return err
+}
+
+// CreateBranchFrom creates a new branch from a specific ref.
+func (g *Git) CreateBranchFrom(name, ref string) error {
+	_, err := g.run("branch", name, ref)
+	return err
+}
+
+// BranchExists checks if a branch exists locally.
+func (g *Git) BranchExists(name string) (bool, error) {
+	_, err := g.run("show-ref", "--verify", "--quiet", "refs/heads/"+name)
+	if err != nil {
+		// Exit code 1 means branch doesn't exist
+		if strings.Contains(err.Error(), "exit status 1") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+// RemoteBranchExists checks if a branch exists on the remote.
+func (g *Git) RemoteBranchExists(remote, branch string) (bool, error) {
+	_, err := g.run("ls-remote", "--heads", remote, branch)
+	if err != nil {
+		return false, err
+	}
+	// ls-remote returns empty if branch doesn't exist, need to check output
+	out, err := g.run("ls-remote", "--heads", remote, branch)
+	if err != nil {
+		return false, err
+	}
+	return out != "", nil
 }
 
 // DeleteBranch deletes a branch.
@@ -324,4 +469,59 @@ func (g *Git) WorktreeList() ([]Worktree, error) {
 	}
 
 	return worktrees, nil
+}
+
+// BranchCreatedDate returns the date when a branch was created.
+// This uses the committer date of the first commit on the branch.
+// Returns date in YYYY-MM-DD format.
+func (g *Git) BranchCreatedDate(branch string) (string, error) {
+	// Get the date of the first commit on the branch that's not on main
+	// Use merge-base to find where the branch diverged from main
+	mergeBase, err := g.run("merge-base", "main", branch)
+	if err != nil {
+		// If merge-base fails, fall back to the branch tip's date
+		out, err := g.run("log", "-1", "--format=%cs", branch)
+		if err != nil {
+			return "", err
+		}
+		return out, nil
+	}
+
+	// Get the first commit after the merge base on this branch
+	out, err := g.run("log", "--format=%cs", "--reverse", mergeBase+".."+branch)
+	if err != nil {
+		return "", err
+	}
+
+	// Get the first line (first commit's date)
+	lines := strings.Split(out, "\n")
+	if len(lines) > 0 && lines[0] != "" {
+		return lines[0], nil
+	}
+
+	// If no commits after merge-base, the branch points to merge-base
+	// Return the merge-base commit date
+	out, err = g.run("log", "-1", "--format=%cs", mergeBase)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
+}
+
+// CommitsAhead returns the number of commits that branch has ahead of base.
+// For example, CommitsAhead("main", "feature") returns how many commits
+// are on feature that are not on main.
+func (g *Git) CommitsAhead(base, branch string) (int, error) {
+	out, err := g.run("rev-list", "--count", base+".."+branch)
+	if err != nil {
+		return 0, err
+	}
+
+	var count int
+	_, err = fmt.Sscanf(out, "%d", &count)
+	if err != nil {
+		return 0, fmt.Errorf("parsing commit count: %w", err)
+	}
+
+	return count, nil
 }

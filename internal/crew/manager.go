@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -80,11 +81,11 @@ func (m *Manager) Add(name string, createBranch bool) (*CrewWorker, error) {
 	if createBranch {
 		branchName = fmt.Sprintf("crew/%s", name)
 		if err := crewGit.CreateBranch(branchName); err != nil {
-			os.RemoveAll(crewPath)
+			_ = os.RemoveAll(crewPath)
 			return nil, fmt.Errorf("creating branch: %w", err)
 		}
 		if err := crewGit.Checkout(branchName); err != nil {
-			os.RemoveAll(crewPath)
+			_ = os.RemoveAll(crewPath)
 			return nil, fmt.Errorf("checking out branch: %w", err)
 		}
 	}
@@ -92,13 +93,13 @@ func (m *Manager) Add(name string, createBranch bool) (*CrewWorker, error) {
 	// Create mail directory for mail delivery
 	mailPath := m.mailDir(name)
 	if err := os.MkdirAll(mailPath, 0755); err != nil {
-		os.RemoveAll(crewPath)
+		_ = os.RemoveAll(crewPath)
 		return nil, fmt.Errorf("creating mail dir: %w", err)
 	}
 
 	// Create CLAUDE.md with crew worker prompting
 	if err := m.createClaudeMD(name, crewPath); err != nil {
-		os.RemoveAll(crewPath)
+		_ = os.RemoveAll(crewPath)
 		return nil, fmt.Errorf("creating CLAUDE.md: %w", err)
 	}
 
@@ -115,7 +116,7 @@ func (m *Manager) Add(name string, createBranch bool) (*CrewWorker, error) {
 
 	// Save state
 	if err := m.saveState(crew); err != nil {
-		os.RemoveAll(crewPath)
+		_ = os.RemoveAll(crewPath)
 		return nil, fmt.Errorf("saving state: %w", err)
 	}
 
@@ -273,4 +274,97 @@ func (m *Manager) loadState(name string) (*CrewWorker, error) {
 	}
 
 	return &crew, nil
+}
+
+// Rename renames a crew worker from oldName to newName.
+func (m *Manager) Rename(oldName, newName string) error {
+	if !m.exists(oldName) {
+		return ErrCrewNotFound
+	}
+	if m.exists(newName) {
+		return ErrCrewExists
+	}
+
+	oldPath := m.crewDir(oldName)
+	newPath := m.crewDir(newName)
+
+	// Rename directory
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return fmt.Errorf("renaming crew dir: %w", err)
+	}
+
+	// Update state file with new name and path
+	crew, err := m.loadState(newName)
+	if err != nil {
+		// Rollback on error
+		_ = os.Rename(newPath, oldPath)
+		return fmt.Errorf("loading state: %w", err)
+	}
+
+	crew.Name = newName
+	crew.ClonePath = newPath
+	crew.UpdatedAt = time.Now()
+
+	if err := m.saveState(crew); err != nil {
+		// Rollback on error
+		_ = os.Rename(newPath, oldPath)
+		return fmt.Errorf("saving state: %w", err)
+	}
+
+	return nil
+}
+
+// Pristine ensures a crew worker is up-to-date with remote.
+// It runs git pull --rebase and bd sync.
+func (m *Manager) Pristine(name string) (*PristineResult, error) {
+	if !m.exists(name) {
+		return nil, ErrCrewNotFound
+	}
+
+	crewPath := m.crewDir(name)
+	crewGit := git.NewGit(crewPath)
+
+	result := &PristineResult{
+		Name: name,
+	}
+
+	// Check for uncommitted changes
+	hasChanges, err := crewGit.HasUncommittedChanges()
+	if err != nil {
+		return nil, fmt.Errorf("checking changes: %w", err)
+	}
+	result.HadChanges = hasChanges
+
+	// Pull latest (use origin and current branch)
+	if err := crewGit.Pull("origin", ""); err != nil {
+		result.PullError = err.Error()
+	} else {
+		result.Pulled = true
+	}
+
+	// Run bd sync
+	if err := m.runBdSync(crewPath); err != nil {
+		result.SyncError = err.Error()
+	} else {
+		result.Synced = true
+	}
+
+	return result, nil
+}
+
+// runBdSync runs bd sync in the given directory.
+func (m *Manager) runBdSync(dir string) error {
+	cmd := exec.Command("bd", "sync")
+	cmd.Dir = dir
+	return cmd.Run()
+}
+
+// PristineResult captures the results of a pristine operation.
+type PristineResult struct {
+	Name       string `json:"name"`
+	HadChanges bool   `json:"had_changes"`
+	Pulled     bool   `json:"pulled"`
+	PullError  string `json:"pull_error,omitempty"`
+	Synced     bool   `json:"synced"`
+	SyncError  string `json:"sync_error,omitempty"`
 }

@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/gastown/internal/config"
@@ -47,6 +49,7 @@ Commands:
   gt crew at <name>        Attach to crew workspace session
   gt crew remove <name>    Remove a crew workspace
   gt crew refresh <name>   Context cycling with mail-to-self handoff
+  gt crew restart <name>   Kill and restart session fresh (alias: rs)
   gt crew status [<name>]  Show detailed workspace status`,
 }
 
@@ -150,6 +153,57 @@ Examples:
 	RunE: runCrewStatus,
 }
 
+var crewRestartCmd = &cobra.Command{
+	Use:     "restart <name>",
+	Aliases: []string{"rs"},
+	Short:   "Kill and restart crew workspace session",
+	Long: `Kill the tmux session and restart fresh with Claude.
+
+Useful when a crew member gets confused or needs a clean slate.
+Unlike 'refresh', this does NOT send handoff mail - it's a clean start.
+
+The command will:
+1. Kill existing tmux session if running
+2. Start fresh session with Claude
+3. Run gt prime to reinitialize context
+
+Examples:
+  gt crew restart dave            # Restart dave's session
+  gt crew rs emma                 # Same, using alias`,
+	Args: cobra.ExactArgs(1),
+	RunE: runCrewRestart,
+}
+
+var crewRenameCmd = &cobra.Command{
+	Use:   "rename <old-name> <new-name>",
+	Short: "Rename a crew workspace",
+	Long: `Rename a crew workspace.
+
+Kills any running session, renames the directory, and updates state.
+The new session will use the new name (gt-<rig>-crew-<new-name>).
+
+Examples:
+  gt crew rename dave david       # Rename dave to david
+  gt crew rename madmax max       # Rename madmax to max`,
+	Args: cobra.ExactArgs(2),
+	RunE: runCrewRename,
+}
+
+var crewPristineCmd = &cobra.Command{
+	Use:   "pristine [<name>]",
+	Short: "Sync crew workspaces with remote",
+	Long: `Ensure crew workspace(s) are up-to-date.
+
+Runs git pull and bd sync for the specified crew, or all crew workers.
+Reports any uncommitted changes that may need attention.
+
+Examples:
+  gt crew pristine                # Pristine all crew workers
+  gt crew pristine dave           # Pristine specific worker
+  gt crew pristine --json         # JSON output`,
+	RunE: runCrewPristine,
+}
+
 func init() {
 	// Add flags
 	crewAddCmd.Flags().StringVar(&crewRig, "rig", "", "Rig to create crew workspace in")
@@ -170,6 +224,13 @@ func init() {
 	crewStatusCmd.Flags().StringVar(&crewRig, "rig", "", "Filter by rig name")
 	crewStatusCmd.Flags().BoolVar(&crewJSON, "json", false, "Output as JSON")
 
+	crewRenameCmd.Flags().StringVar(&crewRig, "rig", "", "Rig to use")
+
+	crewPristineCmd.Flags().StringVar(&crewRig, "rig", "", "Filter by rig name")
+	crewPristineCmd.Flags().BoolVar(&crewJSON, "json", false, "Output as JSON")
+
+	crewRestartCmd.Flags().StringVar(&crewRig, "rig", "", "Rig to use")
+
 	// Add subcommands
 	crewCmd.AddCommand(crewAddCmd)
 	crewCmd.AddCommand(crewListCmd)
@@ -177,6 +238,9 @@ func init() {
 	crewCmd.AddCommand(crewRemoveCmd)
 	crewCmd.AddCommand(crewRefreshCmd)
 	crewCmd.AddCommand(crewStatusCmd)
+	crewCmd.AddCommand(crewRenameCmd)
+	crewCmd.AddCommand(crewPristineCmd)
+	crewCmd.AddCommand(crewRestartCmd)
 
 	rootCmd.AddCommand(crewCmd)
 }
@@ -254,19 +318,12 @@ func inferRigFromCwd(townRoot string) (string, error) {
 		return "", fmt.Errorf("not in workspace")
 	}
 
-	// First component should be the rig name
-	parts := filepath.SplitList(rel)
-	if len(parts) == 0 {
-		// Split on path separator instead
-		for i := 0; i < len(rel); i++ {
-			if rel[i] == filepath.Separator {
-				return rel[:i], nil
-			}
-		}
-		// No separator found, entire rel is the rig name
-		if rel != "" && rel != "." {
-			return rel, nil
-		}
+	// Normalize and split path - first component is the rig name
+	rel = filepath.ToSlash(rel)
+	parts := strings.Split(rel, "/")
+
+	if len(parts) > 0 && parts[0] != "" && parts[0] != "." {
+		return parts[0], nil
 	}
 
 	return "", fmt.Errorf("could not infer rig from current directory")
@@ -446,27 +503,112 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 		}
 
 		// Set environment
-		t.SetEnvironment(sessionID, "GT_RIG", r.Name)
-		t.SetEnvironment(sessionID, "GT_CREW", name)
+		_ = t.SetEnvironment(sessionID, "GT_RIG", r.Name)
+		_ = t.SetEnvironment(sessionID, "GT_CREW", name)
+
+		// Wait for shell to be ready after session creation
+		if err := t.WaitForShellReady(sessionID, 5*time.Second); err != nil {
+			return fmt.Errorf("waiting for shell: %w", err)
+		}
 
 		// Start claude with skip permissions (crew workers are trusted like Mayor)
 		if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
 			return fmt.Errorf("starting claude: %w", err)
 		}
 
-		// Wait a moment for Claude to initialize, then prime it
-		// We send gt prime after a short delay to ensure Claude is ready
-		if err := t.SendKeysDelayed(sessionID, "gt prime", 2000); err != nil {
+		// Wait for Claude to start (pane command changes from shell to node)
+		shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+		if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
+			fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
+		}
+
+		// Send gt prime to initialize context
+		if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 			// Non-fatal: Claude started but priming failed
 			fmt.Printf("Warning: Could not send prime command: %v\n", err)
 		}
 
 		fmt.Printf("%s Created session for %s/%s\n",
 			style.Bold.Render("✓"), r.Name, name)
+	} else {
+		// Session exists - check if Claude is still running
+		// Uses both pane command check and UI marker detection to avoid
+		// restarting when user is in a subshell spawned from Claude
+		if !t.IsClaudeRunning(sessionID) {
+			// Claude has exited, restart it
+			fmt.Printf("Claude exited, restarting...\n")
+			if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
+				return fmt.Errorf("restarting claude: %w", err)
+			}
+			// Wait for Claude to start, then prime
+			shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+			if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
+				fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
+			}
+			if err := t.SendKeys(sessionID, "gt prime"); err != nil {
+				fmt.Printf("Warning: Could not send prime command: %v\n", err)
+			}
+			// Send crew resume prompt after prime completes
+			crewPrompt := "Read your mail, act on anything urgent, else await instructions."
+			if err := t.SendKeysDelayed(sessionID, crewPrompt, 3000); err != nil {
+				fmt.Printf("Warning: Could not send resume prompt: %v\n", err)
+			}
+		}
+	}
+
+	// Check if we're already in the target session
+	if isInTmuxSession(sessionID) {
+		// We're in the session at a shell prompt - just start Claude directly
+		fmt.Printf("Starting Claude in current session...\n")
+		return execClaude()
 	}
 
 	// Attach to session using exec to properly forward TTY
 	return attachToTmuxSession(sessionID)
+}
+
+// isShellCommand checks if the command is a shell (meaning Claude has exited).
+func isShellCommand(cmd string) bool {
+	shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+	for _, shell := range shells {
+		if cmd == shell {
+			return true
+		}
+	}
+	return false
+}
+
+// execClaude execs claude, replacing the current process.
+// Used when we're already in the target session and just need to start Claude.
+func execClaude() error {
+	claudePath, err := exec.LookPath("claude")
+	if err != nil {
+		return fmt.Errorf("claude not found: %w", err)
+	}
+
+	// exec replaces current process with claude
+	args := []string{"claude", "--dangerously-skip-permissions"}
+	return syscall.Exec(claudePath, args, os.Environ())
+}
+
+// isInTmuxSession checks if we're currently inside the target tmux session.
+func isInTmuxSession(targetSession string) bool {
+	// TMUX env var format: /tmp/tmux-501/default,12345,0
+	// We need to get the current session name via tmux display-message
+	tmuxEnv := os.Getenv("TMUX")
+	if tmuxEnv == "" {
+		return false // Not in tmux at all
+	}
+
+	// Get current session name
+	cmd := exec.Command("tmux", "display-message", "-p", "#{session_name}")
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	currentSession := strings.TrimSpace(string(out))
+	return currentSession == targetSession
 }
 
 // attachToTmuxSession attaches to a tmux session with proper TTY forwarding.
@@ -642,15 +784,90 @@ func runCrewRefresh(cmd *cobra.Command, args []string) error {
 	}
 
 	// Set environment
-	t.SetEnvironment(sessionID, "GT_RIG", r.Name)
-	t.SetEnvironment(sessionID, "GT_CREW", name)
+	_ = t.SetEnvironment(sessionID, "GT_RIG", r.Name)
+	_ = t.SetEnvironment(sessionID, "GT_CREW", name)
 
-	// Start claude
+	// Wait for shell to be ready
+	if err := t.WaitForShellReady(sessionID, 5*time.Second); err != nil {
+		return fmt.Errorf("waiting for shell: %w", err)
+	}
+
+	// Start claude (refresh uses regular permissions, reads handoff mail)
 	if err := t.SendKeys(sessionID, "claude"); err != nil {
 		return fmt.Errorf("starting claude: %w", err)
 	}
 
 	fmt.Printf("%s Refreshed crew workspace: %s/%s\n",
+		style.Bold.Render("✓"), r.Name, name)
+	fmt.Printf("Attach with: %s\n", style.Dim.Render(fmt.Sprintf("gt crew at %s", name)))
+
+	return nil
+}
+
+func runCrewRestart(cmd *cobra.Command, args []string) error {
+	name := args[0]
+
+	crewMgr, r, err := getCrewManager(crewRig)
+	if err != nil {
+		return err
+	}
+
+	// Get the crew worker
+	worker, err := crewMgr.Get(name)
+	if err != nil {
+		if err == crew.ErrCrewNotFound {
+			return fmt.Errorf("crew workspace '%s' not found", name)
+		}
+		return fmt.Errorf("getting crew worker: %w", err)
+	}
+
+	t := tmux.NewTmux()
+	sessionID := crewSessionName(r.Name, name)
+
+	// Kill existing session if running
+	if hasSession, _ := t.HasSession(sessionID); hasSession {
+		if err := t.KillSession(sessionID); err != nil {
+			return fmt.Errorf("killing old session: %w", err)
+		}
+		fmt.Printf("Killed session %s\n", sessionID)
+	}
+
+	// Start new session
+	if err := t.NewSession(sessionID, worker.ClonePath); err != nil {
+		return fmt.Errorf("creating session: %w", err)
+	}
+
+	// Set environment
+	t.SetEnvironment(sessionID, "GT_RIG", r.Name)
+	t.SetEnvironment(sessionID, "GT_CREW", name)
+
+	// Wait for shell to be ready
+	if err := t.WaitForShellReady(sessionID, 5*time.Second); err != nil {
+		return fmt.Errorf("waiting for shell: %w", err)
+	}
+
+	// Start claude with skip permissions (crew workers are trusted)
+	if err := t.SendKeys(sessionID, "claude --dangerously-skip-permissions"); err != nil {
+		return fmt.Errorf("starting claude: %w", err)
+	}
+
+	// Wait for Claude to start, then prime it
+	shells := []string{"bash", "zsh", "sh", "fish", "tcsh", "ksh"}
+	if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
+		fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
+	}
+	if err := t.SendKeys(sessionID, "gt prime"); err != nil {
+		// Non-fatal: Claude started but priming failed
+		fmt.Printf("Warning: Could not send prime command: %v\n", err)
+	}
+
+	// Send crew resume prompt after prime completes
+	crewPrompt := "Read your mail, act on anything urgent, else await instructions."
+	if err := t.SendKeysDelayed(sessionID, crewPrompt, 3000); err != nil {
+		fmt.Printf("Warning: Could not send resume prompt: %v\n", err)
+	}
+
+	fmt.Printf("%s Restarted crew workspace: %s/%s\n",
 		style.Bold.Render("✓"), r.Name, name)
 	fmt.Printf("Attach with: %s\n", style.Dim.Render(fmt.Sprintf("gt crew at %s", name)))
 
@@ -789,6 +1006,115 @@ func runCrewStatus(cmd *cobra.Command, args []string) error {
 			fmt.Printf("  Mail:   %d unread / %d total\n", item.MailUnread, item.MailTotal)
 		} else {
 			fmt.Printf("  Mail:   %s\n", style.Dim.Render(fmt.Sprintf("%d messages", item.MailTotal)))
+		}
+	}
+
+	return nil
+}
+
+func runCrewRename(cmd *cobra.Command, args []string) error {
+	oldName := args[0]
+	newName := args[1]
+
+	crewMgr, r, err := getCrewManager(crewRig)
+	if err != nil {
+		return err
+	}
+
+	// Kill any running session for the old name
+	t := tmux.NewTmux()
+	oldSessionID := crewSessionName(r.Name, oldName)
+	if hasSession, _ := t.HasSession(oldSessionID); hasSession {
+		if err := t.KillSession(oldSessionID); err != nil {
+			return fmt.Errorf("killing old session: %w", err)
+		}
+		fmt.Printf("Killed session %s\n", oldSessionID)
+	}
+
+	// Perform the rename
+	if err := crewMgr.Rename(oldName, newName); err != nil {
+		if err == crew.ErrCrewNotFound {
+			return fmt.Errorf("crew workspace '%s' not found", oldName)
+		}
+		if err == crew.ErrCrewExists {
+			return fmt.Errorf("crew workspace '%s' already exists", newName)
+		}
+		return fmt.Errorf("renaming crew workspace: %w", err)
+	}
+
+	fmt.Printf("%s Renamed crew workspace: %s/%s → %s/%s\n",
+		style.Bold.Render("✓"), r.Name, oldName, r.Name, newName)
+	fmt.Printf("New session will be: %s\n", style.Dim.Render(crewSessionName(r.Name, newName)))
+
+	return nil
+}
+
+func runCrewPristine(cmd *cobra.Command, args []string) error {
+	crewMgr, r, err := getCrewManager(crewRig)
+	if err != nil {
+		return err
+	}
+
+	var workers []*crew.CrewWorker
+
+	if len(args) > 0 {
+		// Specific worker
+		name := args[0]
+		worker, err := crewMgr.Get(name)
+		if err != nil {
+			if err == crew.ErrCrewNotFound {
+				return fmt.Errorf("crew workspace '%s' not found", name)
+			}
+			return fmt.Errorf("getting crew worker: %w", err)
+		}
+		workers = []*crew.CrewWorker{worker}
+	} else {
+		// All workers
+		workers, err = crewMgr.List()
+		if err != nil {
+			return fmt.Errorf("listing crew workers: %w", err)
+		}
+	}
+
+	if len(workers) == 0 {
+		fmt.Println("No crew workspaces found.")
+		return nil
+	}
+
+	var results []*crew.PristineResult
+
+	for _, w := range workers {
+		result, err := crewMgr.Pristine(w.Name)
+		if err != nil {
+			return fmt.Errorf("pristine %s: %w", w.Name, err)
+		}
+		results = append(results, result)
+	}
+
+	if crewJSON {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(results)
+	}
+
+	// Text output
+	for _, result := range results {
+		fmt.Printf("%s %s/%s\n", style.Bold.Render("→"), r.Name, result.Name)
+
+		if result.HadChanges {
+			fmt.Printf("  %s\n", style.Bold.Render("⚠ Has uncommitted changes"))
+		}
+
+		if result.Pulled {
+			fmt.Printf("  %s git pull\n", style.Dim.Render("✓"))
+		} else if result.PullError != "" {
+			fmt.Printf("  %s git pull: %s\n", style.Bold.Render("✗"), result.PullError)
+		}
+
+		if result.Synced {
+			fmt.Printf("  %s bd sync\n", style.Dim.Render("✓"))
+		} else if result.SyncError != "" {
+			fmt.Printf("  %s bd sync: %s\n", style.Bold.Render("✗"), result.SyncError)
 		}
 	}
 

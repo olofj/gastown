@@ -17,8 +17,9 @@ import (
 const MayorSessionName = "gt-mayor"
 
 var mayorCmd = &cobra.Command{
-	Use:   "mayor",
-	Short: "Manage the Mayor session",
+	Use:     "mayor",
+	Aliases: []string{"may"},
+	Short:   "Manage the Mayor session",
 	Long: `Manage the Mayor tmux session.
 
 The Mayor is the global coordinator for Gas Town, running as a persistent
@@ -82,12 +83,6 @@ func init() {
 }
 
 func runMayorStart(cmd *cobra.Command, args []string) error {
-	// Find workspace root
-	townRoot, err := workspace.FindFromCwdOrError()
-	if err != nil {
-		return fmt.Errorf("not in a Gas Town workspace: %w", err)
-	}
-
 	t := tmux.NewTmux()
 
 	// Check if session already exists
@@ -99,6 +94,25 @@ func runMayorStart(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Mayor session already running. Attach with: gt mayor attach")
 	}
 
+	if err := startMayorSession(t); err != nil {
+		return err
+	}
+
+	fmt.Printf("%s Mayor session started. Attach with: %s\n",
+		style.Bold.Render("✓"),
+		style.Dim.Render("gt mayor attach"))
+
+	return nil
+}
+
+// startMayorSession creates and initializes the Mayor tmux session.
+func startMayorSession(t *tmux.Tmux) error {
+	// Find workspace root
+	townRoot, err := workspace.FindFromCwdOrError()
+	if err != nil {
+		return fmt.Errorf("not in a Gas Town workspace: %w", err)
+	}
+
 	// Create session in workspace root
 	fmt.Println("Starting Mayor session...")
 	if err := t.NewSession(MayorSessionName, townRoot); err != nil {
@@ -106,17 +120,18 @@ func runMayorStart(cmd *cobra.Command, args []string) error {
 	}
 
 	// Set environment
-	t.SetEnvironment(MayorSessionName, "GT_ROLE", "mayor")
+	_ = t.SetEnvironment(MayorSessionName, "GT_ROLE", "mayor")
 
-	// Launch Claude with full permissions (Mayor is trusted)
-	command := "claude --dangerously-skip-permissions"
-	if err := t.SendKeys(MayorSessionName, command); err != nil {
+	// Apply Mayor theme
+	theme := tmux.MayorTheme()
+	_ = t.ConfigureGasTownSession(MayorSessionName, theme, "", "Mayor", "coordinator")
+
+	// Launch Claude - the startup hook handles 'gt prime' automatically
+	// Use SendKeysDelayed to allow shell initialization after NewSession
+	claudeCmd := `claude --dangerously-skip-permissions`
+	if err := t.SendKeysDelayed(MayorSessionName, claudeCmd, 200); err != nil {
 		return fmt.Errorf("sending command: %w", err)
 	}
-
-	fmt.Printf("%s Mayor session started. Attach with: %s\n",
-		style.Bold.Render("✓"),
-		style.Dim.Render("gt mayor attach"))
 
 	return nil
 }
@@ -136,7 +151,7 @@ func runMayorStop(cmd *cobra.Command, args []string) error {
 	fmt.Println("Stopping Mayor session...")
 
 	// Try graceful shutdown first
-	t.SendKeysRaw(MayorSessionName, "C-c")
+	_ = t.SendKeysRaw(MayorSessionName, "C-c")
 	time.Sleep(100 * time.Millisecond)
 
 	// Kill the session
@@ -157,11 +172,14 @@ func runMayorAttach(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("checking session: %w", err)
 	}
 	if !running {
-		return errors.New("Mayor session is not running. Start with: gt mayor start")
+		// Auto-start if not running
+		fmt.Println("Mayor session not running, starting...")
+		if err := startMayorSession(t); err != nil {
+			return err
+		}
 	}
 
 	// Use exec to replace current process with tmux attach
-	// This is the standard pattern for attaching to tmux sessions
 	tmuxPath, err := exec.LookPath("tmux")
 	if err != nil {
 		return fmt.Errorf("tmux not found: %w", err)
@@ -222,19 +240,19 @@ func runMayorStatus(cmd *cobra.Command, args []string) error {
 func runMayorRestart(cmd *cobra.Command, args []string) error {
 	t := tmux.NewTmux()
 
-	// Stop if running
 	running, err := t.HasSession(MayorSessionName)
 	if err != nil {
 		return fmt.Errorf("checking session: %w", err)
 	}
+
 	if running {
+		// Stop the current session
 		fmt.Println("Stopping Mayor session...")
-		t.SendKeysRaw(MayorSessionName, "C-c")
+		_ = t.SendKeysRaw(MayorSessionName, "C-c")
 		time.Sleep(100 * time.Millisecond)
 		if err := t.KillSession(MayorSessionName); err != nil {
 			return fmt.Errorf("killing session: %w", err)
 		}
-		fmt.Printf("%s Mayor session stopped.\n", style.Bold.Render("✓"))
 	}
 
 	// Start fresh

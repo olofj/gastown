@@ -11,7 +11,7 @@ graph TB
     subgraph "Gas Town"
         Overseer["👤 Overseer<br/>(Human Operator)"]
 
-        subgraph Town["Town (~/ai/)"]
+        subgraph Town["Town (~/gt/)"]
             Mayor["🎩 Mayor<br/>(Global Coordinator)"]
 
             subgraph Rig1["Rig: wyvern"]
@@ -45,12 +45,28 @@ graph TB
 
 ## Core Concepts
 
-### Town
+### Harness (Town)
 
-A **Town** is a complete Gas Town installation - the workspace where everything lives. A town contains:
-- Town configuration (`config/` directory)
-- Mayor's home (`mayor/` directory at town level)
-- One or more **Rigs** (managed project repositories)
+A **Harness** is the installation directory where Gas Town lives - the physical root of your workspace. The terms "harness" and "town" are often used interchangeably:
+- **Harness** = physical (the directory at `~/gt/`)
+- **Town** = logical (the Gas Town workspace concept)
+
+A harness contains:
+- `CLAUDE.md` - Mayor role context (Mayor runs from harness root)
+- `mayor/` - Mayor configuration, state, and registry
+- `.beads/` - Town-level beads (gm-* prefix for mayor mail)
+- `rigs/` or rig directories - Managed project containers
+
+Create a harness with `gt install`:
+```bash
+gt install ~/gt --git  # Create harness with git
+```
+
+**See**: [docs/harness.md](harness.md) for comprehensive harness documentation, including:
+- Beads redirect patterns for complex setups
+- Multi-system sharing (PGT/GGT coexistence)
+- Harness templates for organizations
+- Migration between harnesses
 
 ### Rig
 
@@ -157,27 +173,265 @@ sync-branch: beads-sync    # Separate branch for beads commits
 
 **Why sync-branch?** When multiple agents share a beads database, using a dedicated sync branch prevents beads commits from interleaving with code commits on feature branches.
 
-## Directory Structure
+#### Beads as Universal Data Plane
 
-### Town Level
+Beads is the data plane for ALL Gas Town operations. Everything flows through beads:
+
+| Category | Description | Status |
+|----------|-------------|--------|
+| **Work items** | Issues, tasks, epics | Core |
+| **Mail** | Messages between agents (`type: message`) | Core |
+| **Merge requests** | Queue entries (`type: merge-request`) | In progress |
+| **Molecules** | Composable workflow templates | Planned (v1) |
+| **Timed beads** | Scheduled recurring work | Planned (post-v1) |
+| **Pinned beads** | Ongoing concerns that don't close | Planned (post-v1) |
+| **Resource beads** | Leases, locks, quotas | Planned (post-v1) |
+
+**Molecules** are crystallized workflow patterns that can be attached to work items. See the dedicated **Molecules** section below for full details on composition, nondeterministic idempotence, and built-in workflows.
+
+**The OS Metaphor**: Gas Town is an operating system for work:
+
+| OS Concept | Gas Town |
+|------------|----------|
+| Kernel | Daemon |
+| Process scheduler | Ready work + dependencies |
+| Timer interrupts | Timed beads |
+| Semaphores | Resource beads |
+| Background services | Pinned beads |
+| Process templates | Molecules |
+| IPC | Mail beads |
+
+## Molecules: Composable Workflow Templates
+
+Molecules are **crystallized, composable, nondeterministic-idempotent workflow templates**. They encode structured workflows that any worker can execute, with full auditability and the ability for any worker to pick up where another left off.
+
+### Core Concepts
+
+| Concept | Name | Description |
+|---------|------|-------------|
+| Template | **Molecule** | Read-only workflow pattern (beads issue with type=molecule) |
+| Individual step | **Atom/Step** | Smallest unit of work within a molecule |
+| Dependency | **Bond** | Connection between steps (Needs: directive) |
+| Composed molecule | **Polymer/Derived** | Molecule built from other molecules |
+| Concrete work | **Instance** | Beads created when molecule is instantiated |
+
+### Molecule Format
+
+Molecules use a prose-based format with structured step definitions:
+
+```markdown
+## Molecule: engineer-in-box
+Full workflow from design to merge.
+
+## Step: design
+Think carefully about architecture. Consider:
+- Existing patterns in the codebase
+- Trade-offs between approaches
+- Testability and maintainability
+
+Write a brief design summary before proceeding.
+
+## Step: implement
+Write the code. Follow codebase conventions.
+Needs: design
+
+## Step: review
+Self-review the changes. Look for bugs, style issues, missing error handling.
+Needs: implement
+
+## Step: test
+Write and run tests. Cover happy path and edge cases.
+Needs: implement
+
+## Step: submit
+Submit for merge via refinery.
+Needs: review, test
+```
+
+**Key format elements:**
+- `## Step: <name>` - Step header with reference name
+- Prose instructions - What the step should accomplish
+- `Needs: <step1>, <step2>` - Dependencies (optional)
+- `Tier: haiku|sonnet|opus` - Model hint (optional)
+
+### Molecule Composition
+
+Molecules can include other molecules to create derived workflows:
+
+```markdown
+## Molecule: gastown-polecat
+Full workflow for Gas Town polecats including binary installation.
+
+Includes: mol-engineer-in-box
+
+## Step: install-binary
+After merge is submitted, rebuild and install the local gt binary.
+Run from the rig directory:
+  go build -o gt ./cmd/gt
+  go install ./cmd/gt
+Needs: submit
+```
+
+**Semantics:**
+- `Includes:` brings in all steps from the referenced molecule
+- New steps can depend on included steps (e.g., `Needs: submit`)
+- Multiple includes are supported for complex polymers
+- Dependencies are resolved transitively at parse time
+
+### Nondeterministic Idempotence
+
+This is the key property enabling distributed molecule execution:
+
+1. **Deterministic Structure**: Molecule defines exactly what steps exist and their dependencies
+2. **Nondeterministic Execution**: Any worker can execute any ready step
+3. **Idempotent Progress**: Completed steps stay completed; re-entry is safe
+
+**How it works:**
 
 ```
-~/gt/                              # Town root (Gas Town harness)
-├── CLAUDE.md                      # Mayor role prompting (at town root)
+Worker A picks up "design" (pending → in_progress)
+Worker A completes "design" (in_progress → completed)
+Worker A dies before "implement"
+Worker B queries bd ready, sees "implement" is now ready
+Worker B picks up "implement" (any worker can continue)
+```
+
+This is like a **distributed work queue** backed by beads:
+- Beads is the queue (steps are issues with status)
+- Git is the persistence layer
+- No separate message broker needed
+- Full auditability of who did what, when
+
+### Step States
+
+```
+pending → in_progress → completed
+                     ↘ failed
+```
+
+| State | Meaning |
+|-------|---------|
+| `pending` (open) | Step not yet started, waiting for dependencies |
+| `in_progress` | Worker has claimed this step |
+| `completed` (closed) | Step finished successfully |
+| `failed` | Step failed (needs intervention) |
+
+**Recovery mechanism:**
+- If worker dies mid-step, step stays `in_progress`
+- After timeout (default 30 min), step can be reclaimed
+- `bd release <step-id>` manually releases stuck steps
+- Another worker can then pick it up
+
+### Instantiation
+
+When a molecule is attached to an issue:
+
+```bash
+gt spawn --issue gt-xyz --molecule mol-engineer-in-box
+```
+
+1. Molecule is validated (steps, dependencies)
+2. Child beads are created for each step:
+   - `gt-xyz.design`, `gt-xyz.implement`, etc.
+3. Inter-step dependencies are wired
+4. First ready step(s) become available via `bd ready`
+5. Polecat starts on first ready step
+
+**Provenance tracking:**
+- Each instance has an `instantiated_from` edge to the source molecule
+- Enables querying: "show all instances of mol-engineer-in-box"
+
+### Built-in Molecules
+
+Gas Town ships with three built-in molecules:
+
+**mol-engineer-in-box** (5 steps):
+```
+design → implement → review → test → submit
+```
+Full quality workflow with design phase and self-review.
+
+**mol-quick-fix** (3 steps):
+```
+implement → test → submit
+```
+Fast path for small, well-understood changes.
+
+**mol-research** (2 steps):
+```
+investigate → document
+```
+Exploration workflow for understanding problems.
+
+Seed built-in molecules with:
+```bash
+gt molecule seed
+```
+
+### Usage
+
+```bash
+# List available molecules
+gt molecule list
+
+# Show molecule details
+gt molecule show mol-engineer-in-box
+
+# Instantiate on an issue
+gt molecule instantiate mol-engineer-in-box --parent=gt-xyz
+
+# Spawn polecat with molecule
+gt spawn --issue gt-xyz --molecule mol-engineer-in-box
+```
+
+### Why Molecules?
+
+1. **Quality gates**: Every polecat follows the same review/test workflow
+2. **Error isolation**: Each step is a checkpoint; failures don't lose prior work
+3. **Parallelism**: Independent steps can run in parallel across workers
+4. **Auditability**: Full history of who did what step, when
+5. **Composability**: Build complex workflows from simple building blocks
+6. **Resumability**: Any worker can continue where another left off
+
+### Molecule vs Template
+
+Beads has two related concepts:
+- **bd template**: User-facing workflow templates with variable substitution
+- **gt molecule**: Agent-focused execution templates with step dependencies
+
+Both use similar structures but different semantics:
+- Templates focus on parameterization (`{{variable}}` substitution)
+- Molecules focus on execution (step states, nondeterministic dispatch)
+
+## Directory Structure
+
+### Harness Level
+
+The harness (town root) is created by `gt install`:
+
+```
+~/gt/                              # HARNESS ROOT (Gas Town installation)
+├── CLAUDE.md                      # Mayor role context (runs from here)
 ├── .beads/                        # Town-level beads (prefix: gm-)
 │   ├── beads.db                   # Mayor mail, coordination, handoffs
 │   └── config.yaml
 │
-├── mayor/                         # Mayor's HOME at town level
+├── mayor/                         # Mayor configuration and state
 │   ├── town.json                  # {"type": "town", "name": "..."}
 │   ├── rigs.json                  # Registry of managed rigs
-│   └── state.json                 # Mayor state (NO mail/ directory)
+│   └── state.json                 # Mayor agent state
 │
-├── gastown/                       # A rig (project container)
-└── wyvern/                        # Another rig
+├── rigs/                          # Standard location for rigs
+│   ├── gastown/                   # A rig (project container)
+│   └── wyvern/                    # Another rig
+│
+└── <rig>/                         # OR rigs at harness root (legacy)
 ```
 
-**Note**: Mayor's mail is now in town beads (`gm-*` issues), not JSONL files.
+**Notes**:
+- Mayor's mail is in town beads (`gm-*` issues), not JSONL files
+- Rigs can be in `rigs/` or at harness root (both work)
+- See [docs/harness.md](harness.md) for advanced harness configurations
 
 ### Rig Level
 
@@ -227,8 +481,8 @@ graph TB
         Beads[".beads/"]
 
         subgraph Polecats["polecats/"]
-            Nux["Nux/<br/>(git clone)"]
-            Toast["Toast/<br/>(git clone)"]
+            Nux["Nux/<br/>(worktree)"]
+            Toast["Toast/<br/>(worktree)"]
         end
 
         subgraph Refinery["refinery/"]
@@ -259,19 +513,19 @@ graph TB
 
 ### ASCII Directory Layout
 
-For reference without mermaid rendering:
+For reference without mermaid rendering (see [harness.md](harness.md) for creation/setup):
 
 ```
-~/gt/                                    # TOWN ROOT (Gas Town harness)
-├── CLAUDE.md                            # Mayor role prompting
+~/gt/                                    # HARNESS ROOT (Gas Town installation)
+├── CLAUDE.md                            # Mayor role context
 ├── .beads/                              # Town-level beads (gm-* prefix)
 │   ├── beads.db                         # Mayor mail, coordination
 │   └── config.yaml
 │
-├── mayor/                               # Mayor's home (at town level)
+├── mayor/                               # Mayor configuration and state
 │   ├── town.json                        # {"type": "town", "name": "..."}
 │   ├── rigs.json                        # Registry of managed rigs
-│   └── state.json                       # Mayor state (no mail/ dir)
+│   └── state.json                       # Mayor agent state
 │
 ├── gastown/                             # RIG (container, NOT a git clone)
 │   ├── config.json                      # Rig configuration
@@ -440,6 +694,9 @@ Polecats are the workers that do actual implementation:
 - **Self-verification**: Run decommission checklist before signaling done
 - **Beads access**: Create issues for discovered work, close completed work
 - **Clean handoff**: Ensure git state is clean for Witness verification
+- **Shutdown request**: Request own termination via `gt handoff` (bottom-up lifecycle)
+
+**Polecats are ephemeral**: They exist only while working. When done, they request shutdown and are deleted (worktree removed, branch deleted). There is no "idle pool" of polecats.
 
 ## Key Workflows
 
@@ -505,6 +762,46 @@ sequenceDiagram
         end
     end
 ```
+
+### Polecat Shutdown Protocol (Bottom-Up)
+
+Polecats initiate their own shutdown. This enables streaming - workers come and go continuously without artificial batch boundaries.
+
+```mermaid
+sequenceDiagram
+    participant P as 🐱 Polecat
+    participant R as 🔧 Refinery
+    participant W as 👁 Witness
+
+    P->>P: Complete work
+    P->>R: Submit to merge queue
+    P->>P: Run gt handoff
+
+    Note over P: Verify git clean,<br/>PR exists
+
+    P->>W: Mail: "Shutdown request"
+    P->>P: Set state = pending_shutdown
+
+    W->>W: Verify safe to kill
+    W->>P: Kill session
+    W->>W: git worktree remove
+    W->>W: git branch -d
+```
+
+**gt handoff command** (run by polecat):
+1. Verify git state clean (no uncommitted changes)
+2. Verify work handed off (PR created or in queue)
+3. Send mail to Witness requesting shutdown
+4. Wait for Witness to kill session (don't self-exit)
+
+**Witness shutdown handler**:
+1. Receive shutdown request
+2. Verify PR merged or queued, no data loss risk
+3. Kill session: `gt session stop <rig>/<polecat>`
+4. Remove worktree: `git worktree remove polecats/<name>`
+5. Delete branch: `git branch -d polecat/<name>`
+
+**Why bottom-up?** In streaming, there's no "swarm end" to trigger cleanup. Each worker manages its own lifecycle. The Witness is the lifecycle authority that executes the actual termination.
 
 ### Session Cycling (Mail-to-Self)
 
@@ -695,54 +992,84 @@ gt-auth-epic              # Epic: "Fix authentication bugs"
 
 Workers process issues independently. Work flows through the merge queue. No "swarm ID" needed - the epic provides grouping, labels provide ad-hoc queries, dependencies provide sequencing.
 
-### 12. Agent Session Lifecycle (Daemon Protection)
+### 12. Agent Session Lifecycle (One Daemon)
 
-**Decision**: A background daemon manages agent session lifecycles, including cycling sessions when agents request handoff.
+**Decision**: ONE daemon (Go process) for all Gas Town manages agent lifecycles. Agents use a unified `gt handoff` command to request lifecycle actions.
+
+**Architecture**:
+```
+Gas Town Daemon (gt daemon)
+├── Pokes Mayor periodically
+├── Pokes all Witnesses periodically
+├── Processes lifecycle requests from daemon/ inbox
+└── Restarts sessions when cycle requested
+
+Lifecycle Hierarchy:
+  Daemon → manages Mayor, all Witnesses
+  Witness → manages Polecats, Refinery (per rig)
+```
 
 **Rationale**:
 - Agents can't restart themselves after exiting
-- Handoff mail is useless without someone to start the new session
-- Daemon provides reliable session management outside agent context
-- Enables autonomous long-running operation (hours/days)
+- ONE daemon is simpler than per-rig daemons
+- Daemon is dumb scheduler; intelligence is in agents
+- Unified protocol means all agents work the same way
 
-**Session cycling protocol**:
-1. Agent detects context exhaustion or requests cycle
-2. Agent sends handoff mail to own inbox
-3. Agent sets `requesting_cycle: true` in state.json
-4. Agent exits (or sends explicit signal to daemon)
-5. Daemon detects exit + cycle request flag
-6. Daemon starts new session
-7. New session reads handoff mail, resumes work
+**Unified lifecycle command** (`gt handoff`):
+```bash
+gt handoff              # Context-aware default
+gt handoff --shutdown   # Terminate, don't restart (polecats)
+gt handoff --cycle      # Restart with handoff (long-running agents)
+gt handoff --restart    # Fresh restart, no handoff
+```
 
-**Daemon responsibilities**:
-- Monitor agent session health (heartbeat)
-- Detect session exit
-- Check cycle request flag in state.json
-- Start replacement session if cycle requested
-- Clear cycle flag after successful restart
-- Report failures to Mayor (escalation)
+| Agent | Default | Sends request to |
+|-------|---------|------------------|
+| Polecat | --shutdown | rig/witness |
+| Refinery | --cycle | rig/witness |
+| Witness | --cycle | daemon/ |
+| Mayor | --cycle | daemon/ |
 
-**Applies to**: Witness, Refinery (both long-running agents that may exhaust context)
+**Lifecycle request protocol**:
+1. Agent runs `gt handoff` (verifies git clean, sends handoff mail)
+2. Agent sends lifecycle request to its manager
+3. Agent sets `requesting_<action>: true` in state.json
+4. Agent waits (does NOT self-exit)
+5. Manager receives request, verifies safe
+6. Manager kills session
+7. Manager starts new session (for cycle/restart)
+8. New session reads handoff mail, resumes work
+
+**Daemon heartbeat loop**:
+- Poke Mayor: "HEARTBEAT: check your rigs"
+- Poke each Witness: "HEARTBEAT: check your workers"
+- Agents ignore poke if already working
+- Process any lifecycle requests in daemon/ inbox
+- Restart dead sessions if cycle was requested
 
 ```mermaid
 sequenceDiagram
     participant A1 as Agent Session 1
-    participant S as State.json
-    participant D as Daemon
+    participant M as Lifecycle Manager
     participant A2 as Agent Session 2
-    participant MB as Mailbox
 
-    A1->>MB: Send handoff mail
-    A1->>S: Set requesting_cycle: true
-    A1->>A1: Exit cleanly
-    D->>D: Detect session exit
-    D->>S: Check requesting_cycle
-    S->>D: true
-    D->>D: Start new session
-    D->>S: Clear requesting_cycle
-    A2->>MB: Read handoff mail
-    A2->>A2: Resume from handoff
+    A1->>A1: gt handoff --cycle
+    A1->>A1: Send handoff mail to self
+    A1->>M: Lifecycle request: cycle
+    A1->>A1: Set requesting_cycle, wait
+
+    M->>M: Verify safe to act
+    M->>A1: Kill session
+    M->>A2: Start new session
+    A2->>A2: Read handoff mail
+    A2->>A2: Resume work
 ```
+
+**Polecat shutdown** (--shutdown default):
+After Witness kills session:
+- Remove worktree: `git worktree remove polecats/<name>`
+- Delete branch: `git branch -d polecat/<name>`
+- Polecat ceases to exist (ephemeral)
 
 ### 13. Resource-Constrained Worker Pool
 
@@ -912,10 +1239,13 @@ This ensures all agents in the rig share a single beads database, separate from 
 
 ## CLI Commands
 
-### Town Management
+### Harness Management
 
 ```bash
-gt install [path]      # Install Gas Town at path
+gt install [path]      # Create Gas Town harness (see harness.md)
+gt install --git       # Also initialize git with .gitignore
+gt install --github=u/r  # Also create GitHub repo
+gt git-init            # Initialize git for existing harness
 gt doctor              # Check workspace health
 gt doctor --fix        # Auto-fix issues
 ```
@@ -940,11 +1270,12 @@ gt capture <polecat> "<cmd>"     # Run command in polecat session
 ### Session Management
 
 ```bash
-gt spawn --issue <id>  # Start polecat on issue
-gt kill <polecat>      # Kill polecat session
-gt wake <polecat>      # Mark polecat as active
-gt sleep <polecat>     # Mark polecat as inactive
+gt spawn --issue <id>  # Start polecat on issue (creates fresh worktree)
+gt handoff             # Polecat requests shutdown (run when done)
+gt session stop <p>    # Kill polecat session (Witness uses this)
 ```
+
+**Note**: `gt wake` and `gt sleep` are deprecated - polecats are ephemeral, not pooled.
 
 ### Landing & Merge Queue
 
@@ -1150,7 +1481,7 @@ type Worker interface {
 ### Configuration
 
 ```yaml
-# ~/ai/config/outposts.yaml
+# ~/gt/config/outposts.yaml
 outposts:
   - name: local
     type: local
