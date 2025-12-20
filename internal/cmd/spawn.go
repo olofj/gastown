@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -21,13 +20,6 @@ import (
 	"github.com/steveyegge/gastown/internal/tmux"
 	"github.com/steveyegge/gastown/internal/workspace"
 )
-
-// polecatNames are Mad Max: Fury Road themed names for auto-generated polecats.
-var polecatNames = []string{
-	"Nux", "Toast", "Capable", "Cheedo", "Dag", "Rictus", "Slit", "Morsov",
-	"Ace", "Coma", "Valkyrie", "Keeper", "Vuvalini", "Organic", "Immortan",
-	"Corpus", "Doof", "Scabrous", "Splendid", "Fragile",
-}
 
 // Spawn command flags
 var (
@@ -150,10 +142,13 @@ func runSpawn(cmd *cobra.Command, args []string) error {
 	if polecatName == "" {
 		polecatName, err = selectIdlePolecat(polecatMgr, r)
 		if err != nil {
-			// If --create is set, generate a new polecat name instead of failing
+			// If --create is set, allocate a name from the pool
 			if spawnCreate {
-				polecatName = generatePolecatName(polecatMgr)
-				fmt.Printf("Generated polecat name: %s\n", polecatName)
+				polecatName, err = polecatMgr.AllocateName()
+				if err != nil {
+					return fmt.Errorf("allocating polecat name: %w", err)
+				}
+				fmt.Printf("Allocated polecat name: %s\n", polecatName)
 			} else {
 				return fmt.Errorf("auto-select polecat: %w", err)
 			}
@@ -336,37 +331,6 @@ func parseSpawnAddress(addr string) (rigName, polecatName string, err error) {
 	return addr, "", nil
 }
 
-// generatePolecatName generates a unique polecat name that doesn't conflict with existing ones.
-func generatePolecatName(mgr *polecat.Manager) string {
-	existing, _ := mgr.List()
-	existingNames := make(map[string]bool)
-	for _, p := range existing {
-		existingNames[p.Name] = true
-	}
-
-	// Try to find an unused name from the list
-	// Shuffle to avoid always picking the same name
-	shuffled := make([]string, len(polecatNames))
-	copy(shuffled, polecatNames)
-	rand.Shuffle(len(shuffled), func(i, j int) {
-		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
-	})
-
-	for _, name := range shuffled {
-		if !existingNames[name] {
-			return name
-		}
-	}
-
-	// All names taken, generate one with a number suffix
-	base := shuffled[0]
-	for i := 2; ; i++ {
-		name := fmt.Sprintf("%s%d", base, i)
-		if !existingNames[name] {
-			return name
-		}
-	}
-}
 
 // selectIdlePolecat finds an idle polecat in the rig.
 func selectIdlePolecat(mgr *polecat.Manager, r *rig.Rig) (string, error) {
