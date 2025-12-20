@@ -555,7 +555,7 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 			}
 			// Send crew resume prompt after prime completes
 			// Use longer debounce (300ms) to ensure paste completes before Enter
-			crewPrompt := "Read your mail, act on anything urgent, else await instructions."
+			crewPrompt := "Run gt prime. Check your mail and in-progress issues. Act on anything urgent, else await instructions."
 			if err := t.SendKeysDelayedDebounced(sessionID, crewPrompt, 3000, 300); err != nil {
 				fmt.Printf("Warning: Could not send resume prompt: %v\n", err)
 			}
