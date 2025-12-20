@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/steveyegge/gastown/internal/mail"
@@ -23,12 +24,15 @@ var (
 	mailType        string
 	mailReplyTo     string
 	mailNotify      bool
+	mailInterrupt   bool
 	mailInboxJSON   bool
 	mailReadJSON    bool
 	mailInboxUnread bool
 	mailCheckInject bool
 	mailCheckJSON   bool
+	mailCheckQuiet  bool
 	mailThreadJSON  bool
+	mailWaitTimeout int
 )
 
 var mailCmd = &cobra.Command{
@@ -60,12 +64,17 @@ Message types:
 Priority levels:
   low, normal (default), high, urgent
 
+Delivery modes:
+  queue (default) - Message stored for periodic checking
+  interrupt       - Inject system-reminder directly into session
+
 Examples:
   gt mail send gastown/Toast -s "Status check" -m "How's that bug fix going?"
   gt mail send mayor/ -s "Work complete" -m "Finished gt-abc"
   gt mail send gastown/ -s "All hands" -m "Swarm starting" --notify
   gt mail send gastown/Toast -s "Task" -m "Fix bug" --type task --priority high
-  gt mail send mayor/ -s "Re: Status" -m "Done" --reply-to msg-abc123`,
+  gt mail send mayor/ -s "Re: Status" -m "Done" --reply-to msg-abc123
+  gt mail send gastown/Toast -s "STUCK?" -m "Nudge" --interrupt --priority urgent`,
 	Args: cobra.ExactArgs(1),
 	RunE: runMailSend,
 }
@@ -114,12 +123,16 @@ Exit codes (normal mode):
   0 - New mail available
   1 - No new mail
 
+Exit codes (--quiet mode):
+  0 - Always (non-blocking, silent output)
+
 Exit codes (--inject mode):
   0 - Always (hooks should never block)
   Output: system-reminder if mail exists, silent if no mail
 
 Examples:
   gt mail check             # Simple check
+  gt mail check --quiet     # Silent non-blocking check for agents
   gt mail check --inject    # For hooks`,
 	RunE: runMailCheck,
 }
@@ -137,6 +150,25 @@ Examples:
 	RunE: runMailThread,
 }
 
+var mailWaitCmd = &cobra.Command{
+	Use:   "wait",
+	Short: "Block until mail arrives",
+	Long: `Block until new mail arrives in the inbox.
+
+Useful for idle agents waiting for work assignments.
+Polls the inbox every 5 seconds until mail is found.
+
+Exit codes:
+  0 - Mail arrived
+  1 - Timeout (if --timeout specified)
+  2 - Error
+
+Examples:
+  gt mail wait                 # Wait indefinitely
+  gt mail wait --timeout 60    # Wait up to 60 seconds`,
+	RunE: runMailWait,
+}
+
 func init() {
 	// Send flags
 	mailSendCmd.Flags().StringVarP(&mailSubject, "subject", "s", "", "Message subject (required)")
@@ -145,6 +177,7 @@ func init() {
 	mailSendCmd.Flags().StringVar(&mailType, "type", "notification", "Message type (task, scavenge, notification, reply)")
 	mailSendCmd.Flags().StringVar(&mailReplyTo, "reply-to", "", "Message ID this is replying to")
 	mailSendCmd.Flags().BoolVarP(&mailNotify, "notify", "n", false, "Send tmux notification to recipient")
+	mailSendCmd.Flags().BoolVar(&mailInterrupt, "interrupt", false, "Inject message directly into recipient's session (use for lifecycle/urgent)")
 	mailSendCmd.MarkFlagRequired("subject")
 
 	// Inbox flags
@@ -157,9 +190,13 @@ func init() {
 	// Check flags
 	mailCheckCmd.Flags().BoolVar(&mailCheckInject, "inject", false, "Output format for Claude Code hooks")
 	mailCheckCmd.Flags().BoolVar(&mailCheckJSON, "json", false, "Output as JSON")
+	mailCheckCmd.Flags().BoolVarP(&mailCheckQuiet, "quiet", "q", false, "Silent non-blocking check (always exit 0)")
 
 	// Thread flags
 	mailThreadCmd.Flags().BoolVar(&mailThreadJSON, "json", false, "Output as JSON")
+
+	// Wait flags
+	mailWaitCmd.Flags().IntVar(&mailWaitTimeout, "timeout", 0, "Timeout in seconds (0 = wait indefinitely)")
 
 	// Add subcommands
 	mailCmd.AddCommand(mailSendCmd)
@@ -168,6 +205,7 @@ func init() {
 	mailCmd.AddCommand(mailDeleteCmd)
 	mailCmd.AddCommand(mailCheckCmd)
 	mailCmd.AddCommand(mailThreadCmd)
+	mailCmd.AddCommand(mailWaitCmd)
 
 	rootCmd.AddCommand(mailCmd)
 }
@@ -196,6 +234,13 @@ func runMailSend(cmd *cobra.Command, args []string) error {
 	msg.Priority = mail.ParsePriority(mailPriority)
 	if mailNotify && msg.Priority == mail.PriorityNormal {
 		msg.Priority = mail.PriorityHigh
+	}
+
+	// Set delivery mode
+	if mailInterrupt {
+		msg.Delivery = mail.DeliveryInterrupt
+	} else {
+		msg.Delivery = mail.DeliveryQueue
 	}
 
 	// Set message type
@@ -484,11 +529,13 @@ func detectSender() string {
 }
 
 func runMailCheck(cmd *cobra.Command, args []string) error {
+	// Silent modes (inject or quiet) never fail
+	silentMode := mailCheckInject || mailCheckQuiet
+
 	// Find workspace
 	workDir, err := findBeadsWorkDir()
 	if err != nil {
-		if mailCheckInject {
-			// Inject mode: always exit 0, silent on error
+		if silentMode {
 			return nil
 		}
 		return fmt.Errorf("not in a Gas Town workspace: %w", err)
@@ -501,7 +548,7 @@ func runMailCheck(cmd *cobra.Command, args []string) error {
 	router := mail.NewRouter(workDir)
 	mailbox, err := router.GetMailbox(address)
 	if err != nil {
-		if mailCheckInject {
+		if silentMode {
 			return nil
 		}
 		return fmt.Errorf("getting mailbox: %w", err)
@@ -510,10 +557,15 @@ func runMailCheck(cmd *cobra.Command, args []string) error {
 	// Count unread
 	_, unread, err := mailbox.Count()
 	if err != nil {
-		if mailCheckInject {
+		if silentMode {
 			return nil
 		}
 		return fmt.Errorf("counting messages: %w", err)
+	}
+
+	// Quiet mode: completely silent, just exit
+	if mailCheckQuiet {
+		return nil
 	}
 
 	// JSON output
@@ -627,6 +679,63 @@ func runMailThread(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func runMailWait(cmd *cobra.Command, args []string) error {
+	// Find workspace
+	workDir, err := findBeadsWorkDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "not in a Gas Town workspace: %v\n", err)
+		os.Exit(2)
+		return nil
+	}
+
+	// Determine which inbox
+	address := detectSender()
+
+	// Get mailbox
+	router := mail.NewRouter(workDir)
+	mailbox, err := router.GetMailbox(address)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "getting mailbox: %v\n", err)
+		os.Exit(2)
+		return nil
+	}
+
+	// Calculate deadline if timeout specified
+	var deadline time.Time
+	if mailWaitTimeout > 0 {
+		deadline = time.Now().Add(time.Duration(mailWaitTimeout) * time.Second)
+	}
+
+	pollInterval := 5 * time.Second
+	fmt.Printf("Waiting for mail in %s...\n", address)
+
+	for {
+		// Check for mail
+		_, unread, err := mailbox.Count()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "checking mail: %v\n", err)
+			os.Exit(2)
+			return nil
+		}
+
+		if unread > 0 {
+			fmt.Printf("%s %d message(s) arrived!\n", style.Bold.Render("📬"), unread)
+			os.Exit(0)
+			return nil
+		}
+
+		// Check timeout
+		if mailWaitTimeout > 0 && time.Now().After(deadline) {
+			fmt.Println("Timeout waiting for mail")
+			os.Exit(1)
+			return nil
+		}
+
+		// Sleep before next poll
+		time.Sleep(pollInterval)
+	}
 }
 
 // generateThreadID creates a random thread ID for new message threads.

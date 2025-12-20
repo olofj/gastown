@@ -71,8 +71,14 @@ func (r *Router) Send(msg *Message) error {
 		return fmt.Errorf("sending message: %w", err)
 	}
 
-	// Notify recipient if they have an active session
-	r.notifyRecipient(msg)
+	// Handle delivery based on mode
+	if msg.Delivery == DeliveryInterrupt {
+		// Interrupt: inject system-reminder directly into session
+		r.interruptRecipient(msg)
+	} else {
+		// Queue (default): just notify in status line
+		r.notifyRecipient(msg)
+	}
 
 	return nil
 }
@@ -100,6 +106,39 @@ func (r *Router) notifyRecipient(msg *Message) error {
 	// Display notification in status line (non-disruptive)
 	notification := fmt.Sprintf("[MAIL] From %s: %s", msg.From, msg.Subject)
 	return r.tmux.DisplayMessageDefault(sessionID, notification)
+}
+
+// interruptRecipient injects a system-reminder directly into the session.
+// Uses tmux send-keys to inject text that Claude will see as input.
+// This is disruptive - use for lifecycle events, URGENT messages, or stuck detection.
+func (r *Router) interruptRecipient(msg *Message) error {
+	sessionID := addressToSessionID(msg.To)
+	if sessionID == "" {
+		return nil // Unable to determine session ID
+	}
+
+	// Check if session exists
+	hasSession, err := r.tmux.HasSession(sessionID)
+	if err != nil || !hasSession {
+		return nil // No active session, skip interrupt
+	}
+
+	// Build system-reminder with message content
+	priorityStr := ""
+	if msg.Priority == PriorityUrgent {
+		priorityStr = " [URGENT]"
+	} else if msg.Priority == PriorityHigh {
+		priorityStr = " [HIGH PRIORITY]"
+	}
+
+	reminder := fmt.Sprintf("\n<system-reminder>\n📬 NEW MAIL%s from %s\nSubject: %s\n", priorityStr, msg.From, msg.Subject)
+	if msg.Body != "" {
+		reminder += fmt.Sprintf("\n%s\n", msg.Body)
+	}
+	reminder += "\nRun 'gt mail inbox' to see your messages.\n</system-reminder>\n"
+
+	// Inject via send-keys (don't press Enter, just paste)
+	return r.tmux.SendKeysRaw(sessionID, reminder)
 }
 
 // addressToSessionID converts a mail address to a tmux session ID.
