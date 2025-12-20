@@ -522,6 +522,9 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 			fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
 		}
 
+		// Give Claude time to initialize after process starts
+		time.Sleep(500 * time.Millisecond)
+
 		// Send gt prime to initialize context
 		if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 			// Non-fatal: Claude started but priming failed
@@ -545,12 +548,15 @@ func runCrewAt(cmd *cobra.Command, args []string) error {
 			if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
 				fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
 			}
+			// Give Claude time to initialize after process starts
+			time.Sleep(500 * time.Millisecond)
 			if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 				fmt.Printf("Warning: Could not send prime command: %v\n", err)
 			}
 			// Send crew resume prompt after prime completes
+			// Use longer debounce (300ms) to ensure paste completes before Enter
 			crewPrompt := "Read your mail, act on anything urgent, else await instructions."
-			if err := t.SendKeysDelayed(sessionID, crewPrompt, 3000); err != nil {
+			if err := t.SendKeysDelayedDebounced(sessionID, crewPrompt, 3000, 300); err != nil {
 				fmt.Printf("Warning: Could not send resume prompt: %v\n", err)
 			}
 		}
@@ -856,14 +862,17 @@ func runCrewRestart(cmd *cobra.Command, args []string) error {
 	if err := t.WaitForCommand(sessionID, shells, 15*time.Second); err != nil {
 		fmt.Printf("Warning: Timeout waiting for Claude to start: %v\n", err)
 	}
+	// Give Claude time to initialize after process starts
+	time.Sleep(500 * time.Millisecond)
 	if err := t.SendKeys(sessionID, "gt prime"); err != nil {
 		// Non-fatal: Claude started but priming failed
 		fmt.Printf("Warning: Could not send prime command: %v\n", err)
 	}
 
 	// Send crew resume prompt after prime completes
+	// Use longer debounce (300ms) to ensure paste completes before Enter
 	crewPrompt := "Read your mail, act on anything urgent, else await instructions."
-	if err := t.SendKeysDelayed(sessionID, crewPrompt, 3000); err != nil {
+	if err := t.SendKeysDelayedDebounced(sessionID, crewPrompt, 3000, 300); err != nil {
 		fmt.Printf("Warning: Could not send resume prompt: %v\n", err)
 	}
 

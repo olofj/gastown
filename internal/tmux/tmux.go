@@ -145,6 +145,18 @@ func (t *Tmux) SendKeysDelayed(session, keys string, delayMs int) error {
 	return t.SendKeys(session, keys)
 }
 
+// SendKeysDelayedDebounced sends keystrokes after a pre-delay, with a custom debounce before Enter.
+// Use this when sending input to a process that needs time to initialize AND the message
+// needs extra time between paste and Enter (e.g., Claude prompt injection).
+// preDelayMs: time to wait before sending text (for process readiness)
+// debounceMs: time to wait between text paste and Enter key (for paste completion)
+func (t *Tmux) SendKeysDelayedDebounced(session, keys string, preDelayMs, debounceMs int) error {
+	if preDelayMs > 0 {
+		time.Sleep(time.Duration(preDelayMs) * time.Millisecond)
+	}
+	return t.SendKeysDebounced(session, keys, debounceMs)
+}
+
 // GetPaneCommand returns the current command running in a pane.
 // Returns "bash", "zsh", "claude", "node", etc.
 func (t *Tmux) GetPaneCommand(session string) (string, error) {
