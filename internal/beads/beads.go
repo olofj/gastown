@@ -321,6 +321,27 @@ func (b *Beads) CloseWithReason(reason string, ids ...string) error {
 	return err
 }
 
+// Release moves an in_progress issue back to open status.
+// This is used to recover stuck steps when a worker dies mid-task.
+// It clears the assignee so the step can be claimed by another worker.
+func (b *Beads) Release(id string) error {
+	return b.ReleaseWithReason(id, "")
+}
+
+// ReleaseWithReason moves an in_progress issue back to open status with a reason.
+// The reason is added as a note to the issue for tracking purposes.
+func (b *Beads) ReleaseWithReason(id, reason string) error {
+	args := []string{"update", id, "--status=open", "--assignee="}
+
+	// Add reason as a note if provided
+	if reason != "" {
+		args = append(args, "--notes=Released: "+reason)
+	}
+
+	_, err := b.run(args...)
+	return err
+}
+
 // AddDependency adds a dependency: issue depends on dependsOn.
 func (b *Beads) AddDependency(issue, dependsOn string) error {
 	_, err := b.run("dep", "add", issue, dependsOn)
