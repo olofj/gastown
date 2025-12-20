@@ -75,6 +75,38 @@ func TestRenderRole_Polecat(t *testing.T) {
 	}
 }
 
+func TestRenderRole_Deacon(t *testing.T) {
+	tmpl, err := New()
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	data := RoleData{
+		Role:     "deacon",
+		TownRoot: "/test/town",
+		WorkDir:  "/test/town",
+	}
+
+	output, err := tmpl.RenderRole("deacon", data)
+	if err != nil {
+		t.Fatalf("RenderRole() error = %v", err)
+	}
+
+	// Check for key content
+	if !strings.Contains(output, "Deacon Context") {
+		t.Error("output missing 'Deacon Context'")
+	}
+	if !strings.Contains(output, "/test/town") {
+		t.Error("output missing town root")
+	}
+	if !strings.Contains(output, "Health-Check Orchestrator") {
+		t.Error("output missing role description")
+	}
+	if !strings.Contains(output, "Wake Cycle") {
+		t.Error("output missing wake cycle section")
+	}
+}
+
 func TestRenderMessage_Spawn(t *testing.T) {
 	tmpl, err := New()
 	if err != nil {
@@ -141,7 +173,7 @@ func TestRoleNames(t *testing.T) {
 	}
 
 	names := tmpl.RoleNames()
-	expected := []string{"mayor", "witness", "refinery", "polecat", "crew"}
+	expected := []string{"mayor", "witness", "refinery", "polecat", "crew", "deacon"}
 
 	if len(names) != len(expected) {
 		t.Errorf("RoleNames() = %v, want %v", names, expected)
