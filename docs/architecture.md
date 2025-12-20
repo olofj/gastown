@@ -1001,7 +1001,7 @@ Workers process issues independently. Work flows through the merge queue. No "sw
 Gas Town Daemon (gt daemon)
 ├── Pokes Mayor periodically
 ├── Pokes all Witnesses periodically
-├── Processes lifecycle requests from daemon/ inbox
+├── Processes lifecycle requests from deacon/ inbox
 └── Restarts sessions when cycle requested
 
 Lifecycle Hierarchy:
@@ -1027,8 +1027,8 @@ gt handoff --restart    # Fresh restart, no handoff
 |-------|---------|------------------|
 | Polecat | --shutdown | rig/witness |
 | Refinery | --cycle | rig/witness |
-| Witness | --cycle | daemon/ |
-| Mayor | --cycle | daemon/ |
+| Witness | --cycle | deacon/ |
+| Mayor | --cycle | deacon/ |
 
 **Lifecycle request protocol**:
 1. Agent runs `gt handoff` (verifies git clean, sends handoff mail)
@@ -1044,7 +1044,7 @@ gt handoff --restart    # Fresh restart, no handoff
 - Poke Mayor: "HEARTBEAT: check your rigs"
 - Poke each Witness: "HEARTBEAT: check your workers"
 - Agents ignore poke if already working
-- Process any lifecycle requests in daemon/ inbox
+- Process any lifecycle requests in deacon/ inbox
 - Restart dead sessions if cycle was requested
 
 ```mermaid

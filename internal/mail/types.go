@@ -41,6 +41,19 @@ const (
 	TypeReply MessageType = "reply"
 )
 
+// Delivery specifies how a message is delivered to the recipient.
+type Delivery string
+
+const (
+	// DeliveryQueue creates the message in the mailbox for periodic checking.
+	// This is the default delivery mode. Agent checks with `gt mail check`.
+	DeliveryQueue Delivery = "queue"
+
+	// DeliveryInterrupt injects a system-reminder directly into the agent's session.
+	// Use for lifecycle events, URGENT priority, or stuck detection.
+	DeliveryInterrupt Delivery = "interrupt"
+)
+
 // Message represents a mail message between agents.
 // This is the GGT-side representation; it gets translated to/from beads messages.
 type Message struct {
@@ -70,6 +83,10 @@ type Message struct {
 
 	// Type indicates the message type (task, scavenge, notification, reply).
 	Type MessageType `json:"type"`
+
+	// Delivery specifies how the message is delivered (queue or interrupt).
+	// Queue: agent checks periodically. Interrupt: inject into session.
+	Delivery Delivery `json:"delivery,omitempty"`
 
 	// ThreadID groups related messages into a conversation thread.
 	ThreadID string `json:"thread_id,omitempty"`
