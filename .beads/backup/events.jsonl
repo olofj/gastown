@@ -2600,3 +2600,488 @@
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T10:48:57Z","event_type":"closed","id":5574,"issue_id":"gt-wisp-d99uxt","new_value":"Merged to main. Commit 3924d560. All tests passed.","old_value":""}
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T10:50:48Z","event_type":"closed","id":5575,"issue_id":"gt-wisp-8sq8hm","new_value":"Merged to main. Commit 6c4c3083. All tests passed.","old_value":""}
 {"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-28T10:51:30Z","event_type":"closed","id":5576,"issue_id":"gt-wisp-i7kwiu","new_value":"done","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T10:53:44Z","event_type":"closed","id":5577,"issue_id":"gt-wisp-qvd9ya","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T10:53:49Z","event_type":"created","id":5578,"issue_id":"gt-gastown-polecat-nux","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T10:53:51Z","event_type":"closed","id":5579,"issue_id":"gt-wisp-ffv926","new_value":"burned: force re-sling","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T10:55:28Z","event_type":"closed","id":5580,"issue_id":"gt-wisp-d1obfw","new_value":"Merged to main. Commits 1123b96c + fix-merge 51bce9ee. Conflict resolved with fix-merge. All tests passed.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T10:57:32Z","event_type":"closed","id":5581,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 156. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T10:58:19Z","event_type":"closed","id":5582,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 157. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T10:58:58Z","event_type":"closed","id":5583,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 158. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T10:59:39Z","event_type":"closed","id":5584,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 159. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T10:59:48Z","event_type":"closed","id":5585,"issue_id":"gt-wisp-i7kwiu","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T10:59:57Z","event_type":"closed","id":5586,"issue_id":"gt-wisp-9uzd8y","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:00:37Z","event_type":"closed","id":5587,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 160. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:01:17Z","event_type":"closed","id":5588,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 161. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:02:10Z","event_type":"closed","id":5589,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 162. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:02:48Z","event_type":"closed","id":5590,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 163. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:03:28Z","event_type":"closed","id":5591,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 164. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:04:05Z","event_type":"closed","id":5592,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 165. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:04:49Z","event_type":"closed","id":5593,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 166. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:05:26Z","event_type":"closed","id":5594,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 167. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:06:02Z","event_type":"closed","id":5595,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 168. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:06:36Z","event_type":"closed","id":5596,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 169. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:07:13Z","event_type":"closed","id":5597,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 170. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:07:53Z","event_type":"closed","id":5598,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 171. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:08:26Z","event_type":"closed","id":5599,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 172. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:09:00Z","event_type":"closed","id":5600,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 173. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:09:34Z","event_type":"closed","id":5601,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 174. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:10:10Z","event_type":"closed","id":5602,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 175. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:10:43Z","event_type":"closed","id":5603,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 176. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:11:19Z","event_type":"closed","id":5604,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 177. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:11:54Z","event_type":"closed","id":5605,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 178. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:12:28Z","event_type":"closed","id":5606,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 179. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:13:03Z","event_type":"closed","id":5607,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 180. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:13:38Z","event_type":"closed","id":5608,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 181. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:14:13Z","event_type":"closed","id":5609,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 182. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:15:04Z","event_type":"closed","id":5610,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 183. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:15:40Z","event_type":"closed","id":5611,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 184. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:16:16Z","event_type":"closed","id":5612,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 185. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:16:51Z","event_type":"closed","id":5613,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 186. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:17:26Z","event_type":"closed","id":5614,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 187. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:18:01Z","event_type":"closed","id":5615,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 188. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:18:36Z","event_type":"closed","id":5616,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 189. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:19:25Z","event_type":"closed","id":5617,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 190. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5618,"issue_id":"gt-wisp-zzh50","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5619,"issue_id":"gt-wisp-fl473","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5620,"issue_id":"gt-wisp-0z7eh","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5621,"issue_id":"gt-wisp-1r5at","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5622,"issue_id":"gt-wisp-54l1v","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5623,"issue_id":"gt-wisp-ckxd2","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5624,"issue_id":"gt-wisp-dxgw4","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5625,"issue_id":"gt-wisp-eq6yh","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5626,"issue_id":"gt-wisp-gtgp7","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5627,"issue_id":"gt-wisp-kxctl","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5628,"issue_id":"gt-wisp-welo5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5629,"issue_id":"gt-wisp-xa548","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5630,"issue_id":"gt-wisp-xxo0n","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5631,"issue_id":"gt-wisp-4wt5o","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5632,"issue_id":"gt-wisp-b8o8v","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5633,"issue_id":"gt-wisp-b9ae7","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5634,"issue_id":"gt-wisp-dqbgl","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5635,"issue_id":"gt-wisp-fbptp","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5636,"issue_id":"gt-wisp-gxnwv","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5637,"issue_id":"gt-wisp-jc7km","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5638,"issue_id":"gt-wisp-lnhf5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5639,"issue_id":"gt-wisp-ntvpy","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5640,"issue_id":"gt-wisp-tdwqh","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5641,"issue_id":"gt-wisp-tg5pr","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5642,"issue_id":"gt-wisp-zsh6g","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5643,"issue_id":"gt-wisp-c91dr","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5644,"issue_id":"gt-wisp-liwao","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5645,"issue_id":"gt-wisp-03rto","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5646,"issue_id":"gt-wisp-0sob8","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5647,"issue_id":"gt-wisp-2qln1","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5648,"issue_id":"gt-wisp-9gj9e","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5649,"issue_id":"gt-wisp-e4q2g","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5650,"issue_id":"gt-wisp-gwmen","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5651,"issue_id":"gt-wisp-nwzrp","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5652,"issue_id":"gt-wisp-pc42n","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5653,"issue_id":"gt-wisp-w706w","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5654,"issue_id":"gt-wisp-y5s6q","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5655,"issue_id":"gt-wisp-ykcjw","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5656,"issue_id":"gt-wisp-0md58","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5657,"issue_id":"gt-wisp-0w110","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5658,"issue_id":"gt-wisp-4wgug","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5659,"issue_id":"gt-wisp-6da15","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5660,"issue_id":"gt-wisp-dm0m9","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5661,"issue_id":"gt-wisp-mr2l3","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5662,"issue_id":"gt-wisp-qmdxe","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5663,"issue_id":"gt-wisp-tei0a","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5664,"issue_id":"gt-wisp-yctcs","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5665,"issue_id":"gt-wisp-0pmovm","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5666,"issue_id":"gt-wisp-11tg6w","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5667,"issue_id":"gt-wisp-12u82y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5668,"issue_id":"gt-wisp-1liddy","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5669,"issue_id":"gt-wisp-2rtb49","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5670,"issue_id":"gt-wisp-31neg1","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5671,"issue_id":"gt-wisp-349f95","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5672,"issue_id":"gt-wisp-5ifrvm","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5673,"issue_id":"gt-wisp-5l2za1","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5674,"issue_id":"gt-wisp-63xyux","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5675,"issue_id":"gt-wisp-88sdlu","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5676,"issue_id":"gt-wisp-8x05fx","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5677,"issue_id":"gt-wisp-acou7x","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5678,"issue_id":"gt-wisp-bhway4","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5679,"issue_id":"gt-wisp-c2gp1h","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5680,"issue_id":"gt-wisp-ctidke","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5681,"issue_id":"gt-wisp-cz9m3y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5682,"issue_id":"gt-wisp-e4fqev","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5683,"issue_id":"gt-wisp-f1r0qc","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5684,"issue_id":"gt-wisp-ftbk68","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5685,"issue_id":"gt-wisp-fw8u4e","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5686,"issue_id":"gt-wisp-hvxyw5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5687,"issue_id":"gt-wisp-j0vrvw","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5688,"issue_id":"gt-wisp-jkf15y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5689,"issue_id":"gt-wisp-jwwozv","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5690,"issue_id":"gt-wisp-lps5s0","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5691,"issue_id":"gt-wisp-luqxvp","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5692,"issue_id":"gt-wisp-lygb9r","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5693,"issue_id":"gt-wisp-mx3a9k","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5694,"issue_id":"gt-wisp-n2bc02","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5695,"issue_id":"gt-wisp-nhplrn","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5696,"issue_id":"gt-wisp-nnbcrr","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5697,"issue_id":"gt-wisp-oshoyc","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5698,"issue_id":"gt-wisp-plymif","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5699,"issue_id":"gt-wisp-ppusc9","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5700,"issue_id":"gt-wisp-qjenvv","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5701,"issue_id":"gt-wisp-rzzt93","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5702,"issue_id":"gt-wisp-s8mhxt","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5703,"issue_id":"gt-wisp-scomsm","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5704,"issue_id":"gt-wisp-t91q32","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5705,"issue_id":"gt-wisp-tmqfyt","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5706,"issue_id":"gt-wisp-tt9zof","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5707,"issue_id":"gt-wisp-um7a9y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5708,"issue_id":"gt-wisp-utgcxg","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5709,"issue_id":"gt-wisp-v9uyk2","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5710,"issue_id":"gt-wisp-wrgveu","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5711,"issue_id":"gt-wisp-x2kkq5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5712,"issue_id":"gt-wisp-x4mxn8","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5713,"issue_id":"gt-wisp-xrsuvk","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5714,"issue_id":"gt-wisp-y9f7s5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:01Z","event_type":"closed","id":5715,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 191. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:28Z","event_type":"created","id":5716,"issue_id":"gt-gastown-polecat-furiosa","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5717,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5718,"issue_id":"gt-wisp-2rz9jj","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5719,"issue_id":"gt-wisp-cirs34","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5720,"issue_id":"gt-wisp-qpqd7b","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5721,"issue_id":"gt-wisp-vzc7ht","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:38Z","event_type":"closed","id":5722,"issue_id":"gt-wisp-05v1we","new_value":"patrol cycle complete: Idle cycle 192. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:41Z","event_type":"created","id":5723,"issue_id":"gt-gastown-polecat-nux","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:51Z","event_type":"created","id":5724,"issue_id":"gt-gastown-polecat-slit","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:03Z","event_type":"created","id":5725,"issue_id":"gt-gastown-polecat-rictus","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:14Z","event_type":"created","id":5726,"issue_id":"gt-gastown-polecat-dementus","new_value":"","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T11:21:23Z","event_type":"closed","id":5727,"issue_id":"gt-wisp-4big39","new_value":"Closed","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:27Z","event_type":"created","id":5728,"issue_id":"gt-gastown-polecat-capable","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:21:28Z","event_type":"closed","id":5729,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:21:28Z","event_type":"closed","id":5730,"issue_id":"gt-wisp-08aumh","new_value":"patrol cycle complete: Idle cycle 193. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:44Z","event_type":"created","id":5731,"issue_id":"gt-gastown-polecat-toast","new_value":"","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T11:21:45Z","event_type":"closed","id":5732,"issue_id":"gt-wisp-y3nu4x","new_value":"Closed","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:58Z","event_type":"created","id":5733,"issue_id":"gt-gastown-polecat-dag","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:22:15Z","event_type":"created","id":5734,"issue_id":"gt-gastown-polecat-cheedo","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:22:27Z","event_type":"closed","id":5735,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:22:28Z","event_type":"closed","id":5736,"issue_id":"gt-wisp-0f0y4p","new_value":"patrol cycle complete: Idle cycle 194. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:22:47Z","event_type":"created","id":5737,"issue_id":"gt-gastown-polecat-valkyrie","new_value":"","old_value":""}
+{"actor":"gastown/polecats/dag","comment":"","created_at":"2026-02-28T11:22:56Z","event_type":"closed","id":5738,"issue_id":"gt-wisp-qkf136","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:08:26Z","event_type":"closed","id":5599,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 172. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:09:00Z","event_type":"closed","id":5600,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 173. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:09:34Z","event_type":"closed","id":5601,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 174. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:10:10Z","event_type":"closed","id":5602,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 175. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:10:43Z","event_type":"closed","id":5603,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 176. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:11:19Z","event_type":"closed","id":5604,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 177. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:11:54Z","event_type":"closed","id":5605,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 178. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:12:28Z","event_type":"closed","id":5606,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 179. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:13:03Z","event_type":"closed","id":5607,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 180. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:13:38Z","event_type":"closed","id":5608,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 181. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:14:13Z","event_type":"closed","id":5609,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 182. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:15:04Z","event_type":"closed","id":5610,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 183. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:15:40Z","event_type":"closed","id":5611,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 184. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:16:16Z","event_type":"closed","id":5612,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 185. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:16:51Z","event_type":"closed","id":5613,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 186. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:17:26Z","event_type":"closed","id":5614,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 187. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:18:01Z","event_type":"closed","id":5615,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 188. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:18:36Z","event_type":"closed","id":5616,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 189. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:19:25Z","event_type":"closed","id":5617,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 190. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5618,"issue_id":"gt-wisp-zzh50","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5619,"issue_id":"gt-wisp-fl473","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5620,"issue_id":"gt-wisp-0z7eh","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5621,"issue_id":"gt-wisp-1r5at","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5622,"issue_id":"gt-wisp-54l1v","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5623,"issue_id":"gt-wisp-ckxd2","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5624,"issue_id":"gt-wisp-dxgw4","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5625,"issue_id":"gt-wisp-eq6yh","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5626,"issue_id":"gt-wisp-gtgp7","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5627,"issue_id":"gt-wisp-kxctl","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5628,"issue_id":"gt-wisp-welo5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5629,"issue_id":"gt-wisp-xa548","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5630,"issue_id":"gt-wisp-xxo0n","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5631,"issue_id":"gt-wisp-4wt5o","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5632,"issue_id":"gt-wisp-b8o8v","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5633,"issue_id":"gt-wisp-b9ae7","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5634,"issue_id":"gt-wisp-dqbgl","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5635,"issue_id":"gt-wisp-fbptp","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5636,"issue_id":"gt-wisp-gxnwv","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5637,"issue_id":"gt-wisp-jc7km","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5638,"issue_id":"gt-wisp-lnhf5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5639,"issue_id":"gt-wisp-ntvpy","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5640,"issue_id":"gt-wisp-tdwqh","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5641,"issue_id":"gt-wisp-tg5pr","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5642,"issue_id":"gt-wisp-zsh6g","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5643,"issue_id":"gt-wisp-c91dr","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5644,"issue_id":"gt-wisp-liwao","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5645,"issue_id":"gt-wisp-03rto","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5646,"issue_id":"gt-wisp-0sob8","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5647,"issue_id":"gt-wisp-2qln1","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5648,"issue_id":"gt-wisp-9gj9e","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5649,"issue_id":"gt-wisp-e4q2g","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5650,"issue_id":"gt-wisp-gwmen","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5651,"issue_id":"gt-wisp-nwzrp","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5652,"issue_id":"gt-wisp-pc42n","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5653,"issue_id":"gt-wisp-w706w","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5654,"issue_id":"gt-wisp-y5s6q","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5655,"issue_id":"gt-wisp-ykcjw","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5656,"issue_id":"gt-wisp-0md58","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5657,"issue_id":"gt-wisp-0w110","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5658,"issue_id":"gt-wisp-4wgug","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5659,"issue_id":"gt-wisp-6da15","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:19:59Z","event_type":"closed","id":5660,"issue_id":"gt-wisp-dm0m9","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5661,"issue_id":"gt-wisp-mr2l3","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5662,"issue_id":"gt-wisp-qmdxe","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5663,"issue_id":"gt-wisp-tei0a","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5664,"issue_id":"gt-wisp-yctcs","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5665,"issue_id":"gt-wisp-0pmovm","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5666,"issue_id":"gt-wisp-11tg6w","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5667,"issue_id":"gt-wisp-12u82y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5668,"issue_id":"gt-wisp-1liddy","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5669,"issue_id":"gt-wisp-2rtb49","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5670,"issue_id":"gt-wisp-31neg1","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5671,"issue_id":"gt-wisp-349f95","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5672,"issue_id":"gt-wisp-5ifrvm","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5673,"issue_id":"gt-wisp-5l2za1","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5674,"issue_id":"gt-wisp-63xyux","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5675,"issue_id":"gt-wisp-88sdlu","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5676,"issue_id":"gt-wisp-8x05fx","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5677,"issue_id":"gt-wisp-acou7x","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5678,"issue_id":"gt-wisp-bhway4","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5679,"issue_id":"gt-wisp-c2gp1h","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5680,"issue_id":"gt-wisp-ctidke","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5681,"issue_id":"gt-wisp-cz9m3y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5682,"issue_id":"gt-wisp-e4fqev","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5683,"issue_id":"gt-wisp-f1r0qc","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5684,"issue_id":"gt-wisp-ftbk68","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5685,"issue_id":"gt-wisp-fw8u4e","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5686,"issue_id":"gt-wisp-hvxyw5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5687,"issue_id":"gt-wisp-j0vrvw","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5688,"issue_id":"gt-wisp-jkf15y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5689,"issue_id":"gt-wisp-jwwozv","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5690,"issue_id":"gt-wisp-lps5s0","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5691,"issue_id":"gt-wisp-luqxvp","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5692,"issue_id":"gt-wisp-lygb9r","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5693,"issue_id":"gt-wisp-mx3a9k","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5694,"issue_id":"gt-wisp-n2bc02","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5695,"issue_id":"gt-wisp-nhplrn","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5696,"issue_id":"gt-wisp-nnbcrr","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5697,"issue_id":"gt-wisp-oshoyc","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5698,"issue_id":"gt-wisp-plymif","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5699,"issue_id":"gt-wisp-ppusc9","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5700,"issue_id":"gt-wisp-qjenvv","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5701,"issue_id":"gt-wisp-rzzt93","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5702,"issue_id":"gt-wisp-s8mhxt","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5703,"issue_id":"gt-wisp-scomsm","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5704,"issue_id":"gt-wisp-t91q32","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5705,"issue_id":"gt-wisp-tmqfyt","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5706,"issue_id":"gt-wisp-tt9zof","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5707,"issue_id":"gt-wisp-um7a9y","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5708,"issue_id":"gt-wisp-utgcxg","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5709,"issue_id":"gt-wisp-v9uyk2","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5710,"issue_id":"gt-wisp-wrgveu","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5711,"issue_id":"gt-wisp-x2kkq5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5712,"issue_id":"gt-wisp-x4mxn8","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5713,"issue_id":"gt-wisp-xrsuvk","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:00Z","event_type":"closed","id":5714,"issue_id":"gt-wisp-y9f7s5","new_value":"Wisp pollution cleanup — stale agent steps","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:01Z","event_type":"closed","id":5715,"issue_id":"gt-wisp-s2vyx","new_value":"patrol cycle complete: Idle cycle 191. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:28Z","event_type":"created","id":5716,"issue_id":"gt-gastown-polecat-furiosa","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5717,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5718,"issue_id":"gt-wisp-2rz9jj","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5719,"issue_id":"gt-wisp-cirs34","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5720,"issue_id":"gt-wisp-qpqd7b","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:37Z","event_type":"closed","id":5721,"issue_id":"gt-wisp-vzc7ht","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:20:38Z","event_type":"closed","id":5722,"issue_id":"gt-wisp-05v1we","new_value":"patrol cycle complete: Idle cycle 192. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:41Z","event_type":"created","id":5723,"issue_id":"gt-gastown-polecat-nux","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:20:51Z","event_type":"created","id":5724,"issue_id":"gt-gastown-polecat-slit","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:03Z","event_type":"created","id":5725,"issue_id":"gt-gastown-polecat-rictus","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:14Z","event_type":"created","id":5726,"issue_id":"gt-gastown-polecat-dementus","new_value":"","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T11:21:23Z","event_type":"closed","id":5727,"issue_id":"gt-wisp-4big39","new_value":"Closed","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:27Z","event_type":"created","id":5728,"issue_id":"gt-gastown-polecat-capable","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:21:28Z","event_type":"closed","id":5729,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:21:28Z","event_type":"closed","id":5730,"issue_id":"gt-wisp-08aumh","new_value":"patrol cycle complete: Idle cycle 193. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:44Z","event_type":"created","id":5731,"issue_id":"gt-gastown-polecat-toast","new_value":"","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T11:21:45Z","event_type":"closed","id":5732,"issue_id":"gt-wisp-y3nu4x","new_value":"Closed","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:21:58Z","event_type":"created","id":5733,"issue_id":"gt-gastown-polecat-dag","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:22:15Z","event_type":"created","id":5734,"issue_id":"gt-gastown-polecat-cheedo","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:22:27Z","event_type":"closed","id":5735,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:22:28Z","event_type":"closed","id":5736,"issue_id":"gt-wisp-0f0y4p","new_value":"patrol cycle complete: Idle cycle 194. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:22:47Z","event_type":"created","id":5737,"issue_id":"gt-gastown-polecat-valkyrie","new_value":"","old_value":""}
+{"actor":"gastown/polecats/dag","comment":"","created_at":"2026-02-28T11:22:56Z","event_type":"closed","id":5738,"issue_id":"gt-wisp-qkf136","new_value":"Closed","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:23:14Z","event_type":"created","id":5739,"issue_id":"gt-gastown-polecat-keeper","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:23:37Z","event_type":"created","id":5740,"issue_id":"gt-gastown-polecat-morsov","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:23:53Z","event_type":"closed","id":5741,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:23:53Z","event_type":"closed","id":5742,"issue_id":"gt-wisp-0l6jm3","new_value":"patrol cycle complete: Idle cycle 195. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:24:00Z","event_type":"created","id":5743,"issue_id":"gt-gastown-polecat-ace","new_value":"","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:24:07Z","event_type":"closed","id":5744,"issue_id":"gt-wisp-995te3","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T11:24:17Z","event_type":"closed","id":5745,"issue_id":"gt-wisp-opvrl0","new_value":"done","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:24:23Z","event_type":"created","id":5746,"issue_id":"gt-gastown-polecat-morsov","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:24:41Z","event_type":"created","id":5747,"issue_id":"gt-gastown-polecat-warboy","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:24:52Z","event_type":"closed","id":5748,"issue_id":"gt-wisp-995te3","new_value":"burned: force re-sling","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:24:59Z","event_type":"created","id":5749,"issue_id":"gt-gastown-polecat-imperator","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:25:27Z","event_type":"created","id":5750,"issue_id":"gt-gastown-polecat-organic","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:25:29Z","event_type":"closed","id":5751,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:25:29Z","event_type":"closed","id":5752,"issue_id":"gt-wisp-0nxnos","new_value":"patrol cycle complete: Idle cycle 196. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"gastown/polecats/ace","comment":"","created_at":"2026-02-28T11:26:26Z","event_type":"closed","id":5753,"issue_id":"gt-wisp-sk37l0","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/rictus","comment":"","created_at":"2026-02-28T11:26:33Z","event_type":"created","id":5754,"issue_id":"gt-wisp-b4lr0y","new_value":"","old_value":""}
+{"actor":"gastown/polecats/rictus","comment":"","created_at":"2026-02-28T11:26:39Z","event_type":"closed","id":5755,"issue_id":"gt-wisp-re2aov","new_value":"done","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:43Z","event_type":"closed","id":5756,"issue_id":"gt-wisp-363hu4","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:44Z","event_type":"closed","id":5757,"issue_id":"gt-wisp-xnmf3q","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:44Z","event_type":"closed","id":5758,"issue_id":"gt-wisp-o0306l","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:44Z","event_type":"closed","id":5759,"issue_id":"gt-wisp-i4g4f2","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5760,"issue_id":"gt-wisp-cu0xv8","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5761,"issue_id":"gt-wisp-re2aov","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5762,"issue_id":"gt-wisp-kkixuo","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5763,"issue_id":"gt-wisp-9h184c","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5764,"issue_id":"gt-wisp-879ajs","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5765,"issue_id":"gt-wisp-anxiu3","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5766,"issue_id":"gt-wisp-cncwpq","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5767,"issue_id":"gt-wisp-opvrl0","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5768,"issue_id":"gt-wisp-vgcgm3","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5769,"issue_id":"gt-wisp-y57rfi","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:45Z","event_type":"closed","id":5770,"issue_id":"gt-wisp-09f5fy","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:26:46Z","event_type":"closed","id":5771,"issue_id":"gt-wisp-9f79w7","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:01Z","event_type":"created","id":5772,"issue_id":"gt-gastown-polecat-furiosa","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:05Z","event_type":"closed","id":5773,"issue_id":"gt-wisp-363hu4","new_value":"burned: force re-sling","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:27:09Z","event_type":"closed","id":5774,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T11:27:10Z","event_type":"closed","id":5775,"issue_id":"gt-wisp-0ptpan","new_value":"patrol cycle complete: Idle cycle 197. Queue empty, inbox empty. RSS: 3MB. Continuing.","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:12Z","event_type":"created","id":5776,"issue_id":"gt-gastown-polecat-nux","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:15Z","event_type":"closed","id":5777,"issue_id":"gt-wisp-o0306l","new_value":"burned: force re-sling","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:22Z","event_type":"created","id":5778,"issue_id":"gt-gastown-polecat-slit","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:25Z","event_type":"closed","id":5779,"issue_id":"gt-wisp-i4g4f2","new_value":"burned: force re-sling","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:32Z","event_type":"created","id":5780,"issue_id":"gt-gastown-polecat-rictus","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:35Z","event_type":"closed","id":5781,"issue_id":"gt-wisp-879ajs","new_value":"burned: force re-sling","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:43Z","event_type":"created","id":5782,"issue_id":"gt-gastown-polecat-dementus","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:27:48Z","event_type":"closed","id":5783,"issue_id":"gt-wisp-kkixuo","new_value":"burned: force re-sling","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:28:09Z","event_type":"created","id":5784,"issue_id":"gt-gastown-polecat-capable","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:28:18Z","event_type":"closed","id":5785,"issue_id":"gt-wisp-09f5fy","new_value":"burned: force re-sling","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:28:34Z","event_type":"created","id":5786,"issue_id":"gt-gastown-polecat-toast","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:28:42Z","event_type":"closed","id":5787,"issue_id":"gt-wisp-cncwpq","new_value":"burned: force re-sling","old_value":""}
+{"actor":"gastown/polecats/capable","comment":"","created_at":"2026-02-28T11:29:03Z","event_type":"closed","id":5788,"issue_id":"gt-wisp-ww1bdx","new_value":"Closed","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:29:06Z","event_type":"created","id":5789,"issue_id":"gt-gastown-polecat-dag","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:29:14Z","event_type":"closed","id":5790,"issue_id":"gt-wisp-9f79w7","new_value":"burned: force re-sling","old_value":""}
+{"actor":"gastown/polecats/capable","comment":"","created_at":"2026-02-28T11:29:17Z","event_type":"closed","id":5791,"issue_id":"gt-wisp-ye0n6s","new_value":"Closed","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:29:56Z","event_type":"closed","id":5792,"issue_id":"gt-wisp-ds100k","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:29:57Z","event_type":"closed","id":5793,"issue_id":"gt-wisp-venphl","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T11:30:02Z","event_type":"closed","id":5794,"issue_id":"gt-wisp-409hkl","new_value":"done","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:30:28Z","event_type":"closed","id":5795,"issue_id":"gt-wisp-k6ve0k","new_value":"Closed","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:30:30Z","event_type":"created","id":5796,"issue_id":"gt-gastown-polecat-dag","new_value":"","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-28T11:30:43Z","event_type":"closed","id":5797,"issue_id":"gt-wisp-ds100k","new_value":"burned: force re-sling","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-28T11:31:40Z","event_type":"closed","id":5798,"issue_id":"gt-wisp-c01lwt","new_value":"done","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:23Z","event_type":"closed","id":5799,"issue_id":"gt-wisp-zzh50","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:23Z","event_type":"closed","id":5800,"issue_id":"gt-wisp-fl473","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:23Z","event_type":"closed","id":5801,"issue_id":"gt-wisp-0z7eh","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:23Z","event_type":"closed","id":5802,"issue_id":"gt-wisp-1r5at","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:23Z","event_type":"closed","id":5803,"issue_id":"gt-wisp-54l1v","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:23Z","event_type":"closed","id":5804,"issue_id":"gt-wisp-ckxd2","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:23Z","event_type":"closed","id":5805,"issue_id":"gt-wisp-dxgw4","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5806,"issue_id":"gt-wisp-eq6yh","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5807,"issue_id":"gt-wisp-gtgp7","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5808,"issue_id":"gt-wisp-kxctl","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5809,"issue_id":"gt-wisp-welo5","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5810,"issue_id":"gt-wisp-xa548","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5811,"issue_id":"gt-wisp-xxo0n","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5812,"issue_id":"gt-wisp-4wt5o","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5813,"issue_id":"gt-wisp-b8o8v","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:24Z","event_type":"closed","id":5814,"issue_id":"gt-wisp-b9ae7","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5815,"issue_id":"gt-wisp-dqbgl","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5816,"issue_id":"gt-wisp-fbptp","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5817,"issue_id":"gt-wisp-gxnwv","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5818,"issue_id":"gt-wisp-jc7km","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5819,"issue_id":"gt-wisp-lnhf5","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5820,"issue_id":"gt-wisp-ntvpy","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5821,"issue_id":"gt-wisp-tdwqh","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5822,"issue_id":"gt-wisp-tg5pr","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5823,"issue_id":"gt-wisp-zsh6g","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:25Z","event_type":"closed","id":5824,"issue_id":"gt-wisp-c91dr","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5825,"issue_id":"gt-wisp-liwao","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5826,"issue_id":"gt-wisp-03rto","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5827,"issue_id":"gt-wisp-0sob8","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5828,"issue_id":"gt-wisp-2qln1","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5829,"issue_id":"gt-wisp-9gj9e","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5830,"issue_id":"gt-wisp-e4q2g","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5831,"issue_id":"gt-wisp-gwmen","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5832,"issue_id":"gt-wisp-nwzrp","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5833,"issue_id":"gt-wisp-pc42n","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:26Z","event_type":"closed","id":5834,"issue_id":"gt-wisp-w706w","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5835,"issue_id":"gt-wisp-y5s6q","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5836,"issue_id":"gt-wisp-ykcjw","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5837,"issue_id":"gt-wisp-0md58","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5838,"issue_id":"gt-wisp-0w110","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5839,"issue_id":"gt-wisp-4wgug","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5840,"issue_id":"gt-wisp-6da15","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5841,"issue_id":"gt-wisp-dm0m9","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5842,"issue_id":"gt-wisp-mr2l3","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5843,"issue_id":"gt-wisp-qmdxe","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5844,"issue_id":"gt-wisp-tei0a","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5845,"issue_id":"gt-wisp-yctcs","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:27Z","event_type":"closed","id":5846,"issue_id":"gt-wisp-yuozm","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5847,"issue_id":"gt-wisp-zkg2o","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5848,"issue_id":"gt-wisp-0t2mdp","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5849,"issue_id":"gt-wisp-0t62mi","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5850,"issue_id":"gt-wisp-1b50u0","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5851,"issue_id":"gt-wisp-1s253n","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5852,"issue_id":"gt-wisp-2p2uhk","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5853,"issue_id":"gt-wisp-3p36k9","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5854,"issue_id":"gt-wisp-3t1qhy","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5855,"issue_id":"gt-wisp-44uany","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5856,"issue_id":"gt-wisp-4l9m1x","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:28Z","event_type":"closed","id":5857,"issue_id":"gt-wisp-4ouxda","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5858,"issue_id":"gt-wisp-541cll","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5859,"issue_id":"gt-wisp-5gs5ux","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5860,"issue_id":"gt-wisp-5xr5cz","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5861,"issue_id":"gt-wisp-62oy2u","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5862,"issue_id":"gt-wisp-6u950f","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5863,"issue_id":"gt-wisp-6y1n22","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5864,"issue_id":"gt-wisp-787snd","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5865,"issue_id":"gt-wisp-81d6u2","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5866,"issue_id":"gt-wisp-88gjvg","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5867,"issue_id":"gt-wisp-8e8ggd","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5868,"issue_id":"gt-wisp-9cpzsj","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:29Z","event_type":"closed","id":5869,"issue_id":"gt-wisp-a40fir","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5870,"issue_id":"gt-wisp-byva7x","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5871,"issue_id":"gt-wisp-c22106","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5872,"issue_id":"gt-wisp-cmhqcd","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5873,"issue_id":"gt-wisp-cux1xu","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5874,"issue_id":"gt-wisp-db0guu","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5875,"issue_id":"gt-wisp-gk9spi","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5876,"issue_id":"gt-wisp-hmzeog","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5877,"issue_id":"gt-wisp-hwfvmb","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5878,"issue_id":"gt-wisp-i82zre","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5879,"issue_id":"gt-wisp-ibp728","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5880,"issue_id":"gt-wisp-ipefpg","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5881,"issue_id":"gt-wisp-ir0b87","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:30Z","event_type":"closed","id":5882,"issue_id":"gt-wisp-j7tble","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5883,"issue_id":"gt-wisp-jnchc6","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5884,"issue_id":"gt-wisp-mifrx3","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5885,"issue_id":"gt-wisp-n3hr5r","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5886,"issue_id":"gt-wisp-q1ni7v","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5887,"issue_id":"gt-wisp-q8qwm7","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5888,"issue_id":"gt-wisp-qxh19x","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5889,"issue_id":"gt-wisp-rmqpmj","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5890,"issue_id":"gt-wisp-sewmlk","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5891,"issue_id":"gt-wisp-uh7pik","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5892,"issue_id":"gt-wisp-v1k7as","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5893,"issue_id":"gt-wisp-vp2ioh","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5894,"issue_id":"gt-wisp-vz1fgv","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:31Z","event_type":"closed","id":5895,"issue_id":"gt-wisp-wl25z4","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:32Z","event_type":"closed","id":5896,"issue_id":"gt-wisp-wub2w1","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-28T11:32:32Z","event_type":"closed","id":5897,"issue_id":"gt-wisp-zyb6sc","new_value":"Wisp pollution cleanup","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:32:51Z","event_type":"closed","id":5898,"issue_id":"gt-wisp-byu0l6","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/capable","comment":"","created_at":"2026-02-28T11:35:11Z","event_type":"closed","id":5899,"issue_id":"gt-wisp-rmqpmj","new_value":"done","old_value":""}
+{"actor":"gastown/polecats/toast","comment":"","created_at":"2026-02-28T11:36:15Z","event_type":"created","id":5900,"issue_id":"gt-wisp-idfmq4","new_value":"","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:36:27Z","event_type":"closed","id":5901,"issue_id":"gt-wisp-n3hr5r","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:36:28Z","event_type":"closed","id":5902,"issue_id":"gt-wisp-q1ni7v","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:36:31Z","event_type":"closed","id":5903,"issue_id":"gt-wisp-vp2ioh","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/nux","comment":"","created_at":"2026-02-28T11:36:35Z","event_type":"created","id":5904,"issue_id":"gt-wisp-8g8tvk","new_value":"","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:36:40Z","event_type":"closed","id":5905,"issue_id":"gt-wisp-62oy2u","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:36:41Z","event_type":"closed","id":5906,"issue_id":"gt-wisp-mifrx3","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:36:54Z","event_type":"closed","id":5907,"issue_id":"gt-wisp-787snd","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:37:05Z","event_type":"created","id":5908,"issue_id":"gt-wisp-mpwlh7","new_value":"","old_value":""}
+{"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T11:37:09Z","event_type":"closed","id":5909,"issue_id":"gt-wisp-a40fir","new_value":"done","old_value":""}
+{"actor":"gastown/polecats/capable","comment":"","created_at":"2026-02-28T11:45:31Z","event_type":"closed","id":5910,"issue_id":"gt-wisp-rw8ap2","new_value":"Closed","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:45:44Z","event_type":"closed","id":5911,"issue_id":"gt-wisp-a40fir","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:45:50Z","event_type":"closed","id":5912,"issue_id":"gt-wisp-msj8mj","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:45:53Z","event_type":"closed","id":5913,"issue_id":"gt-wisp-409hkl","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:45:58Z","event_type":"closed","id":5914,"issue_id":"gt-wisp-2p2uhk","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:46:02Z","event_type":"closed","id":5915,"issue_id":"gt-wisp-zyb6sc","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:46:05Z","event_type":"closed","id":5916,"issue_id":"gt-wisp-rmqpmj","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-28T11:46:18Z","event_type":"created","id":5917,"issue_id":"gt-wisp-igsm3s","new_value":"","old_value":""}
+{"actor":"gastown/polecats/dag","comment":"","created_at":"2026-02-28T11:46:53Z","event_type":"created","id":5918,"issue_id":"gt-wisp-hrdz0b","new_value":"","old_value":""}
+{"actor":"gastown/polecats/dag","comment":"","created_at":"2026-02-28T11:46:56Z","event_type":"closed","id":5919,"issue_id":"gt-wisp-44uany","new_value":"done","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:46:57Z","event_type":"closed","id":5920,"issue_id":"gt-wisp-c01lwt","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-28T11:47:11Z","event_type":"closed","id":5921,"issue_id":"gt-wisp-44uany","new_value":"burned: polecat nuked","old_value":""}
