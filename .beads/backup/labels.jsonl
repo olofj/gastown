@@ -67,9 +67,6 @@
 {"issue_id":"gt-gastown-polecat-nux","label":"gt:agent"}
 {"issue_id":"gt-gastown-polecat-rictus","label":"gt:agent"}
 {"issue_id":"gt-gastown-polecat-rictus","label":"gt:agent"}
-{"issue_id":"gt-gastown-polecat-slit","label":"done-cp:pushed:polecat/slit/gt-qae2@mm5uycrk:1772255489"}
-{"issue_id":"gt-gastown-polecat-slit","label":"done-cp:witness-notified:ok:1772255492"}
-{"issue_id":"gt-gastown-polecat-slit","label":"done-intent:COMPLETED:1772255486"}
 {"issue_id":"gt-gastown-polecat-slit","label":"gt:agent"}
 {"issue_id":"gt-gastown-polecat-slit","label":"gt:agent"}
 {"issue_id":"gt-gastown-polecat-toast","label":"gt:agent"}
@@ -170,6 +167,7 @@
 {"issue_id":"gt-wisp-6yryp","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-71ha","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-71ha","label":"gt:merge-request"}
+{"issue_id":"gt-wisp-8sq8hm","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-8xffw","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-9bzu1","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-9bzu1","label":"gt:merge-request"}
@@ -192,10 +190,12 @@
 {"issue_id":"gt-wisp-atotz","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-bkx9h","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-bkx9h","label":"gt:merge-request"}
+{"issue_id":"gt-wisp-d1obfw","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-d3w51","label":"plugin:rebuild-gt"}
 {"issue_id":"gt-wisp-d3w51","label":"result:success"}
 {"issue_id":"gt-wisp-d3w51","label":"rig:gastown"}
 {"issue_id":"gt-wisp-d3w51","label":"type:plugin-run"}
+{"issue_id":"gt-wisp-d99uxt","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-eojz","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-eojz","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-f3p0w","label":"gt:merge-request"}
@@ -218,6 +218,7 @@
 {"issue_id":"gt-wisp-mk4v","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-molml","label":"idle:5"}
 {"issue_id":"gt-wisp-molml","label":"idle:5"}
+{"issue_id":"gt-wisp-mq8ycs","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-mw40z","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-n5bn7","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-njqsf","label":"gt:merge-request"}
