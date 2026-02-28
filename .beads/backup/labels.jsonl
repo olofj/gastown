@@ -19,6 +19,8 @@
 {"issue_id":"gt-8ik","label":"reconciliation"}
 {"issue_id":"gt-8ik","label":"zfc"}
 {"issue_id":"gt-8l3w","label":"formula"}
+{"issue_id":"gt-94i9","label":"pre-existing"}
+{"issue_id":"gt-94i9","label":"test-failure"}
 {"issue_id":"gt-9p8h5","label":"desire-path"}
 {"issue_id":"gt-9xbg","label":"zfc-violation"}
 {"issue_id":"gt-bmho","label":"zfc-violation"}
@@ -28,6 +30,9 @@
 {"issue_id":"gt-crew-role","label":"migrated-to:hq-crew-role"}
 {"issue_id":"gt-d9ed","label":"zfc-violation"}
 {"issue_id":"gt-deacon","label":"migrated-to:hq-deacon"}
+{"issue_id":"gt-eo8d","label":"flaky"}
+{"issue_id":"gt-eo8d","label":"pre-existing"}
+{"issue_id":"gt-eo8d","label":"test-failure"}
 {"issue_id":"gt-f6mkz","label":"design"}
 {"issue_id":"gt-f6mkz","label":"prerequisite"}
 {"issue_id":"gt-gastown-crew-dennis","label":"gt:agent"}
@@ -130,6 +135,7 @@
 {"issue_id":"gt-wisp-eojz","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-f3p0w","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-gh5q8","label":"gt:merge-request"}
+{"issue_id":"gt-wisp-iwmhr","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-iyr4","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-lz2m","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-m6nu","label":"gt:merge-request"}
