@@ -1148,3 +1148,104 @@
 {"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:55:59Z","event_type":"closed","id":4326,"issue_id":"gt-wisp-ewta5","new_value":"Closed","old_value":""}
 {"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:04Z","event_type":"claimed","id":4327,"issue_id":"gt-wisp-73ee3","new_value":"","old_value":""}
 {"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:07Z","event_type":"closed","id":4328,"issue_id":"gt-wisp-73ee3","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:11Z","event_type":"claimed","id":4329,"issue_id":"gt-wisp-o17n0","new_value":"","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:17Z","event_type":"closed","id":4330,"issue_id":"gt-wisp-o17n0","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:21Z","event_type":"claimed","id":4331,"issue_id":"gt-wisp-7ykpr","new_value":"","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:21Z","event_type":"closed","id":4332,"issue_id":"gt-wisp-7ykpr","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:31Z","event_type":"created","id":4333,"issue_id":"gt-wisp-a0326","new_value":"","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T17:56:34Z","event_type":"closed","id":4334,"issue_id":"gt-wisp-bmfqr","new_value":"done","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-27T17:58:10Z","event_type":"closed","id":4335,"issue_id":"gt-wisp-bmfqr","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T17:58:51Z","event_type":"closed","id":4336,"issue_id":"gt-wisp-11x74","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T17:58:57Z","event_type":"claimed","id":4337,"issue_id":"gt-wisp-afztm","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:02:03Z","event_type":"closed","id":4338,"issue_id":"gt-wisp-afztm","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:02:09Z","event_type":"claimed","id":4339,"issue_id":"gt-wisp-seyp2","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:02:09Z","event_type":"closed","id":4340,"issue_id":"gt-wisp-seyp2","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:02:15Z","event_type":"claimed","id":4341,"issue_id":"gt-wisp-gteqt","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:02:36Z","event_type":"closed","id":4342,"issue_id":"gt-wisp-kkrtg","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:02:49Z","event_type":"claimed","id":4343,"issue_id":"gt-wisp-zc6gi","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:02:50Z","event_type":"created","id":4344,"issue_id":"gt-wisp-gh5q8","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:02:51Z","event_type":"closed","id":4345,"issue_id":"gt-wisp-fzhvd","new_value":"done","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:03:18Z","event_type":"closed","id":4346,"issue_id":"gt-wisp-4gqph","new_value":"merged to main","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:03:25Z","event_type":"closed","id":4347,"issue_id":"gt-wisp-gteqt","new_value":"Closed","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-27T18:03:47Z","event_type":"closed","id":4348,"issue_id":"gt-wisp-fzhvd","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:25Z","event_type":"closed","id":4349,"issue_id":"gt-wisp-6yryp","new_value":"stale: branch has 0 commits ahead of main, all changes already in main","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:33Z","event_type":"closed","id":4350,"issue_id":"gt-wisp-pvcbj","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:38Z","event_type":"claimed","id":4351,"issue_id":"gt-wisp-7n2z2","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:38Z","event_type":"closed","id":4352,"issue_id":"gt-wisp-7n2z2","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:46Z","event_type":"claimed","id":4353,"issue_id":"gt-wisp-8520e","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:52Z","event_type":"closed","id":4354,"issue_id":"gt-wisp-8520e","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:52Z","event_type":"closed","id":4355,"issue_id":"gt-wisp-rrgx6","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:04:52Z","event_type":"closed","id":4356,"issue_id":"gt-wisp-9kb2q","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:05:00Z","event_type":"closed","id":4357,"issue_id":"gt-wisp-mv5zs","new_value":"stale patrol cleanup","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:06:17Z","event_type":"closed","id":4358,"issue_id":"gt-wisp-gh5q8","new_value":"stale: branch has 0 commits ahead of main, no new work","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:06:41Z","event_type":"closed","id":4359,"issue_id":"gt-wisp-a0326","new_value":"stale: branch polecat/slit/gt-p7uq.3@mm5nyyge does not exist on any remote","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:08:04Z","event_type":"created","id":4360,"issue_id":"gt-gastown-polecat-furiosa","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:10:28Z","event_type":"created","id":4361,"issue_id":"gt-gastown-polecat-nux","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:11:03Z","event_type":"closed","id":4362,"issue_id":"gt-wisp-n0o1y","new_value":"patrol cycle complete: Patrol cycle: 0 merges, 3 stale MRs already closed (0 commits ahead of main). Filed bug gt-0jh0 for pre-existing test failure TestInitRegistry_SocketFromTownName (caused by 635916ab, test expects per-town socket but code uses default).","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:11:17Z","event_type":"created","id":4363,"issue_id":"gt-gastown-polecat-slit","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:11:22Z","event_type":"closed","id":4364,"issue_id":"gt-wisp-1hi6q","new_value":"patrol cycle complete: Patrol cycle: queue empty, no merges. New polecat branch polecat/nux/gt-lpop seen but no MR submitted yet.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:11:45Z","event_type":"closed","id":4365,"issue_id":"gt-wisp-aru1u","new_value":"patrol cycle complete: Queue empty, no merges. Polecat slit working on gt-0jh0 (test failure bug), polecat nux on gt-lpop. Awaiting MR submissions.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:12:03Z","event_type":"closed","id":4366,"issue_id":"gt-wisp-y63ad","new_value":"patrol cycle complete: Queue empty, no merges. Polecats still working.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:12:17Z","event_type":"closed","id":4367,"issue_id":"gt-wisp-h8gmi","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:12:27Z","event_type":"closed","id":4368,"issue_id":"gt-wisp-cawbn","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:12:37Z","event_type":"closed","id":4369,"issue_id":"gt-wisp-o6gr0","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:12:46Z","event_type":"closed","id":4370,"issue_id":"gt-wisp-h2ss3","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:12:55Z","event_type":"closed","id":4371,"issue_id":"gt-wisp-e75z6","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:13:04Z","event_type":"closed","id":4372,"issue_id":"gt-wisp-dv5af","new_value":"patrol cycle complete: Queue empty, no merges. Extended idle period.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:13:13Z","event_type":"closed","id":4373,"issue_id":"gt-wisp-snu3l","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:13:25Z","event_type":"closed","id":4374,"issue_id":"gt-wisp-y2ayj","new_value":"patrol cycle complete: Queue empty. Polecat slit pushed new work on gt-0jh0 (test fix), no MR yet.","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T18:13:33Z","event_type":"created","id":4375,"issue_id":"gt-wisp-a83ty","new_value":"","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:13:36Z","event_type":"closed","id":4376,"issue_id":"gt-wisp-1db6e","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T18:13:37Z","event_type":"closed","id":4377,"issue_id":"gt-wisp-z3ccc","new_value":"done","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:13:50Z","event_type":"closed","id":4378,"issue_id":"gt-wisp-b5sw7","new_value":"done","old_value":""}
+{"actor":"gastown/polecats/nux","comment":"","created_at":"2026-02-27T18:13:55Z","event_type":"closed","id":4379,"issue_id":"gt-wisp-bxzkx","new_value":"done","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-27T18:14:56Z","event_type":"closed","id":4380,"issue_id":"gt-wisp-z3ccc","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:15:42Z","event_type":"closed","id":4381,"issue_id":"gt-wisp-a83ty","new_value":"Stale MR: branch polecat/slit/gt-0jh0@mm5oq01w does not exist on any remote. Source issue gt-0jh0 already closed. Polecat slit no longer running.","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:15:50Z","event_type":"created","id":4382,"issue_id":"gt-wisp-5avt0","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:16:08Z","event_type":"created","id":4383,"issue_id":"gt-gastown-polecat-slit","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:16:25Z","event_type":"closed","id":4384,"issue_id":"gt-wisp-b5sw7","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/witness","comment":"","created_at":"2026-02-27T18:17:32Z","event_type":"closed","id":4385,"issue_id":"gt-wisp-bxzkx","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:17:51Z","event_type":"closed","id":4386,"issue_id":"gt-wisp-5avt0","new_value":"Stale MR: branch polecat/furiosa/gt-kk21@mm5olv04 not on any remote. Source issue gt-kk21 already closed. Work product (plugins/compactor-dog/plugin.md) exists locally in gitignored refinery dir — does not need git merge.","old_value":""}
+{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-27T18:18:37Z","event_type":"closed","id":4387,"issue_id":"gt-wisp-qj5rn","new_value":"done","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:19:14Z","event_type":"closed","id":4388,"issue_id":"gt-wisp-x7cba","new_value":"patrol cycle complete: Merged 2 branches to main: slit/gt-0jh0 (test fix, 2930ba83), furiosa/gt-kk21 (compactor-dog plugin, ac38b1c9). All tests pass, no conflicts.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:19:19Z","event_type":"closed","id":4389,"issue_id":"gt-wisp-qj5rn","new_value":"burned: polecat nuked","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:19:23Z","event_type":"closed","id":4390,"issue_id":"gt-wisp-622id","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:19:34Z","event_type":"closed","id":4391,"issue_id":"gt-wisp-ehn2t","new_value":"patrol cycle complete: Queue empty, no merges.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:22:27Z","event_type":"closed","id":4392,"issue_id":"gt-wisp-dhpza","new_value":"patrol cycle complete: Empty queue cycle. No branches to merge, inbox clear, session healthy (RSS 3MB).","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:22:49Z","event_type":"closed","id":4393,"issue_id":"gt-wisp-hrksx","new_value":"patrol cycle complete: Empty queue cycle 2. No branches to merge, inbox clear, session healthy (RSS 3MB).","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:23:09Z","event_type":"closed","id":4394,"issue_id":"gt-wisp-gq83q","new_value":"patrol cycle complete: Empty queue cycle 3. No work pending, session healthy (RSS 3MB). Standing by.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:23:25Z","event_type":"closed","id":4395,"issue_id":"gt-wisp-nfwdd","new_value":"patrol cycle complete: Empty queue cycle 4. Standing by. Session healthy (RSS 3MB).","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-02-27T18:34:26Z","event_type":"closed","id":4396,"issue_id":"gt-wisp-1i6q5","new_value":"patrol cycle complete: Cycle 1: Queue empty, inbox clear. Main advanced on origin (ac38b1c9..e5248e0f). No branches to merge. Session healthy (RSS 3MB).","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:42:08Z","event_type":"created","id":4397,"issue_id":"gt-gastown-polecat-furiosa","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:42:19Z","event_type":"created","id":4398,"issue_id":"gt-gastown-polecat-nux","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:42:32Z","event_type":"claimed","id":4399,"issue_id":"gt-wisp-mq5xo","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:42:36Z","event_type":"created","id":4400,"issue_id":"gt-gastown-polecat-slit","new_value":"","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:42:51Z","event_type":"created","id":4401,"issue_id":"gt-gastown-polecat-rictus","new_value":"","old_value":""}
+{"actor":"gastown/polecats/nux","comment":"","created_at":"2026-02-27T18:42:55Z","event_type":"closed","id":4402,"issue_id":"gt-wisp-vr84c","new_value":"Closed","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:43:08Z","event_type":"created","id":4403,"issue_id":"gt-gastown-polecat-dementus","new_value":"","old_value":""}
+{"actor":"gastown/polecats/nux","comment":"","created_at":"2026-02-27T18:43:19Z","event_type":"closed","id":4404,"issue_id":"gt-wisp-2gzt8","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:43:21Z","event_type":"closed","id":4405,"issue_id":"gt-wisp-mq5xo","new_value":"Closed","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-02-27T18:43:22Z","event_type":"created","id":4406,"issue_id":"gt-gastown-polecat-capable","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:43:28Z","event_type":"claimed","id":4407,"issue_id":"gt-wisp-5mg9u","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:43:34Z","event_type":"closed","id":4408,"issue_id":"gt-wisp-5mg9u","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:43:46Z","event_type":"claimed","id":4409,"issue_id":"gt-wisp-xplya","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:44:32Z","event_type":"closed","id":4410,"issue_id":"gt-wisp-xplya","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:44:40Z","event_type":"claimed","id":4411,"issue_id":"gt-wisp-1dx0k","new_value":"","old_value":""}
+{"actor":"gastown/polecats/nux","comment":"","created_at":"2026-02-27T18:45:08Z","event_type":"closed","id":4412,"issue_id":"gt-wisp-st5bf","new_value":"done","old_value":""}
+{"actor":"dog","comment":"","created_at":"2026-02-27T18:45:25Z","event_type":"created","id":4413,"issue_id":"gt-wisp-0wzfx","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:46:43Z","event_type":"closed","id":4414,"issue_id":"gt-wisp-1dx0k","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:46:47Z","event_type":"claimed","id":4415,"issue_id":"gt-wisp-5yd37","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:46:59Z","event_type":"closed","id":4416,"issue_id":"gt-wisp-5yd37","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:47:02Z","event_type":"claimed","id":4417,"issue_id":"gt-wisp-drwmf","new_value":"","old_value":""}
+{"actor":"gastown/polecats/nux","comment":"","created_at":"2026-02-27T18:47:13Z","event_type":"closed","id":4418,"issue_id":"gt-wisp-n4kzy","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:47:27Z","event_type":"closed","id":4419,"issue_id":"gt-wisp-2vlrx","new_value":"done","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:11Z","event_type":"closed","id":4420,"issue_id":"gt-wisp-drwmf","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:15Z","event_type":"claimed","id":4421,"issue_id":"gt-wisp-nlhan","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:26Z","event_type":"closed","id":4422,"issue_id":"gt-wisp-nlhan","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:30Z","event_type":"claimed","id":4423,"issue_id":"gt-wisp-uegfk","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:33Z","event_type":"closed","id":4424,"issue_id":"gt-wisp-uegfk","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:36Z","event_type":"claimed","id":4425,"issue_id":"gt-wisp-pmsyb","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:41Z","event_type":"closed","id":4426,"issue_id":"gt-wisp-pmsyb","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:44Z","event_type":"claimed","id":4427,"issue_id":"gt-wisp-aigid","new_value":"","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:48:47Z","event_type":"closed","id":4428,"issue_id":"gt-wisp-aigid","new_value":"Closed","old_value":""}
+{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-27T18:49:00Z","event_type":"created","id":4429,"issue_id":"gt-wisp-5iasc","new_value":"","old_value":""}
