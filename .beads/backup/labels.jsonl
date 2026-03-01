@@ -135,6 +135,7 @@
 {"issue_id":"gt-wisp-0wzfx","label":"result:success"}
 {"issue_id":"gt-wisp-0wzfx","label":"rig:gastown"}
 {"issue_id":"gt-wisp-0wzfx","label":"type:plugin-run"}
+{"issue_id":"gt-wisp-1740a","label":"backoff-until:1772332325"}
 {"issue_id":"gt-wisp-1bmva","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-1hn0et","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-1ucpg","label":"gt:merge-request"}
@@ -191,6 +192,7 @@
 {"issue_id":"gt-wisp-yary2z","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-ycc4","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-yjtiyr","label":"gt:merge-request"}
+{"issue_id":"gt-wisp-ylsxf","label":"idle:1"}
 {"issue_id":"gt-wisp-z1g7oq","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-zb9d8i","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-zd8mo","label":"gt:merge-request"}
