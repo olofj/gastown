@@ -3037,3 +3037,6 @@
 {"actor":"gastown/crew/mel","comment":null,"created_at":"2026-03-01T10:40:01Z","event_type":"created","id":3495,"issue_id":"gt-sm59","new_value":"","old_value":""}
 {"actor":"gastown/crew/mel","comment":"Added label: enhancement","created_at":"2026-03-01T10:40:01Z","event_type":"label_added","id":3496,"issue_id":"gt-sm59","new_value":null,"old_value":null}
 {"actor":"gastown/polecats/cheedo","comment":"","created_at":"2026-03-01T09:37:19Z","event_type":"closed","id":7913,"issue_id":"gt-wisp-yggq6","new_value":"Closed","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-03-01T13:29:40Z","event_type":"closed","id":7958,"issue_id":"gt-wisp-3n6r","new_value":"patrol cycle complete: Patrol cycle: merge queue empty, inbox clear, no integration branches ready. Session healthy (3MB RSS). Looping.","old_value":""}
+{"actor":"gastown/refinery","comment":"","created_at":"2026-03-01T13:29:55Z","event_type":"closed","id":7959,"issue_id":"gt-wisp-7gd1","new_value":"patrol cycle complete: Cycle 2: merge queue empty, inbox clear. No polecat work pending. Handing off.","old_value":""}
+{"actor":"mayor","comment":"","created_at":"2026-03-01T13:30:07Z","event_type":"created","id":7960,"issue_id":"gt-gastown-polecat-furiosa","new_value":"","old_value":""}
