@@ -3655,27 +3655,10 @@
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T15:58:31Z","event_type":"closed","id":7280,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T15:58:40Z","event_type":"closed","id":7282,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
 {"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T16:11:23Z","event_type":"closed","id":7289,"issue_id":"gt-wisp-lycj3q","new_value":"done","old_value":""}
-{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T16:13:35Z","event_type":"closed","id":7290,"issue_id":"gt-wisp-hk8hk6","new_value":"Closed","old_value":""}
-{"actor":"gastown/polecats/nux","comment":"","created_at":"2026-02-28T16:17:19Z","event_type":"created","id":7291,"issue_id":"gt-wisp-9czr5d","new_value":"","old_value":""}
-{"actor":"gastown/polecats/slit","comment":"","created_at":"2026-02-28T16:18:10Z","event_type":"created","id":7292,"issue_id":"gt-wisp-yjtiyr","new_value":"","old_value":""}
-{"actor":"gastown/polecats/furiosa","comment":"","created_at":"2026-02-28T16:18:12Z","event_type":"created","id":7293,"issue_id":"gt-wisp-yary2z","new_value":"","old_value":""}
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:18:57Z","event_type":"closed","id":7294,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
-{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:18:57Z","event_type":"closed","id":7295,"issue_id":"gt-wisp-8mg36e","new_value":"stale patrol cleanup","old_value":""}
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:19:09Z","event_type":"closed","id":7296,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
-{"actor":"gastown/polecats/capable","comment":"","created_at":"2026-02-28T16:20:01Z","event_type":"created","id":7297,"issue_id":"gt-wisp-zb9d8i","new_value":"","old_value":""}
-{"actor":"gastown/polecats/capable","comment":"","created_at":"2026-02-28T16:20:04Z","event_type":"closed","id":7298,"issue_id":"gt-wisp-mrl4hw","new_value":"done","old_value":""}
-{"actor":"gastown/polecats/toast","comment":"","created_at":"2026-02-28T16:24:16Z","event_type":"created","id":7299,"issue_id":"gt-wisp-t6dcjk","new_value":"","old_value":""}
-{"actor":"gastown/polecats/toast","comment":"","created_at":"2026-02-28T16:24:19Z","event_type":"closed","id":7300,"issue_id":"gt-wisp-dsmvmg","new_value":"done","old_value":""}
 {"actor":"gastown/polecats/cheedo","comment":"","created_at":"2026-02-28T16:24:36Z","event_type":"created","id":7301,"issue_id":"gt-wisp-n4v2m8","new_value":"","old_value":""}
-{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:25:14Z","event_type":"closed","id":7302,"issue_id":"gt-wisp-9czr5d","new_value":"merged","old_value":""}
-{"actor":"gastown/polecats/valkyrie","comment":"","created_at":"2026-02-28T16:29:32Z","event_type":"closed","id":7303,"issue_id":"gt-wisp-0jqfe0","new_value":"done","old_value":""}
-{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:30:08Z","event_type":"closed","id":7304,"issue_id":"gt-wisp-yary2z","new_value":"merged","old_value":""}
-{"actor":"gastown/polecats/valkyrie","comment":"","created_at":"2026-02-28T16:32:08Z","event_type":"created","id":7305,"issue_id":"gt-wisp-z1g7oq","new_value":"","old_value":""}
-{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:32:18Z","event_type":"closed","id":7306,"issue_id":"gt-wisp-yjtiyr","new_value":"rejected: Branch changes already on main — commit becomes empty after rebase. The fix for gt-v5ku (preserve remote branch during nuke) was already implemented on main with hasPendingMR check and deletePolecatBranch helper.","old_value":""}
-{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:34:49Z","event_type":"closed","id":7307,"issue_id":"gt-wisp-z1g7oq","new_value":"merged","old_value":""}
-{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:35:40Z","event_type":"closed","id":7308,"issue_id":"gt-wisp-zb9d8i","new_value":"merged","old_value":""}
 {"actor":"gastown/polecats/dementus","comment":"","created_at":"2026-02-28T16:37:42Z","event_type":"created","id":7309,"issue_id":"gt-wisp-f7b25x","new_value":"","old_value":""}
-{"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:37:48Z","event_type":"closed","id":7310,"issue_id":"gt-wisp-t6dcjk","new_value":"merged","old_value":""}
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:39:52Z","event_type":"closed","id":7311,"issue_id":"gt-wisp-n4v2m8","new_value":"merged","old_value":""}
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:42:09Z","event_type":"closed","id":7312,"issue_id":"gt-wisp-f7b25x","new_value":"merged","old_value":""}
 {"actor":"gastown/refinery","comment":"","created_at":"2026-02-28T16:42:45Z","event_type":"closed","id":7313,"issue_id":"gt-wisp-s2vyx","new_value":"stale patrol cleanup","old_value":""}
