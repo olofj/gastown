@@ -12,6 +12,9 @@
 {"issue_id":"gt-4unmo","label":"worker-lifecycle"}
 {"issue_id":"gt-5rne","label":"zfc-violation"}
 {"issue_id":"gt-5v29","label":"desire-path"}
+{"issue_id":"gt-5zs8","label":"api"}
+{"issue_id":"gt-5zs8","label":"design"}
+{"issue_id":"gt-5zs8","label":"pinned"}
 {"issue_id":"gt-6oio","label":"plugin:rebuild-gt"}
 {"issue_id":"gt-6oio","label":"result:success"}
 {"issue_id":"gt-6oio","label":"rig:gastown"}
@@ -124,10 +127,8 @@
 {"issue_id":"gt-tit8","label":"memory"}
 {"issue_id":"gt-tsut","label":"zfc-violation"}
 {"issue_id":"gt-utbjv","label":"worker-lifecycle"}
-{"issue_id":"gt-wisp-4mrc7","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-gmgj2","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-nli53","label":"idle:2"}
-{"issue_id":"gt-wisp-r8k36","label":"idle:1"}
 {"issue_id":"gt-wisp-tesb4","label":"gt:merge-request"}
 {"issue_id":"gt-wisp-tgysg","label":"gt:merge-request"}
 {"issue_id":"gt-witness-role","label":"migrated-to:hq-witness-role"}
