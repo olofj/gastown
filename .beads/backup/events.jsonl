@@ -3406,3 +3406,4 @@
 {"actor":"gastown/crew/tom","comment":null,"created_at":"2026-03-02T16:25:56Z","event_type":"created","id":3864,"issue_id":"gt-8neb","new_value":"","old_value":""}
 {"actor":"gastown/crew/tom","comment":"Added label: architecture","created_at":"2026-03-02T16:25:56Z","event_type":"label_added","id":3865,"issue_id":"gt-8neb","new_value":null,"old_value":null}
 {"actor":"gastown/crew/tom","comment":"Added label: desire-path","created_at":"2026-03-02T16:25:56Z","event_type":"label_added","id":3866,"issue_id":"gt-8neb","new_value":null,"old_value":null}
+{"actor":"mayor","comment":null,"created_at":"2026-03-02T17:05:04Z","event_type":"created","id":3867,"issue_id":"gt-4oqo","new_value":"","old_value":""}
