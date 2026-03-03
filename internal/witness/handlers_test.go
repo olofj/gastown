@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/steveyegge/gastown/internal/beads"
+	"github.com/steveyegge/gastown/internal/config"
 	"github.com/steveyegge/gastown/internal/polecat"
 	"github.com/steveyegge/gastown/internal/tmux"
 )
@@ -582,7 +583,7 @@ func TestDetectZombie_DoneIntentDeadSession(t *testing.T) {
 	age := time.Since(doneIntent.Timestamp)
 
 	// Dead session + old intent → restart path (gt-dsgp: was auto-nuke)
-	shouldRestart := !sessionAlive && doneIntent != nil && age >= DoneIntentGracePeriod
+	shouldRestart := !sessionAlive && doneIntent != nil && age >= config.DefaultWitnessDoneIntentStuckTimeout
 	if !shouldRestart {
 		t.Errorf("expected restart for dead session + old done-intent (age=%v)", age)
 	}
@@ -600,7 +601,7 @@ func TestDetectZombie_DoneIntentLiveStuck(t *testing.T) {
 	age := time.Since(doneIntent.Timestamp)
 
 	// Live session + old intent → restart stuck session (gt-dsgp: was kill)
-	shouldRestart := sessionAlive && doneIntent != nil && age > DoneIntentGracePeriod
+	shouldRestart := sessionAlive && doneIntent != nil && age > config.DefaultWitnessDoneIntentStuckTimeout
 	if !shouldRestart {
 		t.Errorf("expected restart for live session + old done-intent (age=%v)", age)
 	}
@@ -608,7 +609,7 @@ func TestDetectZombie_DoneIntentLiveStuck(t *testing.T) {
 
 func TestDetectZombie_DoneIntentRecent(t *testing.T) {
 	t.Parallel()
-	// Verify the logic: done-intent younger than DoneIntentGracePeriod → skip (polecat still working)
+	// Verify the logic: done-intent younger than config.DefaultWitnessDoneIntentStuckTimeout → skip (polecat still working)
 	doneIntent := &DoneIntent{
 		ExitType:  "COMPLETED",
 		Timestamp: time.Now().Add(-10 * time.Second), // 10s old
@@ -617,14 +618,14 @@ func TestDetectZombie_DoneIntentRecent(t *testing.T) {
 	age := time.Since(doneIntent.Timestamp)
 
 	// Recent intent → should skip
-	shouldSkip := !sessionAlive && doneIntent != nil && age < DoneIntentGracePeriod
+	shouldSkip := !sessionAlive && doneIntent != nil && age < config.DefaultWitnessDoneIntentStuckTimeout
 	if !shouldSkip {
 		t.Errorf("expected skip for recent done-intent (age=%v)", age)
 	}
 
 	// Live session + recent intent → also skip
 	sessionAlive = true
-	shouldSkipLive := sessionAlive && doneIntent != nil && age <= DoneIntentGracePeriod
+	shouldSkipLive := sessionAlive && doneIntent != nil && age <= config.DefaultWitnessDoneIntentStuckTimeout
 	if !shouldSkipLive {
 		t.Errorf("expected skip for live session + recent done-intent (age=%v)", age)
 	}
@@ -768,7 +769,7 @@ func TestDetectZombie_BeadClosedVsDoneIntent(t *testing.T) {
 
 	// Done-intent exists + bead closed → done-intent check runs first,
 	// closed-bead check should NOT run (it's in the else branch)
-	doneIntentHandled := sessionAlive && doneIntent != nil && time.Since(doneIntent.Timestamp) > DoneIntentGracePeriod
+	doneIntentHandled := sessionAlive && doneIntent != nil && time.Since(doneIntent.Timestamp) > config.DefaultWitnessDoneIntentStuckTimeout
 	closedBeadCheck := sessionAlive && agentAlive && doneIntent == nil &&
 		hookBead != "" && beadStatus == "closed"
 
@@ -1025,18 +1026,21 @@ func TestDetectStalledPolecats_NoSession(t *testing.T) {
 
 func TestStartupStallThresholds(t *testing.T) {
 	t.Parallel()
-	// Verify thresholds are reasonable
-	if StartupStallThreshold < 30*time.Second {
-		t.Errorf("StartupStallThreshold = %v, too short (< 30s)", StartupStallThreshold)
+	// Verify config defaults are reasonable (tests the operational config defaults,
+	// not removed handler constants).
+	stallThreshold := config.DefaultWitnessStartupStallThreshold
+	activityGrace := config.DefaultWitnessStartupActivityGrace
+	if stallThreshold < 30*time.Second {
+		t.Errorf("DefaultWitnessStartupStallThreshold = %v, too short (< 30s)", stallThreshold)
 	}
-	if StartupStallThreshold > 5*time.Minute {
-		t.Errorf("StartupStallThreshold = %v, too long (> 5min)", StartupStallThreshold)
+	if stallThreshold > 5*time.Minute {
+		t.Errorf("DefaultWitnessStartupStallThreshold = %v, too long (> 5min)", stallThreshold)
 	}
-	if StartupActivityGrace < 15*time.Second {
-		t.Errorf("StartupActivityGrace = %v, too short (< 15s)", StartupActivityGrace)
+	if activityGrace < 15*time.Second {
+		t.Errorf("DefaultWitnessStartupActivityGrace = %v, too short (< 15s)", activityGrace)
 	}
-	if StartupActivityGrace > 5*time.Minute {
-		t.Errorf("StartupActivityGrace = %v, too long (> 5min)", StartupActivityGrace)
+	if activityGrace > 5*time.Minute {
+		t.Errorf("DefaultWitnessStartupActivityGrace = %v, too long (> 5min)", activityGrace)
 	}
 }
 
@@ -1656,7 +1660,7 @@ func TestHeartbeatV2_ExitingStateSkipsZombieDetection(t *testing.T) {
 	t.Parallel()
 	// Agent reports "exiting" state via heartbeat v2.
 	// The witness should trust the agent and NOT flag as zombie,
-	// even if done-intent is older than DoneIntentGracePeriod.
+	// even if done-intent is older than config.DefaultWitnessDoneIntentStuckTimeout.
 	// This replaces timer-based inference for v2 agents.
 
 	// Fresh heartbeat with state="exiting" → not a zombie
