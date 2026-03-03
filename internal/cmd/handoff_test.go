@@ -754,6 +754,7 @@ func TestRecordHandoffTime(t *testing.T) {
 // - No cooldown when enough time has passed
 func TestEnforceHandoffCooldown(t *testing.T) {
 	t.Run("no cooldown without previous handoff", func(t *testing.T) {
+		t.Setenv("GT_ROLE", "")
 		tmpDir := t.TempDir()
 		t.Chdir(tmpDir)
 
@@ -768,6 +769,7 @@ func TestEnforceHandoffCooldown(t *testing.T) {
 	})
 
 	t.Run("no cooldown when last handoff is old", func(t *testing.T) {
+		t.Setenv("GT_ROLE", "")
 		tmpDir := t.TempDir()
 		t.Chdir(tmpDir)
 
@@ -790,6 +792,8 @@ func TestEnforceHandoffCooldown(t *testing.T) {
 	})
 
 	t.Run("cooldown triggers for recent handoff", func(t *testing.T) {
+		// Use a non-exempt role so cooldown applies
+		t.Setenv("GT_ROLE", "gastown/witness")
 		tmpDir := t.TempDir()
 		t.Chdir(tmpDir)
 
@@ -812,6 +816,46 @@ func TestEnforceHandoffCooldown(t *testing.T) {
 		}
 		if elapsed > 3*time.Second {
 			t.Errorf("expected cooldown sleep of ~1s, but waited %v", elapsed)
+		}
+	})
+
+	t.Run("no cooldown for crew role", func(t *testing.T) {
+		t.Setenv("GT_ROLE", "gastown/crew/max")
+		tmpDir := t.TempDir()
+		t.Chdir(tmpDir)
+
+		// Create a recent handoff file that would normally trigger cooldown
+		runtimeDir := filepath.Join(tmpDir, constants.DirRuntime)
+		os.MkdirAll(runtimeDir, 0755)
+		tsPath := filepath.Join(runtimeDir, constants.FileLastHandoffTS)
+		os.WriteFile(tsPath, []byte("now"), 0644)
+
+		start := time.Now()
+		enforceHandoffCooldown()
+		elapsed := time.Since(start)
+
+		if elapsed > 1*time.Second {
+			t.Errorf("crew should be exempt from cooldown, but waited %v", elapsed)
+		}
+	})
+
+	t.Run("no cooldown for mayor role", func(t *testing.T) {
+		t.Setenv("GT_ROLE", "mayor")
+		tmpDir := t.TempDir()
+		t.Chdir(tmpDir)
+
+		// Create a recent handoff file that would normally trigger cooldown
+		runtimeDir := filepath.Join(tmpDir, constants.DirRuntime)
+		os.MkdirAll(runtimeDir, 0755)
+		tsPath := filepath.Join(runtimeDir, constants.FileLastHandoffTS)
+		os.WriteFile(tsPath, []byte("now"), 0644)
+
+		start := time.Now()
+		enforceHandoffCooldown()
+		elapsed := time.Since(start)
+
+		if elapsed > 1*time.Second {
+			t.Errorf("mayor should be exempt from cooldown, but waited %v", elapsed)
 		}
 	})
 }
