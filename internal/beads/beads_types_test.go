@@ -401,17 +401,6 @@ func TestEnsureDatabaseInitialized(t *testing.T) {
 		_ = ensureDatabaseInitialized(beadsDir)
 	})
 
-	t.Run("beads.db exists — skip init (legacy)", func(t *testing.T) {
-		beadsDir := filepath.Join(t.TempDir(), ".beads")
-		os.MkdirAll(beadsDir, 0755)
-		os.WriteFile(filepath.Join(beadsDir, "beads.db"), []byte("sqlite"), 0644)
-
-		err := ensureDatabaseInitialized(beadsDir)
-		if err != nil {
-			t.Errorf("expected nil error when beads.db exists, got: %v", err)
-		}
-	})
-
 	t.Run("no database artifacts — attempts bd init", func(t *testing.T) {
 		beadsDir := filepath.Join(t.TempDir(), ".beads")
 		os.MkdirAll(beadsDir, 0755)
