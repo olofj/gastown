@@ -581,9 +581,10 @@ func findAgentWork(ctx RoleContext) (*beads.Issue, error) {
 		return nil, nil
 	}
 
-	// Polecats and crew use a retry loop to handle the timing race where
-	// the hook write (status=hooked + assignee) hasn't propagated to new
-	// Dolt connections by the time gt prime runs on session startup.
+	// Polecats, crew, and dogs use a retry loop to handle the timing race
+	// where the hook write (status=hooked + assignee) hasn't propagated to
+	// new Dolt connections by the time gt prime runs on session startup.
+	// Dogs are especially affected since dispatch is fire-and-forget. (GH#2748)
 	// Uses exponential backoff: 500ms, 1s, 2s, 4s, 8s (total ~15.5s max).
 	// See: https://github.com/steveyegge/gastown/issues/2389
 	//
@@ -591,7 +592,7 @@ func findAgentWork(ctx RoleContext) (*beads.Issue, error) {
 	// A single attempt suffices — retries would add ~15s of latency to
 	// compaction hooks, causing non-Claude runtimes to report hook failure.
 	maxAttempts := 1
-	if (ctx.Role == RolePolecat || ctx.Role == RoleCrew) && !isCompactResume() {
+	if (ctx.Role == RolePolecat || ctx.Role == RoleCrew || ctx.Role == RoleDog) && !isCompactResume() {
 		maxAttempts = 5
 	}
 
