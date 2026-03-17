@@ -130,12 +130,29 @@ func (d *Daemon) syncJsonlGitBackup() {
 		return
 	}
 
-	d.logger.Printf("jsonl_git_backup: exporting %d database(s) to %s (scrub=%v)", len(databases), gitRepo, scrub)
+	// Filter configured databases against those actually available on the
+	// Dolt server. This prevents false-alarm escalations when a configured
+	// database (e.g. "bd") doesn't exist locally.
+	available := d.listAvailableDoltDatabases(dataDir)
+	var activeDatabases []string
+	for _, db := range databases {
+		if available[db] {
+			activeDatabases = append(activeDatabases, db)
+		} else {
+			d.logger.Printf("jsonl_git_backup: %s: database not found on server, skipping", db)
+		}
+	}
+	if len(activeDatabases) == 0 {
+		d.logger.Printf("jsonl_git_backup: none of the configured databases exist, skipping")
+		return
+	}
+
+	d.logger.Printf("jsonl_git_backup: exporting %d database(s) to %s (scrub=%v)", len(activeDatabases), gitRepo, scrub)
 
 	exported := 0
 	var failed []string
 	counts := make(map[string]int)
-	for _, db := range databases {
+	for _, db := range activeDatabases {
 		n, err := d.exportDatabaseToJsonl(db, gitRepo, dataDir, scrub)
 		if err != nil {
 			d.logger.Printf("jsonl_git_backup: %s: export failed: %v", db, err)
@@ -155,15 +172,15 @@ func (d *Daemon) syncJsonlGitBackup() {
 	mol.closeStep("export")
 
 	// Phase D: Pollution firewall — filter test data from exports.
-	removed := d.applyPollutionFilter(gitRepo, databases)
+	removed := d.applyPollutionFilter(gitRepo, activeDatabases)
 	if removed > 0 {
 		d.logger.Printf("jsonl_git_backup: filtered %d total test-pollution record(s)", removed)
 		// Recount after filtering so spike detection uses accurate numbers.
-		recountAfterFilter(gitRepo, databases, counts)
+		recountAfterFilter(gitRepo, activeDatabases, counts)
 	}
 
 	// Post-scrub verification: re-scan output for any remaining pollution.
-	if remaining := d.verifyNoPollution(gitRepo, databases); remaining > 0 {
+	if remaining := d.verifyNoPollution(gitRepo, activeDatabases); remaining > 0 {
 		d.logger.Printf("jsonl_git_backup: WARNING: %d suspicious record(s) survived scrub+filter", remaining)
 		d.escalate("jsonl_git_backup", fmt.Sprintf("post-scrub verification found %d suspicious records — review JSONL exports", remaining))
 	}
@@ -172,7 +189,7 @@ func (d *Daemon) syncJsonlGitBackup() {
 
 	// Phase D: Spike detection — compare current counts to previous commit.
 	threshold := spikeThreshold(config)
-	spikes := d.verifyExportCounts(gitRepo, databases, counts, threshold)
+	spikes := d.verifyExportCounts(gitRepo, activeDatabases, counts, threshold)
 	if len(spikes) > 0 {
 		report := formatSpikeReport(spikes)
 		d.logger.Printf("jsonl_git_backup: HALTING — spike detected:\n%s", report)
@@ -184,7 +201,7 @@ func (d *Daemon) syncJsonlGitBackup() {
 	// Commit and push if anything changed.
 	// Include failed databases in commit message so staleness is visible.
 	pushStatus := "ok"
-	if err := d.commitAndPushJsonlBackup(gitRepo, databases, counts, failed); err != nil {
+	if err := d.commitAndPushJsonlBackup(gitRepo, activeDatabases, counts, failed); err != nil {
 		d.logger.Printf("jsonl_git_backup: git operations failed: %v", err)
 		pushStatus = "failed"
 		mol.failStep("push", err.Error())
@@ -200,7 +217,7 @@ func (d *Daemon) syncJsonlGitBackup() {
 		mol.closeStep("push")
 	}
 
-	d.logger.Printf("jsonl_git_backup: exported %d/%d database(s), push=%s", exported, len(databases), pushStatus)
+	d.logger.Printf("jsonl_git_backup: exported %d/%d database(s), push=%s", exported, len(activeDatabases), pushStatus)
 	mol.closeStep("report")
 }
 
@@ -464,6 +481,79 @@ func (d *Daemon) escalate(source, message string) {
 	if output, err := cmd.CombinedOutput(); err != nil {
 		d.logger.Printf("jsonl_git_backup: escalation failed: %v (%s)", err, strings.TrimSpace(string(output)))
 	}
+}
+
+// listAvailableDoltDatabases returns a set of database names that exist on the
+// local Dolt server. It queries SHOW DATABASES if a server is running, otherwise
+// checks the filesystem for directories with .dolt subdirectories.
+func (d *Daemon) listAvailableDoltDatabases(dataDir string) map[string]bool {
+	result := make(map[string]bool)
+
+	// Try querying the running server first.
+	if d.doltServer != nil && d.doltServer.IsEnabled() {
+		host := "127.0.0.1"
+		port := 3307
+		user := "root"
+		password := ""
+		if d.doltServer.config.Host != "" {
+			host = d.doltServer.config.Host
+		}
+		if d.doltServer.config.Port != 0 {
+			port = d.doltServer.config.Port
+		}
+		if d.doltServer.config.User != "" {
+			user = d.doltServer.config.User
+		}
+		password = d.doltServer.config.Password
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		cmd := exec.CommandContext(ctx, "dolt",
+			"--host", host,
+			"--port", strconv.Itoa(port),
+			"--no-tls",
+			"-u", user,
+			"-p", password,
+			"sql", "-r", "json", "-q", "SHOW DATABASES")
+		cmd.Dir = dataDir
+
+		var stdout bytes.Buffer
+		cmd.Stdout = &stdout
+
+		if err := cmd.Run(); err == nil {
+			var resp struct {
+				Rows []map[string]interface{} `json:"rows"`
+			}
+			if err := json.Unmarshal(stdout.Bytes(), &resp); err == nil {
+				for _, row := range resp.Rows {
+					for _, v := range row {
+						if name, ok := v.(string); ok {
+							result[name] = true
+						}
+					}
+				}
+				return result
+			}
+		}
+		// Fall through to filesystem check on query failure.
+	}
+
+	// Fallback: scan the data directory for .dolt subdirectories.
+	entries, err := os.ReadDir(dataDir)
+	if err != nil {
+		return result
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		doltDir := filepath.Join(dataDir, entry.Name(), ".dolt")
+		if _, err := os.Stat(doltDir); err == nil {
+			result[entry.Name()] = true
+		}
+	}
+	return result
 }
 
 // spikeThreshold returns the configured spike threshold or the default (20%).
