@@ -65,11 +65,28 @@ func (d *Daemon) syncDoltBackups() {
 		return
 	}
 
-	d.logger.Printf("dolt_backup: syncing %d database(s)", len(databases))
+	// Filter configured databases against those actually available on the
+	// Dolt server. This prevents crashes and false-alarm escalations when a
+	// configured database (e.g. "bd") doesn't exist locally.
+	available := d.listAvailableDoltDatabases(dataDir)
+	var activeDatabases []string
+	for _, db := range databases {
+		if available[db] {
+			activeDatabases = append(activeDatabases, db)
+		} else {
+			d.logger.Printf("dolt_backup: %s: database not found on server, skipping", db)
+		}
+	}
+	if len(activeDatabases) == 0 {
+		d.logger.Printf("dolt_backup: none of the configured databases exist, skipping")
+		return
+	}
+
+	d.logger.Printf("dolt_backup: syncing %d database(s)", len(activeDatabases))
 
 	synced := 0
 	var failures []string
-	for _, db := range databases {
+	for _, db := range activeDatabases {
 		backupName := db + "-backup"
 		if err := d.syncBackup(dataDir, db, backupName); err != nil {
 			d.logger.Printf("dolt_backup: %s: sync failed: %v", db, err)
@@ -79,10 +96,10 @@ func (d *Daemon) syncDoltBackups() {
 		}
 	}
 
-	d.logger.Printf("dolt_backup: synced %d/%d database(s)", synced, len(databases))
+	d.logger.Printf("dolt_backup: synced %d/%d database(s)", synced, len(activeDatabases))
 
 	if len(failures) > 0 {
-		mol.failStep("sync", fmt.Sprintf("synced %d/%d, failures: %s", synced, len(databases), strings.Join(failures, "; ")))
+		mol.failStep("sync", fmt.Sprintf("synced %d/%d, failures: %s", synced, len(activeDatabases), strings.Join(failures, "; ")))
 	} else {
 		mol.closeStep("sync")
 	}
@@ -175,6 +192,9 @@ func (d *Daemon) discoverDatabasesWithBackups(dataDir string) []string {
 
 	return databases
 }
+
+// listAvailableDoltDatabases returns a set of database names that exist on the
+// listAvailableDoltDatabases is defined in jsonl_git_backup.go (shared helper).
 
 // hasBackupRemote checks if a database has the specified backup remote configured.
 func (d *Daemon) hasBackupRemote(dataDir, db, backupName string) bool {
