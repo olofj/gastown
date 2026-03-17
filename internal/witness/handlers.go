@@ -806,6 +806,14 @@ func NukePolecat(bd *BdCli, workDir, rigName, polecatName string) error {
 		return fmt.Errorf("refusing to nuke %s/%s: MR pending in refinery (gt-6a9d)", rigName, polecatName)
 	}
 
+	// Safety gate (gt-ciu): refuse to nuke if cleanup_status indicates unpushed work.
+	// When gt done's push fails, no MR is created, so hasPendingMR returns false.
+	// But the worktree still has local-only commits that would be permanently lost.
+	// The cleanup_status ("unpushed", "uncommitted", "stash") signals this risk.
+	if cs := getCleanupStatus(bd, workDir, rigName, polecatName); cs != "" && cs != "clean" && cs != "unknown" {
+		return fmt.Errorf("refusing to nuke %s/%s: cleanup_status=%s — worktree has unrecoverable local work (gt-ciu)", rigName, polecatName, cs)
+	}
+
 	// CRITICAL: Kill the tmux session FIRST and unconditionally.
 	// We do this explicitly here because gt polecat nuke may fail to kill the
 	// session due to rig loading issues or race conditions with IsRunning checks.

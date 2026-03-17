@@ -1064,16 +1064,19 @@ func (m *Manager) RemoveWithOptions(name string, force, nuclear, selfNuke bool) 
 		}
 	}
 
-	// Even nuclear mode must not delete worktrees with unmerged MRs.
+	// Even nuclear mode must not delete worktrees with unmerged MRs (gt-ciu).
 	// The nuclear flag bypasses git-status checks (needed for self-nuke)
 	// but MR status is a higher-level concern that should always be checked.
-	if !force {
+	// Previously gated by `if !force` which allowed force/nuclear callers
+	// (nukePolecatFull, polecat stale --cleanup) to bypass this check,
+	// destroying worktrees with pending MRs the refinery still needed.
+	{
 		agentID := m.agentBeadID(name)
 		_, fields, aErr := m.beads.GetAgentBead(agentID)
 		if aErr == nil && fields != nil && fields.ActiveMR != "" {
 			mrBead, mrErr := m.beads.Show(fields.ActiveMR)
 			if mrErr == nil && mrBead != nil && beads.IssueStatus(mrBead.Status).BlocksRemoval() {
-				return fmt.Errorf("cannot remove polecat %s: MR %s is still open in merge queue\nRefinery will process the MR and clean up after merge\nUse --force to override (risks data loss)", name, fields.ActiveMR)
+				return fmt.Errorf("cannot remove polecat %s: MR %s is still open in merge queue\nRefinery will process the MR and clean up after merge", name, fields.ActiveMR)
 			}
 		}
 	}
