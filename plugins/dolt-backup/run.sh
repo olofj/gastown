@@ -50,11 +50,11 @@ for DB in "${PROD_DBS[@]}"; do
   BACKUP_NAME="${DB}-backup"
   HASH_FILE="$BACKUP_DIR/${DB}/.last-backup-hash"
 
-  # Check DB dir exists
+  # Check DB dir exists — missing databases are normal (e.g. "bd" may not
+  # exist locally) and should not trigger escalation.
   if [[ ! -d "$DB_DIR/.dolt" ]]; then
-    log "  $DB: no .dolt directory, skipping"
-    FAILED=$((FAILED + 1))
-    FAILED_DBS="$FAILED_DBS $DB(no-dir)"
+    log "  $DB: database not found, skipping"
+    SKIPPED=$((SKIPPED + 1))
     continue
   fi
 

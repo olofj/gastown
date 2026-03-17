@@ -1,11 +1,14 @@
 package daemon
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,11 +68,28 @@ func (d *Daemon) syncDoltBackups() {
 		return
 	}
 
-	d.logger.Printf("dolt_backup: syncing %d database(s)", len(databases))
+	// Filter configured databases against those actually available on the
+	// Dolt server. This prevents crashes and false-alarm escalations when a
+	// configured database (e.g. "bd") doesn't exist locally.
+	available := d.listAvailableDoltDatabases(dataDir)
+	var activeDatabases []string
+	for _, db := range databases {
+		if available[db] {
+			activeDatabases = append(activeDatabases, db)
+		} else {
+			d.logger.Printf("dolt_backup: %s: database not found on server, skipping", db)
+		}
+	}
+	if len(activeDatabases) == 0 {
+		d.logger.Printf("dolt_backup: none of the configured databases exist, skipping")
+		return
+	}
+
+	d.logger.Printf("dolt_backup: syncing %d database(s)", len(activeDatabases))
 
 	synced := 0
 	var failures []string
-	for _, db := range databases {
+	for _, db := range activeDatabases {
 		backupName := db + "-backup"
 		if err := d.syncBackup(dataDir, db, backupName); err != nil {
 			d.logger.Printf("dolt_backup: %s: sync failed: %v", db, err)
@@ -79,10 +99,10 @@ func (d *Daemon) syncDoltBackups() {
 		}
 	}
 
-	d.logger.Printf("dolt_backup: synced %d/%d database(s)", synced, len(databases))
+	d.logger.Printf("dolt_backup: synced %d/%d database(s)", synced, len(activeDatabases))
 
 	if len(failures) > 0 {
-		mol.failStep("sync", fmt.Sprintf("synced %d/%d, failures: %s", synced, len(databases), strings.Join(failures, "; ")))
+		mol.failStep("sync", fmt.Sprintf("synced %d/%d, failures: %s", synced, len(activeDatabases), strings.Join(failures, "; ")))
 	} else {
 		mol.closeStep("sync")
 	}
@@ -174,6 +194,79 @@ func (d *Daemon) discoverDatabasesWithBackups(dataDir string) []string {
 	}
 
 	return databases
+}
+
+// listAvailableDoltDatabases returns a set of database names that exist on the
+// local Dolt server. It queries SHOW DATABASES if a server is running, otherwise
+// checks the filesystem for directories with .dolt subdirectories.
+func (d *Daemon) listAvailableDoltDatabases(dataDir string) map[string]bool {
+	result := make(map[string]bool)
+
+	// Try querying the running server first.
+	if d.doltServer != nil && d.doltServer.IsEnabled() {
+		host := "127.0.0.1"
+		port := 3307
+		user := "root"
+		password := ""
+		if d.doltServer.config.Host != "" {
+			host = d.doltServer.config.Host
+		}
+		if d.doltServer.config.Port != 0 {
+			port = d.doltServer.config.Port
+		}
+		if d.doltServer.config.User != "" {
+			user = d.doltServer.config.User
+		}
+		password = d.doltServer.config.Password
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		cmd := exec.CommandContext(ctx, "dolt",
+			"--host", host,
+			"--port", strconv.Itoa(port),
+			"--no-tls",
+			"-u", user,
+			"-p", password,
+			"sql", "-r", "json", "-q", "SHOW DATABASES")
+		cmd.Dir = dataDir
+
+		var stdout bytes.Buffer
+		cmd.Stdout = &stdout
+
+		if err := cmd.Run(); err == nil {
+			var resp struct {
+				Rows []map[string]interface{} `json:"rows"`
+			}
+			if err := json.Unmarshal(stdout.Bytes(), &resp); err == nil {
+				for _, row := range resp.Rows {
+					for _, v := range row {
+						if name, ok := v.(string); ok {
+							result[name] = true
+						}
+					}
+				}
+				return result
+			}
+		}
+		// Fall through to filesystem check on query failure.
+	}
+
+	// Fallback: scan the data directory for .dolt subdirectories.
+	entries, err := os.ReadDir(dataDir)
+	if err != nil {
+		return result
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		doltDir := filepath.Join(dataDir, entry.Name(), ".dolt")
+		if _, err := os.Stat(doltDir); err == nil {
+			result[entry.Name()] = true
+		}
+	}
+	return result
 }
 
 // hasBackupRemote checks if a database has the specified backup remote configured.
