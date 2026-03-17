@@ -964,8 +964,9 @@ func (d *Daemon) ensureBootRunning() {
 	}
 
 	// Spawn Boot in a fresh tmux session
+	// Boot is a trivial triage check — use cheapest model
 	d.logger.Println("Spawning Boot for triage...")
-	if err := b.Spawn(""); err != nil {
+	if err := b.Spawn("claude-haiku"); err != nil {
 		d.logger.Printf("Error spawning Boot: %v, falling back to direct Deacon check", err)
 		// Fallback: ensure Deacon is running directly
 		d.ensureDeaconRunning()
