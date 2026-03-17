@@ -133,7 +133,7 @@ gt prime                        # Shows formula checklist (inline steps)
 ```bash
 git status                      # Check working tree
 git add <files>                 # Stage changes
-git commit -m "msg (issue)"     # Commit with issue reference
+git commit -m "type: terse subject" -m "Longer explanation" # No bead IDs
 ```
 
 ### Communication
@@ -189,7 +189,7 @@ When your work is done, follow this checklist — **step 4 is REQUIRED**:
        - npm projects: npm run lint && npm run format && npm test
        - Go projects:  go test ./... && go vet ./...
 [ ] 2. Stage changes:     git add <files>
-[ ] 3. Commit changes:    git commit -m "msg (issue-id)"
+[ ] 3. Commit changes:    git commit -m "type: terse subject" -m "details"
 [ ] 4. Self-clean:        gt done   ← MANDATORY FINAL STEP
 ```
 
