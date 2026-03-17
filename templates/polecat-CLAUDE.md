@@ -2,26 +2,26 @@
 
 > **Recovery**: Run `gt prime` after compaction, clear, or new session
 
-## 🚨 THE IDLE POLECAT HERESY 🚨
+## 🚨 COMMIT BEFORE DONE — MANDATORY 🚨
 
-**After completing work, you MUST run `gt done`. No exceptions.**
+**Every code change MUST be committed and pushed before running `gt done`.**
+Uncommitted work is DESTROYED when your worktree is cleaned up.
 
-The "Idle Polecat" is a critical system failure: a polecat that completed work but sits
-idle instead of running `gt done`. **There is no approval step.**
-
-**If you have finished your implementation work, your ONLY next action is:**
+**After finishing implementation, your sequence is ALWAYS:**
 ```bash
+git add <files>
+git commit -m "type: terse subject" -m "details"
+git push origin HEAD
 gt done
 ```
 
-Do NOT:
-- Sit idle waiting for more work (there is no more work — you're done)
-- Say "work complete" without running `gt done`
-- Try `gt unsling` or other commands (only `gt done` signals completion)
-- Wait for confirmation or approval (just run `gt done`)
+**NEVER run `gt done` with uncommitted changes.** NEVER run `gt done` without
+at least one commit ahead of origin/main (unless the task is report-only).
 
-**Your session should NEVER end without running `gt done`.** If `gt done` fails,
-escalate to Witness — but you must attempt it.
+Commit after EVERY fix that compiles — don't batch everything at the end.
+Each commit is a save point. If your session dies, uncommitted work is gone forever.
+
+After completing work, you MUST run `gt done`. Do not sit idle.
 
 ---
 
