@@ -1289,7 +1289,8 @@ func nukePolecatFull(polecatName, rigName string, mgr *polecat.Manager, r *rig.R
 
 	// Step 2.75: Best-effort push before nuke (gt-4vr guardrail).
 	// Try to preserve any unpushed commits on the branch. If push fails,
-	// proceed — --force already means "I accept data loss".
+	// the local branch is preserved as the last copy (gt-ciu).
+	branchPushed := false
 	if branchToDelete != "" {
 		var pushGit *git.Git
 		// Try worktree first (may still exist), then bare repo fallback.
@@ -1309,9 +1310,16 @@ func nukePolecatFull(polecatName, rigName string, mgr *polecat.Manager, r *rig.R
 		if pushGit != nil {
 			refspec := branchToDelete + ":" + branchToDelete
 			if err := pushGit.Push("origin", refspec, false); err != nil {
-				fmt.Printf("  %s best-effort push failed (proceeding): %v\n", style.Dim.Render("○"), err)
+				fmt.Printf("  %s best-effort push failed: %v\n", style.Dim.Render("○"), err)
 			} else {
+				branchPushed = true
 				fmt.Printf("  %s pushed branch %s before nuke\n", style.Success.Render("✓"), branchToDelete)
+			}
+		}
+		// Also check if branch was already on remote (pushed by gt done earlier)
+		if !branchPushed && pushGit != nil {
+			if exists, err := pushGit.RemoteBranchExists("origin", branchToDelete); err == nil && exists {
+				branchPushed = true
 			}
 		}
 	}
@@ -1328,19 +1336,26 @@ func nukePolecatFull(polecatName, rigName string, mgr *polecat.Manager, r *rig.R
 	}
 
 	// Step 4: Delete local branch (if we know it)
-	// Local branch can always be deleted (worktree is already gone).
 	// Remote branch is never deleted during nuke — the refinery owns
 	// remote branch cleanup after successful merge (gt mq post-merge).
 	// This prevents the race where nuke deletes the branch before the
 	// refinery has a chance to merge it. (gt-v5ku)
+	//
+	// gt-ciu: Only delete local branch if commits are safely on remote.
+	// If push failed (both in gt done and best-effort above), the local
+	// branch is the LAST copy of the commits. Deleting it loses work permanently.
 	if branchToDelete != "" {
-		repoGit := getRepoGitForRig(r.Path)
-		if err := repoGit.DeleteBranch(branchToDelete, true); err != nil {
-			fmt.Printf("  %s branch delete: %v\n", style.Dim.Render("○"), err)
+		if branchPushed {
+			repoGit := getRepoGitForRig(r.Path)
+			if err := repoGit.DeleteBranch(branchToDelete, true); err != nil {
+				fmt.Printf("  %s branch delete: %v\n", style.Dim.Render("○"), err)
+			} else {
+				fmt.Printf("  %s deleted local branch %s\n", style.Success.Render("✓"), branchToDelete)
+			}
+			fmt.Printf("  %s remote branch preserved for refinery merge\n", style.Dim.Render("○"))
 		} else {
-			fmt.Printf("  %s deleted local branch %s\n", style.Success.Render("✓"), branchToDelete)
+			fmt.Printf("  %s local branch %s PRESERVED — not on remote, would lose commits (gt-ciu)\n", style.Warning.Render("⚠"), branchToDelete)
 		}
-		fmt.Printf("  %s remote branch preserved for refinery merge\n", style.Dim.Render("○"))
 	}
 
 	// Step 5: Reset agent bead for reuse (if exists)
