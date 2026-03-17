@@ -86,11 +86,20 @@ fi
 log "Starting archive cycle (databases: ${PROD_DBS[*]})"
 mkdir -p "$JSONL_EXPORT_DIR"
 
+# Check which databases actually exist on the Dolt server before attempting export.
+AVAILABLE_DBS=$(dolt --host "$DOLT_HOST" --port "$DOLT_PORT" --no-tls -u "$DOLT_USER" -p "" \
+  sql -q "SHOW DATABASES" --result-format csv 2>/dev/null | tail -n +2 | tr -d '\r' || true)
+
 EXPORTED=0
 EXPORT_FAILED=0
 EXPORT_ERRORS=""
 
 for DB in "${PROD_DBS[@]}"; do
+  # Skip databases that don't exist on the server.
+  if [[ -n "$AVAILABLE_DBS" ]] && ! echo "$AVAILABLE_DBS" | grep -qx "$DB"; then
+    log "  $DB: not found on server, skipping"
+    continue
+  fi
   EXPORT_FILE="$JSONL_EXPORT_DIR/${DB}-$(date +%Y%m%d-%H%M).jsonl"
   LATEST_LINK="$JSONL_EXPORT_DIR/${DB}-latest.jsonl"
 

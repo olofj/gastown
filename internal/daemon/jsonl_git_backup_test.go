@@ -499,6 +499,62 @@ func TestParseLineCount(t *testing.T) {
 	}
 }
 
+func TestListAvailableDoltDatabases_FilesystemFallback(t *testing.T) {
+	dataDir := t.TempDir()
+
+	// Create some valid dolt databases (directories with .dolt subdirectory).
+	for _, db := range []string{"hq", "gt"} {
+		doltDir := filepath.Join(dataDir, db, ".dolt")
+		if err := os.MkdirAll(doltDir, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Create a directory without .dolt (not a database).
+	if err := os.MkdirAll(filepath.Join(dataDir, "notadb"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	// Create a file (not a database).
+	if err := os.WriteFile(filepath.Join(dataDir, "somefile"), []byte("hi"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	d := &Daemon{logger: log.New(io.Discard, "", 0)}
+	available := d.listAvailableDoltDatabases(dataDir)
+
+	if !available["hq"] {
+		t.Error("expected hq to be available")
+	}
+	if !available["gt"] {
+		t.Error("expected gt to be available")
+	}
+	if available["notadb"] {
+		t.Error("notadb should not be available (no .dolt)")
+	}
+	if available["somefile"] {
+		t.Error("somefile should not be available")
+	}
+	if available["bd"] {
+		t.Error("bd should not be available (doesn't exist)")
+	}
+}
+
+func TestListAvailableDoltDatabases_EmptyDir(t *testing.T) {
+	dataDir := t.TempDir()
+	d := &Daemon{logger: log.New(io.Discard, "", 0)}
+	available := d.listAvailableDoltDatabases(dataDir)
+	if len(available) != 0 {
+		t.Errorf("expected empty map, got %v", available)
+	}
+}
+
+func TestListAvailableDoltDatabases_NonexistentDir(t *testing.T) {
+	d := &Daemon{logger: log.New(io.Discard, "", 0)}
+	available := d.listAvailableDoltDatabases("/nonexistent/path")
+	if len(available) != 0 {
+		t.Errorf("expected empty map, got %v", available)
+	}
+}
+
 // --- helpers ---
 
 func splitNonEmpty(s string) []string {
