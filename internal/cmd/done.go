@@ -367,17 +367,42 @@ func runDone(cmd *cobra.Command, args []string) (retErr error) {
 			return fmt.Errorf("cannot complete: working directory not available (worktree deleted?)\nUse --status DEFERRED to exit without completing")
 		}
 
-		// Block if there are uncommitted changes (would be lost on completion).
+		// Auto-commit uncommitted changes to prevent data loss (gt-8t4).
 		// Runtime artifacts (.claude/, .beads/, .runtime/, __pycache__/) are
 		// excluded — these are toolchain-managed and normally gitignored.
 		// Without this filter, gt done fails on virtually every polecat because
 		// Cursor creates .claude/ at runtime in every workspace.
+		//
+		// Previously this blocked with an error, but polecats often reach gt done
+		// with a dying session (context limit) and can't go back to commit manually.
+		// Auto-committing is safer: the work is preserved on the branch.
 		workStatus, err := g.CheckUncommittedWork()
 		if err != nil {
 			return fmt.Errorf("checking git status: %w", err)
 		}
 		if workStatus.HasUncommittedChanges && !workStatus.CleanExcludingRuntime() {
-			return fmt.Errorf("cannot complete: uncommitted changes would be lost\nCommit your changes first, or use --status DEFERRED to exit without completing\nUncommitted: %s", workStatus.String())
+			nonRuntimeFiles := workStatus.NonRuntimeFiles()
+			if len(nonRuntimeFiles) > 0 {
+				// Auto-commit non-runtime files to preserve work
+				commitMsg := fmt.Sprintf("WIP: uncommitted changes from %s", issueID)
+				if issueID == "" {
+					commitMsg = "WIP: uncommitted changes (auto-committed by gt done)"
+				}
+
+				if addErr := g.Add(nonRuntimeFiles...); addErr != nil {
+					return fmt.Errorf("cannot complete: failed to stage uncommitted changes: %w\n"+
+						"Commit your changes manually, or use --status DEFERRED to exit without completing", addErr)
+				}
+				if commitErr := g.Commit(commitMsg); commitErr != nil {
+					return fmt.Errorf("cannot complete: failed to auto-commit uncommitted changes: %w\n"+
+						"Commit your changes manually, or use --status DEFERRED to exit without completing", commitErr)
+				}
+
+				fmt.Printf("%s Auto-committed %d file(s): %s\n", style.Bold.Render("⚠"), len(nonRuntimeFiles), commitMsg)
+				for _, f := range nonRuntimeFiles {
+					fmt.Printf("  %s\n", f)
+				}
+			}
 		}
 
 		// Check if branch has commits ahead of origin/default

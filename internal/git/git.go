@@ -1560,6 +1560,24 @@ func (s *UncommittedWorkStatus) CleanExcludingRuntime() bool {
 	return true
 }
 
+// NonRuntimeFiles returns the list of modified and untracked files that are NOT
+// Gas Town runtime artifacts. These are the files that represent real work and
+// should be auto-committed by gt done to prevent data loss.
+func (s *UncommittedWorkStatus) NonRuntimeFiles() []string {
+	var files []string
+	for _, f := range s.ModifiedFiles {
+		if !isGasTownRuntimePath(f) {
+			files = append(files, f)
+		}
+	}
+	for _, f := range s.UntrackedFiles {
+		if !isGasTownRuntimePath(f) {
+			files = append(files, f)
+		}
+	}
+	return files
+}
+
 // String returns a human-readable summary of uncommitted work.
 func (s *UncommittedWorkStatus) String() string {
 	var issues []string
