@@ -689,11 +689,15 @@ func runDone(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		if pushErr != nil {
-			// All push attempts failed
+			// All push attempts failed (gt-ciu: ensure cleanup_status stays "unpushed"
+			// so witness NukePolecat refuses to destroy the worktree).
 			pushFailed = true
+			// Force cleanup_status to "unpushed" regardless of auto-detection.
+			// This is the nuke guard — the witness checks this before allowing cleanup.
+			doneCleanupStatus = "unpushed"
 			errMsg := fmt.Sprintf("push failed for branch '%s': %v", branch, pushErr)
 			doneErrors = append(doneErrors, errMsg)
-			style.PrintWarning("%s\nCommits exist locally but failed to push. Witness will be notified.", errMsg)
+			style.PrintWarning("%s\nCommits exist locally but failed to push. Witness will be notified.\nWorktree protected from cleanup until push succeeds (gt-ciu).", errMsg)
 			goto notifyWitness
 		}
 
@@ -713,9 +717,10 @@ func runDone(cmd *cobra.Command, args []string) (retErr error) {
 			}
 			if verifyErr != nil || !exists {
 				pushFailed = true
+				doneCleanupStatus = "unpushed" // gt-ciu: nuke guard
 				errMsg := fmt.Sprintf("push appeared to succeed but branch '%s' not found on remote", branch)
 				doneErrors = append(doneErrors, errMsg)
-				style.PrintWarning("%s\nThis may indicate a stale git context. Witness will be notified.", errMsg)
+				style.PrintWarning("%s\nThis may indicate a stale git context. Witness will be notified.\nWorktree protected from cleanup until push succeeds (gt-ciu).", errMsg)
 				goto notifyWitness
 			}
 		}

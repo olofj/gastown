@@ -1118,10 +1118,26 @@ func (e *Engineer) HandleMRInfoFailure(mr *MRInfo, result ProcessResult) {
 		return
 	}
 
-	// Branch-not-found means the remote branch was cleaned up before we could process it
-	// (e.g. cherry-picked to target directly). Skip polecat nudge — the polecat is gone.
+	// Branch-not-found means the source branch was cleaned up before we could
+	// process it. This can indicate work loss (gt-ciu: worktree nuked before
+	// merge) — escalate to witness and mayor rather than silently skipping.
 	if result.BranchNotFound {
-		_, _ = fmt.Fprintf(e.output, "[Engineer] MR %s: branch %s no longer exists, skipping (queue continues)\n", mr.ID, mr.Branch)
+		_, _ = fmt.Fprintf(e.output, "[Engineer] MR %s: branch %s no longer exists — escalating (gt-ciu)\n", mr.ID, mr.Branch)
+		// Nudge witness about the missing branch so it can investigate
+		witnessMsg := fmt.Sprintf("BRANCH_MISSING: MR %s branch=%s issue=%s worker=%s — branch gone before merge, possible work loss (gt-ciu)",
+			mr.ID, mr.Branch, mr.SourceIssue, mr.Worker)
+		witnessCmd := exec.Command("gt", "nudge", fmt.Sprintf("%s/witness", e.rig.Name), witnessMsg)
+		witnessCmd.Dir = e.workDir
+		if err := witnessCmd.Run(); err != nil {
+			_, _ = fmt.Fprintf(e.output, "[Engineer] Warning: failed to nudge witness about missing branch: %v\n", err)
+		}
+		// Nudge mayor for visibility
+		mayorMsg := fmt.Sprintf("BRANCH_MISSING: MR %s branch=%s issue=%s — refinery cannot merge, branch not found", mr.ID, mr.Branch, mr.SourceIssue)
+		mayorCmd := exec.Command("gt", "nudge", "mayor/", mayorMsg)
+		mayorCmd.Dir = e.workDir
+		if err := mayorCmd.Run(); err != nil {
+			_, _ = fmt.Fprintf(e.output, "[Engineer] Warning: failed to nudge mayor about missing branch: %v\n", err)
+		}
 		return
 	}
 
