@@ -663,6 +663,30 @@ func TestComputeExpectedNoBase(t *testing.T) {
 			t.Errorf("refinery missing patrol-formula-guard matcher: %s", matcher)
 		}
 	}
+
+	// Polecat should get DefaultBase + built-in Agent tool blocker
+	polecat, err := ComputeExpected("polecat")
+	if err != nil {
+		t.Fatalf("ComputeExpected(polecat) failed: %v", err)
+	}
+	// Polecat has a built-in PreToolUse override blocking the Agent tool
+	foundAgentBlocker := false
+	for _, entry := range polecat.PreToolUse {
+		if entry.Matcher == "Agent(*)" {
+			foundAgentBlocker = true
+			if len(entry.Hooks) != 1 || entry.Hooks[0].Type != "command" {
+				t.Error("expected Agent(*) blocker to have exactly one command hook")
+			}
+			break
+		}
+	}
+	if !foundAgentBlocker {
+		t.Error("expected polecat to have Agent(*) blocker from DefaultOverrides")
+	}
+	// Should still inherit base SessionStart
+	if len(polecat.SessionStart) != len(defaultBase.SessionStart) {
+		t.Error("expected polecat to inherit SessionStart from DefaultBase")
+	}
 }
 
 // TestComputeExpectedWitnessRigSpecific verifies patrol-formula-guard propagates

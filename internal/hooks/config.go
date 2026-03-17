@@ -327,6 +327,21 @@ func DefaultOverrides() map[string]*HooksConfig {
 				},
 			},
 		},
+		// Polecat roles: block sub-agent spawning.
+		// Polecats that spawn sub-agents via the Agent tool fill their context
+		// window with delegated results and die before acting on them.
+		// Force polecats to do the work directly.
+		"polecat": {
+			PreToolUse: []HookEntry{
+				{
+					Matcher: "Agent(*)",
+					Hooks: []Hook{{
+						Type:    "command",
+						Command: "echo 'BLOCKED: Polecats cannot use sub-agents. Do the work directly.' && exit 2",
+					}},
+				},
+			},
+		},
 	}
 }
 
