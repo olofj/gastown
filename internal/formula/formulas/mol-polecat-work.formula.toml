@@ -59,6 +59,15 @@ spawning → working → mr_submitted → awaiting_verdict
 | lint_command | rig config | Lint command (e.g., `eslint .`). Empty = skip. |
 | build_command | rig config | Build command (e.g., `go build ./...`). Empty = skip. |
 
+## ⚠️ CRITICAL: Commits Are LOCAL Until Pushed
+
+**Committing code does NOT complete your work.** Your commits exist only in your
+local worktree. If you exit after committing without reaching the submit-mr step,
+your worktree gets cleaned up and ALL YOUR WORK IS LOST.
+
+**The full pipeline:** implement → commit → verify → **push + submit MR** → await verdict → done.
+Stopping at "commit" means your work never reaches origin and never gets merged.
+
 ## Failure Modes
 
 | Situation | Action |
@@ -428,6 +437,11 @@ bd show {{issue}}    # Check notes/design fields have your findings
 If findings are persisted, proceed to cleanup. `gt done --cleanup-status clean`
 handles the no-commit case for report-only tasks.
 
+**⚠️ YOU ARE NOT DONE. Committing is step 6 of 10.**
+Your commits are LOCAL. If you exit now, they are LOST FOREVER.
+You MUST continue to the submit-mr step (which pushes your branch and creates
+the merge request). Do NOT run `gt done` yet — there are verification steps first.
+
 **Exit criteria:** Working tree clean AND either (a) at least 1 commit ahead of origin/{{base_branch}}, or (b) report-only task with findings persisted to bead."""
 
 [[steps]]
@@ -497,6 +511,9 @@ id = "submit-mr"
 title = "Submit MR and enter awaiting_verdict"
 needs = ["pre-verify"]
 description = """
+**🚨 THIS STEP IS MANDATORY. Do NOT skip it.**
+Without this step, your commits stay LOCAL and are LOST when the worktree is cleaned up.
+
 Submit your MR to the merge queue but stay alive for the verdict.
 
 **Pre-flight: Verify you have actual work to submit (HARD GATE):**

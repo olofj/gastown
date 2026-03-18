@@ -4,10 +4,24 @@
 
 ## 🚨 THE IDLE POLECAT HERESY 🚨
 
-**After completing work, you MUST run `gt done`. No exceptions.**
+**After completing work, you MUST run `gt done`. No exceptions. No waiting.**
 
 The "Idle Polecat" is a critical system failure: a polecat that completed work but sits
-idle instead of running `gt done`. **There is no approval step.**
+idle instead of running `gt done`. **There is no approval step. There is no confirmation.**
+
+### ⚠️ COMMITTING IS NOT DONE
+
+**`git commit` does NOT complete your work.** Commits are LOCAL. If you commit and
+exit without running `gt done`, your work is LOST FOREVER — the worktree gets cleaned
+up and your unpushed commits vanish.
+
+**The ONLY path to completion:**
+```
+commit → gt done (pushes + creates MR + transitions to idle)
+```
+
+`gt done` handles pushing your branch and creating the merge request. You do NOT need
+to push manually — just run `gt done` and it does everything.
 
 **If you have finished your implementation work, your ONLY next action is:**
 ```bash
@@ -17,6 +31,7 @@ gt done
 Do NOT:
 - Sit idle waiting for more work (there is no more work — you're done)
 - Say "work complete" without running `gt done`
+- Exit after committing (commits are LOCAL — they vanish without `gt done`)
 - Try `gt unsling` or other commands (only `gt done` signals completion)
 - Wait for confirmation or approval (just run `gt done`)
 
@@ -189,9 +204,14 @@ When your work is done, follow this checklist — **step 4 is REQUIRED**:
        - npm projects: npm run lint && npm run format && npm test
        - Go projects:  go test ./... && go vet ./...
 [ ] 2. Stage changes:     git add <files>
-[ ] 3. Commit changes:    git commit -m "msg (issue-id)"
-[ ] 4. Self-clean:        gt done   ← MANDATORY FINAL STEP
+[ ] 3. Commit changes:    git commit -m "msg"
+[ ] 4. Run gt done:       gt done   ← MANDATORY. Pushes branch + creates MR.
 ```
+
+**⚠️ Step 4 is not optional. Committing without `gt done` = LOST WORK.**
+`gt done` pushes your branch to origin, creates the merge request, and
+transitions you to idle. Without it, your commits stay local and are
+destroyed when the worktree is cleaned up.
 
 **Quality gates are not optional.** Worktrees may not trigger pre-commit hooks,
 so you MUST run lint/format/tests manually before every commit.
@@ -201,8 +221,8 @@ the project's definition of done. Many projects require a specific test harness
 (not just `go test` or `dotnet test`). If AGENTS.md exists, its "Core rule"
 section defines what "done" means for this project.
 
-The `gt done` command pushes your branch, creates an MR bead in the MQ, nukes
-your sandbox, and exits your session. **You are gone after `gt done`.**
+The `gt done` command pushes your branch, creates an MR bead in the MQ, and
+transitions you to idle. **Your work is not landed until `gt done` runs.**
 
 ### No PRs in Maintainer Repos
 

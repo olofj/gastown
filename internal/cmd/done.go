@@ -363,17 +363,35 @@ func runDone(cmd *cobra.Command, args []string) (retErr error) {
 			return fmt.Errorf("cannot complete: working directory not available (worktree deleted?)\nUse --status DEFERRED to exit without completing")
 		}
 
-		// Block if there are uncommitted changes (would be lost on completion).
+		// Auto-commit uncommitted changes to prevent data loss (gt-imx).
+		// Polecats sometimes reach gt done with uncommitted work. Rather than
+		// blocking (which causes them to exit without retrying, losing work),
+		// we auto-commit non-runtime changes so the push preserves them.
 		// Runtime artifacts (.claude/, .beads/, .runtime/, __pycache__/) are
 		// excluded — these are toolchain-managed and normally gitignored.
-		// Without this filter, gt done fails on virtually every polecat because
-		// Cursor creates .claude/ at runtime in every workspace.
 		workStatus, err := g.CheckUncommittedWork()
 		if err != nil {
 			return fmt.Errorf("checking git status: %w", err)
 		}
 		if workStatus.HasUncommittedChanges && !workStatus.CleanExcludingRuntime() {
-			return fmt.Errorf("cannot complete: uncommitted changes would be lost\nCommit your changes first, or use --status DEFERRED to exit without completing\nUncommitted: %s", workStatus.String())
+			if os.Getenv("GT_POLECAT") != "" {
+				// Auto-commit for polecats: preserve work that would otherwise be lost
+				fmt.Printf("%s Auto-committing uncommitted changes to prevent data loss\n", style.Bold.Render("→"))
+				fmt.Printf("  Uncommitted: %s\n", workStatus.String())
+				if err := g.Add("."); err != nil {
+					return fmt.Errorf("auto-commit: git add failed: %w", err)
+				}
+				commitMsg := fmt.Sprintf("chore: auto-commit uncommitted changes before merge submission")
+				if issueID != "" {
+					commitMsg = fmt.Sprintf("chore: auto-commit uncommitted changes (%s)", issueID)
+				}
+				if err := g.Commit(commitMsg); err != nil {
+					return fmt.Errorf("auto-commit: git commit failed: %w", err)
+				}
+				fmt.Printf("%s Uncommitted changes auto-committed\n", style.Bold.Render("✓"))
+			} else {
+				return fmt.Errorf("cannot complete: uncommitted changes would be lost\nCommit your changes first, or use --status DEFERRED to exit without completing\nUncommitted: %s", workStatus.String())
+			}
 		}
 
 		// Check if branch has commits ahead of origin/default
