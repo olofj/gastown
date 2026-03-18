@@ -38,6 +38,7 @@ var SystemDefaults = map[string]interface{}{
 	"priority_adjustment":     0,
 	"dnd":                     false,
 	"polecat_branch_template": "", // Empty = use default behavior (polecat/{name}/...)
+	"memory_max":              "", // Empty = no cgroup memory limit. Set to e.g. "16G" to cap polecat process trees.
 }
 
 // StackingKeys defines which keys use stacking semantics (values add up).

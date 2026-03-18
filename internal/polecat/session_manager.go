@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/steveyegge/gastown/internal/beads"
+	"github.com/steveyegge/gastown/internal/cgroup"
 	"github.com/steveyegge/gastown/internal/config"
 	"github.com/steveyegge/gastown/internal/constants"
 	"github.com/steveyegge/gastown/internal/git"
@@ -343,6 +344,18 @@ func (m *SessionManager) Start(polecat string, opts SessionStartOptions) error {
 		envVarsToInject["GT_BRANCH"] = polecatGitBranch
 	}
 	command = config.PrependEnv(command, envVarsToInject)
+
+	// Wrap command in a cgroup v2 memory scope if memory_max is configured for
+	// this rig. This caps the entire polecat process tree (agent + compiler +
+	// children) so a runaway build can't OOM the host. The kernel OOM-kills
+	// within the scope only, leaving the daemon and other rigs unaffected.
+	if memoryMax := m.rig.GetStringConfig("memory_max"); memoryMax != "" {
+		wrapped, err := cgroup.WrapCommand(command, memoryMax)
+		if err != nil {
+			return fmt.Errorf("applying memory limit: %w", err)
+		}
+		command = wrapped
+	}
 
 	// Create session with command directly to avoid send-keys race condition.
 	// See: https://github.com/anthropics/gastown/issues/280
