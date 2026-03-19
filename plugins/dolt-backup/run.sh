@@ -59,11 +59,11 @@ for DB in "${PROD_DBS[@]}"; do
   BACKUP_NAME="${DB}-backup"
   HASH_FILE="$BACKUP_DIR/${DB}/.last-backup-hash"
 
-  # Check DB dir exists
+  # Check DB dir exists — missing directories are normal (e.g. docked rigs),
+  # so skip gracefully instead of counting as a failure.
   if [[ ! -d "$DB_DIR/.dolt" ]]; then
     log "  $DB: no .dolt directory, skipping"
-    FAILED=$((FAILED + 1))
-    FAILED_DBS="$FAILED_DBS $DB(no-dir)"
+    SKIPPED=$((SKIPPED + 1))
     continue
   fi
 

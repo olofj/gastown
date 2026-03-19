@@ -91,6 +91,7 @@ func (d *Daemon) syncDoltBackups() {
 	d.logger.Printf("dolt_backup: syncing %d database(s)", len(activeDatabases))
 
 	synced := 0
+	skipped := len(databases) - len(activeDatabases)
 	var failures []string
 	for _, db := range activeDatabases {
 		backupName := db + "-backup"
@@ -102,7 +103,7 @@ func (d *Daemon) syncDoltBackups() {
 		}
 	}
 
-	d.logger.Printf("dolt_backup: synced %d/%d database(s)", synced, len(activeDatabases))
+	d.logger.Printf("dolt_backup: synced %d/%d database(s) (skipped %d)", synced, len(activeDatabases), skipped)
 
 	if len(failures) > 0 {
 		mol.failStep("sync", fmt.Sprintf("synced %d/%d, failures: %s", synced, len(activeDatabases), strings.Join(failures, "; ")))
