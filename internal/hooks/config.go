@@ -224,6 +224,15 @@ func DefaultOverrides() map[string]*HooksConfig {
 					},
 				},
 			},
+			PreToolUse: []HookEntry{
+				{
+					Matcher: "Agent(*)",
+					Hooks: []Hook{{
+						Type:    "command",
+						Command: "echo 'BLOCKED: Polecats cannot use sub-agents. Do the work directly.' && exit 2",
+					}},
+				},
+			},
 		},
 		// Crew workers: auto-cycle session on context compaction (gt-op78).
 		// Instead of compacting (lossy), replace with fresh session that
