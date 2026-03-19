@@ -293,6 +293,20 @@ func DefaultOverrides() map[string]*HooksConfig {
 				},
 			},
 		},
+		// Polecat workers: block Agent tool usage.
+		// Polecats must do work directly — sub-agents fragment context,
+		// bypass hooks, and evade the capability ledger.
+		"polecats": {
+			PreToolUse: []HookEntry{
+				{
+					Matcher: "Agent(*)",
+					Hooks: []Hook{{
+						Type:    "command",
+						Command: "echo 'BLOCKED: Polecats cannot use sub-agents. Do the work directly.' && exit 2",
+					}},
+				},
+			},
+		},
 		// Refinery roles: patrol-formula-guard (same as witness).
 		// Refineries also run patrols and must use wisps, not persistent molecules.
 		"refinery": {
