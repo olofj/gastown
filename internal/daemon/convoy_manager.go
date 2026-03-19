@@ -86,9 +86,9 @@ type ConvoyManager struct {
 	// duplicate convoy checks for the same stranded convoy.
 	scanMu sync.Mutex
 
-	// lastEventIDs tracks per-store high-water marks for event polling.
+	// lastEventTimes tracks per-store high-water marks for event polling.
 	// Key matches stores map keys ("hq", "gastown", etc.).
-	lastEventIDs sync.Map // map[string]time.Time
+	lastEventTimes sync.Map // map[string]time.Time
 
 	// seeded is true once the first poll cycle has run (warm-up).
 	// The first cycle advances high-water marks without processing events,
@@ -261,9 +261,9 @@ func (m *ConvoyManager) pollStoresSnapshot(stores map[string]beadsdk.Storage) bo
 // The seen set deduplicates issueIDs across stores within a poll cycle.
 // Returns an error if the poll failed (used by caller for backoff decisions).
 func (m *ConvoyManager) pollStore(name string, store beadsdk.Storage, stores map[string]beadsdk.Storage, seen map[string]bool) error {
-	// Load per-store high-water mark
+	// Load per-store high-water mark (time-based since event IDs are UUIDs)
 	var highWater time.Time
-	if v, ok := m.lastEventIDs.Load(name); ok {
+	if v, ok := m.lastEventTimes.Load(name); ok {
 		highWater = v.(time.Time)
 	}
 
@@ -282,7 +282,7 @@ func (m *ConvoyManager) pollStore(name string, store beadsdk.Storage, stores map
 			highWater = e.CreatedAt
 		}
 	}
-	m.lastEventIDs.Store(name, highWater)
+	m.lastEventTimes.Store(name, highWater)
 
 	// First poll cycle is warm-up only: advance marks, skip processing.
 	// This prevents replaying the entire event history on daemon restart.
