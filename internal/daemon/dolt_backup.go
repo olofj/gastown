@@ -68,8 +68,17 @@ func (d *Daemon) syncDoltBackups() {
 	d.logger.Printf("dolt_backup: syncing %d database(s)", len(databases))
 
 	synced := 0
+	skipped := 0
 	var failures []string
 	for _, db := range databases {
+		// Skip databases whose directory doesn't exist (e.g. docked rigs).
+		dbDir := filepath.Join(dataDir, db)
+		if _, err := os.Stat(dbDir); os.IsNotExist(err) {
+			d.logger.Printf("dolt_backup: %s: directory not found, skipping", db)
+			skipped++
+			continue
+		}
+
 		backupName := db + "-backup"
 		if err := d.syncBackup(dataDir, db, backupName); err != nil {
 			d.logger.Printf("dolt_backup: %s: sync failed: %v", db, err)
@@ -79,7 +88,7 @@ func (d *Daemon) syncDoltBackups() {
 		}
 	}
 
-	d.logger.Printf("dolt_backup: synced %d/%d database(s)", synced, len(databases))
+	d.logger.Printf("dolt_backup: synced %d/%d database(s) (skipped %d)", synced, len(databases), skipped)
 
 	if len(failures) > 0 {
 		mol.failStep("sync", fmt.Sprintf("synced %d/%d, failures: %s", synced, len(databases), strings.Join(failures, "; ")))
