@@ -1057,6 +1057,63 @@ func TestAddEntry(t *testing.T) {
 	}
 }
 
+// TestDefaultOverridesPolecatAgentBlocker verifies that polecat overrides
+// include the Agent tool blocker so polecats cannot spawn sub-agents.
+func TestDefaultOverridesPolecatAgentBlocker(t *testing.T) {
+	defaults := DefaultOverrides()
+	polecatCfg, ok := defaults["polecats"]
+	if !ok {
+		t.Fatal("DefaultOverrides missing 'polecats' entry")
+	}
+
+	if len(polecatCfg.PreToolUse) == 0 {
+		t.Fatal("polecats override has no PreToolUse entries")
+	}
+
+	found := false
+	for _, entry := range polecatCfg.PreToolUse {
+		if entry.Matcher == "Agent(*)" {
+			found = true
+			if len(entry.Hooks) == 0 {
+				t.Fatal("Agent(*) matcher has no hooks")
+			}
+			if !strings.Contains(entry.Hooks[0].Command, "exit 2") {
+				t.Errorf("Agent(*) hook should exit 2 (block), got %q", entry.Hooks[0].Command)
+			}
+		}
+	}
+	if !found {
+		t.Error("polecats override missing Agent(*) blocker in PreToolUse")
+	}
+}
+
+// TestComputeExpectedPolecatGetsAgentBlocker verifies that ComputeExpected
+// for a polecat target includes the Agent(*) blocker from DefaultOverrides.
+func TestComputeExpectedPolecatGetsAgentBlocker(t *testing.T) {
+	tmpDir := t.TempDir()
+	setTestHome(t, tmpDir)
+
+	expected, err := ComputeExpected("gastown/polecats")
+	if err != nil {
+		t.Fatalf("ComputeExpected(gastown/polecats) failed: %v", err)
+	}
+
+	found := false
+	for _, entry := range expected.PreToolUse {
+		if entry.Matcher == "Agent(*)" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("gastown/polecats should have Agent(*) blocker from DefaultOverrides")
+	}
+
+	// Should still inherit base hooks
+	if len(expected.SessionStart) == 0 {
+		t.Error("gastown/polecats should inherit SessionStart from DefaultBase")
+	}
+}
+
 func TestMarshalConfig(t *testing.T) {
 	cfg := &HooksConfig{
 		SessionStart: []HookEntry{
