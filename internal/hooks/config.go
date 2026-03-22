@@ -212,6 +212,8 @@ func DefaultOverrides() map[string]*HooksConfig {
 		// forget to call gt done before the session ends. The polecat-stop-check
 		// command is idempotent — it checks heartbeat state and branch commits
 		// before deciding whether to run gt done.
+		// Also blocks Agent tool usage — polecats must do work directly.
+		// Sub-agents fragment context, bypass hooks, and evade the capability ledger.
 		"polecats": {
 			Stop: []HookEntry{
 				{
@@ -222,6 +224,15 @@ func DefaultOverrides() map[string]*HooksConfig {
 							Command: fmt.Sprintf("%s && gt tap polecat-stop-check", pathSetup),
 						},
 					},
+				},
+			},
+			PreToolUse: []HookEntry{
+				{
+					Matcher: "Agent(*)",
+					Hooks: []Hook{{
+						Type:    "command",
+						Command: "echo 'BLOCKED: Polecats cannot use sub-agents. Do the work directly.' && exit 2",
+					}},
 				},
 			},
 		},
@@ -308,20 +319,6 @@ func DefaultOverrides() map[string]*HooksConfig {
 					Hooks: []Hook{{
 						Type:    "command",
 						Command: "echo '❌ BLOCKED: Patrol formulas must use wisps, not persistent molecules.' && echo 'Use: bd mol wisp mol-*-patrol' && echo 'Not:  bd mol pour mol-*-patrol' && exit 2",
-					}},
-				},
-			},
-		},
-		// Polecat workers: block Agent tool usage.
-		// Polecats must do work directly — sub-agents fragment context,
-		// bypass hooks, and evade the capability ledger.
-		"polecats": {
-			PreToolUse: []HookEntry{
-				{
-					Matcher: "Agent(*)",
-					Hooks: []Hook{{
-						Type:    "command",
-						Command: "echo 'BLOCKED: Polecats cannot use sub-agents. Do the work directly.' && exit 2",
 					}},
 				},
 			},
