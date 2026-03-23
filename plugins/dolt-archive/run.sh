@@ -96,26 +96,26 @@ for DB in "${PROD_DBS[@]}"; do
 
   log "Exporting $DB..."
 
-  # Try bd export first (native beads export)
-  if bd export --db "$DB" --format jsonl > "$EXPORT_FILE" 2>/dev/null; then
+  # Check if the database has an issues table before attempting export
+  HAS_ISSUES=$(dolt_query "$DB" "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB' AND table_name='issues'" 2>/dev/null || echo "0")
+
+  if [[ "$HAS_ISSUES" == "0" ]]; then
+    # Empty database or no issues table — not a failure
+    log "  $DB: no issues table (empty database), skipping"
+    echo -n > "$EXPORT_FILE"
+    ln -sf "$(basename "$EXPORT_FILE")" "$LATEST_LINK"
+    EXPORTED=$((EXPORTED + 1))
+  elif dolt_query_json "$DB" "SELECT * FROM issues ORDER BY id" > "$EXPORT_FILE" 2>/dev/null && [[ -s "$EXPORT_FILE" ]]; then
     LINE_COUNT=$(wc -l < "$EXPORT_FILE" | tr -d ' ')
     FILE_SIZE=$(du -h "$EXPORT_FILE" | cut -f1)
-    log "  $DB: $LINE_COUNT issues exported ($FILE_SIZE) [bd export]"
+    log "  $DB: exported via SQL ($LINE_COUNT lines, $FILE_SIZE)"
     ln -sf "$(basename "$EXPORT_FILE")" "$LATEST_LINK"
     EXPORTED=$((EXPORTED + 1))
   else
-    # Fallback: query Dolt directly for issues table
-    if dolt_query_json "$DB" "SELECT * FROM issues ORDER BY id" > "$EXPORT_FILE" 2>/dev/null && [[ -s "$EXPORT_FILE" ]]; then
-      LINE_COUNT=$(wc -l < "$EXPORT_FILE" | tr -d ' ')
-      log "  $DB: exported via SQL ($LINE_COUNT lines)"
-      ln -sf "$(basename "$EXPORT_FILE")" "$LATEST_LINK"
-      EXPORTED=$((EXPORTED + 1))
-    else
-      log "  WARN: $DB export failed"
-      rm -f "$EXPORT_FILE"
-      EXPORT_FAILED=$((EXPORT_FAILED + 1))
-      EXPORT_ERRORS="${EXPORT_ERRORS}${DB} "
-    fi
+    log "  WARN: $DB export failed"
+    rm -f "$EXPORT_FILE"
+    EXPORT_FAILED=$((EXPORT_FAILED + 1))
+    EXPORT_ERRORS="${EXPORT_ERRORS}${DB} "
   fi
 done
 
