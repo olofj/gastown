@@ -36,5 +36,15 @@ services:
 
     # Exec into the container with: docker compose exec gastown zsh
 
+  blog:
+    image: nginx:alpine
+    container_name: gastown-blog
+    volumes:
+      - ./blog/site:/var/www/gastown-blog:ro
+      - ./blog/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${BLOG_PORT:-80}:80"
+    restart: unless-stopped
+
 volumes:
   agent-home:
