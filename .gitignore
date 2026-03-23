@@ -67,6 +67,10 @@ settings/
 .sqlhistory
 .fork-integration.json
 
+# Blog build output
+blog/public/
+blog/.last-build-hash
+
 # Nix build
 result
 

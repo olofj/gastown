@@ -1,0 +1,87 @@
+/* Gas Town Blog — minimal static site styles */
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --text: #e0e0e0;
+  --text-muted: #8888aa;
+  --accent: #e94560;
+  --link: #0f9b8e;
+  --mono: "Fira Mono", "Cascadia Code", monospace;
+  --sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+header {
+  margin-bottom: 3rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--surface);
+}
+
+.site-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.post-summary {
+  margin-bottom: 2rem;
+}
+
+.post-summary h2 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+.post-summary time { color: var(--text-muted); font-size: 0.875rem; }
+.post-summary p { margin-top: 0.5rem; color: var(--text-muted); }
+
+.post header { margin-bottom: 2rem; }
+.post h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+.post time { color: var(--text-muted); font-size: 0.875rem; }
+
+.post-body { margin-bottom: 2rem; }
+.post-body p { margin-bottom: 1rem; }
+.post-body code {
+  font-family: var(--mono);
+  background: var(--surface);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.post-body pre {
+  background: var(--surface);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+.post-body pre code { background: none; padding: 0; }
+.post-body h2 { margin: 1.5rem 0 0.75rem; font-size: 1.25rem; }
+.post-body h3 { margin: 1.25rem 0 0.5rem; font-size: 1.1rem; }
+
+.post-nav { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--surface); }
+
+footer {
+  margin-top: 4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}

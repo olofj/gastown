@@ -1,0 +1,11 @@
+<h1>Gas Town Blog</h1>
+<p class="subtitle">Notes on building autonomous multi-agent systems</p>
+<div class="posts">
+  {{range .Posts}}
+  <article class="post-summary">
+    <h2><a href="/posts/{{.Slug}}.html">{{.Title}}</a></h2>
+    <time datetime="{{.Date}}">{{.DateFormatted}}</time>
+    {{if .Summary}}<p>{{.Summary}}</p>{{end}}
+  </article>
+  {{end}}
+</div>
